@@ -3,11 +3,12 @@
 
 import re
 import xml.etree.ElementTree as et
-import json
+import csv
 
 class ArtCollection:
-	def __init__(self):
+	def __init__(self, db):
 		self.content = []
+		self.db = db
 	def __iter__(self):
 		self.a = 0
 		return(self)
@@ -22,13 +23,13 @@ class ArtCollection:
 		if isinstance(work, Artwork):
 			self.content.append(work)
 		return(1)
-	def loadBySQL(self, db, sqlArtwork):
-		cursor = db.cursor(dictionary=True, buffered=True)
-		cursorPers = db.cursor(dictionary=True, buffered=True)
-		cursorPersAttr = db.cursor(dictionary=True, buffered=True)
-		cursorPersAttrSeeAlso = db.cursor(dictionary=True, buffered=True)
-		cursorAttr = db.cursor(dictionary=True, buffered=True)
-		cursorAttrRel = db.cursor(dictionary=True, buffered=True)
+	def loadBySQL(self, sqlArtwork):
+		cursor = self.db.cursor(dictionary=True, buffered=True)
+		cursorPers = self.db.cursor(dictionary=True, buffered=True)
+		cursorPersAttr = self.db.cursor(dictionary=True, buffered=True)
+		cursorPersAttrSeeAlso = self.db.cursor(dictionary=True, buffered=True)
+		cursorAttr = self.db.cursor(dictionary=True, buffered=True)
+		cursorAttrRel = self.db.cursor(dictionary=True, buffered=True)
 		cursor.execute(sqlArtwork)
 		for row in cursor:
 			artwork = Artwork()
@@ -58,21 +59,32 @@ class ArtCollection:
 				artwork.attributes.append(attribute)
 			self.addWork(artwork)
 		return(1)
-	def load(self, db, limit=100, offset=1):
+	def load(self, limit=100, offset=1):
 		sql = "SELECT * FROM artwork LIMIT " + str(limit) + " OFFSET " + str(offset)
-		self.loadBySQL(db, sql)
+		self.loadBySQL(sql)
 		return(1)
-	def loadByANumber(self, db, anumber):
+	def loadByANumber(self, anumber):
 		anumber = str(anumber)
 		number = re.search('[0-9]+', anumber).group(0)
 		sql = "SELECT * FROM artwork WHERE artwork.anumber = \"A " + number + "\""
-		self.loadBySQL(db, sql)
-	def makeJSON(self, path):
-		file = open(path, "w+")
-		return(0)
-	def makeXML(self, fileName):
+		self.loadBySQL(sql)
+
+class Serializer:
+	def __init__(self, collection):
+		self.collection = collection
+		self.ser = ""
+	def save(self, fileName):
+		file = open(fileName, "w", encoding="utf-8")
+		file.write(self.ser)
+		file.close()
+
+class SerializerXML(Serializer):
+	def __init__(self, collection):
+		super().__init__(collection)
+		pass
+	def serialize(self, fileName):
 		root = et.fromstring('<ArtCollection></ArtCollection>')
-		for artwork in self.content:
+		for artwork in self.collection.content:
 			artwork.description = artwork.descriptionClean
 			artworkEl = et.SubElement(root, 'artwork')
 			for field in artwork.flatFields:
@@ -128,10 +140,102 @@ class ArtCollection:
 				for see in attribute.seealso:
 					seeEl = et.SubElement(attrEl, 'seealso')
 					seeEl.text = see
-		#et.dump(root)
-		tree = et.ElementTree()
-		tree._setroot(root)
-		tree.write(fileName + ".xml", encoding="unicode")
+		self.ser = et.tostring(root, encoding="unicode")
+		self.save(fileName + ".xml")
+
+class SerializerCSV(Serializer):
+	def __init__(self, collection):
+		super().__init__(collection)
+		self.artworkFields = ['id', 'anumber', 'url', 'urlImage', 'invNo', 'sheetsize', 'platesize', 'imagesize', 'technique', 'notes', 'descriptionClean', 'catalogs', 'condition', 'source', 'shelfmarkSource']
+		self.numberPersons = 4
+		self.personFields = ['name', 'yearStart', 'yearEnd', 'dateBirth', 'placeBirth', 'dateDeath', 'placeDeath']
+		self.numberArtists = 3
+		self.artistFields = ['name', 'role', 'lifetime', 'description']
+		self.numberPublishers = 2
+		self.publisherFields = ['name', 'place', 'time', 'placetime']
+		self.artworkAttributes = True
+	def serialize(self, fileName):
+		with open(fileName + ".csv", 'w', encoding="utf-8", newline="") as csvfile:
+			writer = csv.writer(csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+			metaRow = []
+			metaRow.extend(self.artworkFields)
+			if self.artworkAttributes == True:
+				metaRow.append('attributes')
+			for i in range(0, self.numberPersons):
+				for prop in self.personFields:
+					metaRow.append(prop + "-person" + str(i))
+				metaRow.append("attributes-person" + str(i))
+			for i in range(0, self.numberArtists):
+				for prop in self.artistFields:
+					metaRow.append(prop + "-artist" + str(i))
+			for i in range(0, self.numberPublishers):
+				for prop in self.publisherFields:
+					metaRow.append(prop + "-publisher" + str(i))	
+			writer.writerow(metaRow)
+			for artwork in self.collection.content:
+				row = []
+				for field in self.artworkFields:
+					row.append(getattr(artwork, field))
+				if self.artworkAttributes == True:
+					row.append(artwork.makeAttributeString())
+				for i in range(0, self.numberPersons):
+					for f in self.personFields:
+						try:
+							row.append(getattr(artwork.personsRepr[i], f))
+						except:
+							row.append("")
+					try:
+						row.append(artwork.personsRepr[i].makeAttributeString())
+					except:
+						row.append("")
+				for i in range(0, self.numberArtists):
+					for f in self.artistFields:
+						try:
+							row.append(getattr(artwork.artists[i], f))
+						except:
+							row.append("")				
+				for i in range(0, self.numberPublishers):
+					for f in self.publisherFields:
+						try:
+							row.append(getattr(artwork.publishers[i], f))
+						except:
+							row.append("")
+				writer.writerow(row)
+
+class SerializerSel(SerializerCSV):
+	def __init__(self, collection):
+		super().__init__(collection)
+		controllCollection = ArtCollection(self.collection.db)
+		copyFields = ['technique', 'yearNormalized', 'portraitType', 'orientation']
+		for item in self.collection:
+			item.keywords_technique = item.extractTechnique()
+			item.yearNormalized = item.getNormalizedYear()
+			item.portraitType = item.getPortraitType()
+			item.orientation = item.getOrientation()
+			item.likeA = item.getLikeA()
+			if item.likeA != None:
+				controllCollection.loadByANumber(item.likeA)
+				try:
+					model = controllCollection.content[0]
+				except:
+					pass
+				else:
+					if item.keywords_technique == "" or item.keywords_technique == None:
+						item.keywords_technique = model.extractTechnique()
+					if item.yearNormalized == "" or item.yearNormalized == None:
+						item.yearNormalized = model.getNormalizedYear()
+					if item.portraitType == "" or item.portraitType == None:
+						item.portraitType = model.getPortraitType()
+					if item.orientation == "" or item.orientation == None:
+						item.orientation = model.getOrientation()
+		self.artworkFields = ['id', 'anumber', 'keywords_technique', 'yearNormalized', 'portraitType', 'orientation', 'likeA', 'descriptionClean', 'technique']
+		self.numberPersons = 0
+		self.personFields = ['name', 'yearStart', 'yearEnd', 'dateBirth', 'placeBirth', 'dateDeath', 'placeDeath']
+		self.numberArtists = 0
+		self.artistFields = ['name', 'role', 'lifetime', 'description']
+		self.numberPublishers = 0
+		self.publisherFields = ['name', 'place', 'time', 'placetime']
+		self.artworkAttributes = False
 
 class Artwork:	
 	def __init__(self):
@@ -144,7 +248,7 @@ class Artwork:
 		self.artists = []
 		self.publishers = []
 		self.sheetsize = None
-		self.sheezsizeSep = None
+		self.sheetsizeSep = None
 		self.platesize = None
 		self.platesizeSep = None
 		self.imagesize = None
@@ -168,16 +272,26 @@ class Artwork:
 			ret = ret + ", 1 Attribut"
 		elif len(self.attributes) > 1:
 			ret = ret + ", " + str(len(self.attributes)) + " Attribute"
-		return(ret)	
+		return(ret)
+	def __iter__(self):
+		self.iterFields = ['id', 'anumber', 'url', 'urlImage', 'invNo', 'sheetsize', 'platesize', 'imagesize', 'technique', 'notes', 'description', 'transcription', 'catalogs', 'condition', 'source', 'shelfmarkSource', 'instime', 'modtime']
+		return(self)
+	def __next__(self):
+		try:
+			field = self.iterFields.pop(0)
+		except:
+			raise StopIteration
+		else:			
+			return({field : getattr(self, field)})			
 	def importRow(self, row):
 		self.id = row["id"]
 		self.anumber = row["anumber"][2:]
 		self.invNo = row["inventorynumber"]
-		self.sheetsize = row["sheetsize"]
+		self.sheetsize = removeLinebreaks(row["sheetsize"])
 		self.sheetsizeSep = separateSize(self.sheetsize)
-		self.platesize = row["platesize"]
+		self.platesize = removeLinebreaks(row["platesize"])
 		self.platesizeSep = separateSize(self.platesize)		
-		self.imagesize = row["imagesize"]
+		self.imagesize = removeLinebreaks(row["imagesize"])
 		self.imagesizeSep = separateSize(self.imagesize)
 		self.technique = row["technique"]
 		self.notes = removeLinebreaks(row["notes"])
@@ -186,7 +300,7 @@ class Artwork:
 		self.descriptionClean = cleanDescription(self.description)
 		self.catalogs = removeLinebreaks(row["catalogs"], ", ")
 		self.condition = row["condition"]
-		self.source = row["source"]
+		self.source = removeLinebreaks(row["source"])
 		self.shelfmarkSource = extractShelfmark(self.source)
 		self.instime = row["instime"]
 		self.modtime = row["modtime"]
@@ -196,7 +310,7 @@ class Artwork:
 		self.importPublishers(row["publishers"])
 		return(1)
 	def importArtists(self, artistsXML):
-		artists = XMLReader.read(artistsXML, "artist")
+		artists = XMLReader.readElement(artistsXML, "artist")
 		if artists == 0:
 			return(0)
 		for artist in artists:
@@ -208,7 +322,7 @@ class Artwork:
 			self.artists.append(artistObj)
 		return(1)
 	def importPublishers(self, publishersXML):
-		publishers = XMLReader.read(publishersXML, "publisher")
+		publishers = XMLReader.readElement(publishersXML, "publisher")
 		if publishers == 0:
 			return(0)
 		for publisher in publishers:
@@ -232,7 +346,7 @@ class Artwork:
 		personObj.literature = removeLinebreaks(row["literature"])
 		personObj.instime = row["instime"]
 		personObj.modtime = row["instime"]
-		bornData = XMLReader.read(row["lifetime"], "born")
+		bornData = XMLReader.readElement(row["lifetime"], "born")
 		try:
 			bornData[0]["date"]
 		except:
@@ -246,7 +360,7 @@ class Artwork:
 		else:
 			personObj.placeBirth = bornData[0]["place"]
 		bornData = None			
-		diedData = XMLReader.read(row["lifetime"], "died")
+		diedData = XMLReader.readElement(row["lifetime"], "died")
 		try:
 			diedData[0]["date"]
 		except:
@@ -262,6 +376,66 @@ class Artwork:
 		personObj.attributes = attributes
 		self.personsRepr.append(personObj)
 		return(1)
+	def makeAttributeString(self, sep="/"):
+		attr = [attr.value for attr in self.attributes]
+		return(sep.join(attr))
+	def getNormalizedYear(self):
+		for pub in self.publishers:
+			if pub.getYear() != None:
+				return(pub.getYear())
+		for artist in self.artists:
+			if artist.getYear() != None:
+				return(artist.getYear())
+		for pers in self.personsRepr:
+			if pers.getYear() != None:
+				if int(pers.getYear()) > 1500:
+					return(pers.getYear())
+		return(None)
+	def extractTechnique(self):
+		tech = self.technique
+		match = re.findall(r"Kupferstich|Radierung|Schabkunst|Lithographie|Farblithographie|Holzschnitt|Stahlstich|Holzstich|Roulettestich|Umrißkupfer|Umrisskupfer|Punktierstich|Punzstich|Aquatinta|Silhouettenstich|Umrissradierung|Silhouettendruck|Silhouettenzeichnung|Photogr|Farbtuschzeichnung|Tuschzeichnung|Kreidezeichnung|Farbzeichnung|Farbezeichnung|Federzeichnung|Zeichnung|Crayonmanier|Scherenschnitt|in Braun|koloriert", tech)
+		ret = []
+		conc = {"Farbezeichnung":"Farbzeichnung", "Photogr":"Fotografie", "Umrißkupfer":"Umrisskupfer"}
+		for el in match:
+			try:
+				ret.append(conc[el])
+			except:
+				ret.append(el)
+		ret.sort()
+		try:
+			return("/".join(ret))
+		except:
+			return(None)
+	def getPortraitType(self):
+		descr = self.descriptionClean
+		match = re.search(r"Büste|Brustb|Hüftb|Halbf|Kopfb|[gG]anzer? Fig|Kniest|Silhouette Kopf|Kopfsilhouette", descr)
+		conc = {"Brustb" : "Brustbild", "Hüftb" : "Hüftbild", "Halbf" : "Halbfigur", "Kopfb" : "Kopfbild", "ganzer Fig" : "ganze Figur", "ganze Fig" : "ganze Figur", "Ganze Fig" : "ganze Figur", "Kniest" : "Kniestück", "Silhouette Kopf" : "Kopfsilhouette"}
+		try:
+			ret = match.group(0)
+		except:
+			return(None)
+		else:
+			try:
+				ret = conc[ret]
+			except:
+				pass
+			return(ret)
+	def getOrientation(self):
+		descr = self.descriptionClean
+		match = re.search(r"((leicht )?nach (r\.|l\.|hr\.|hl\.)|von vorn)", descr)
+		try:
+			return(match.group(0))
+		except:
+			return(None)			
+	def getLikeA(self):
+		descr = self.descriptionClean
+		match = re.search(r" A ([0-9]+)", descr)
+		#match = re.search(r"[wW]ie (in |das folgende )?A ([0-9]+)", descr)
+		try:
+			return(match.group(1))
+			#return(match.group(2))
+		except:
+			return(None)
 
 class Person:
 	def __init__(self, name = ""):
@@ -291,6 +465,25 @@ class Person:
 		if self.gnd != None:
 			ret = ret + ", GND " +  self.gnd
 		return(ret)	
+	def __iter__(self):
+		self.iterFields = self.flatFields
+		return(self)
+	def __next__(self):
+		try:
+			field = self.iterFields.pop(0)
+		except:
+			raise StopIteration
+		else:			
+			return({field : getattr(self, field)})
+	def makeAttributeString(self, sep="/"):
+		attr = [attr.value for attr in self.attributes]
+		return(sep.join(attr))
+	def getYear(self):
+		if self.yearEnd != None:
+			return(self.yearEnd)
+		if self.dateDeath != "":
+			return(extractYear(str(self.dateDeath)))
+		return(None)
 
 class Artist(Person):
 	def __init__(self):
@@ -299,6 +492,10 @@ class Artist(Person):
 		self.role = ""
 		self.lifetime = ""
 		self.description = ""
+	def getYear(self):
+		if self.lifetime != "":
+			year = extractYearFromSpan(self.lifetime)
+			return(year)
 
 class Publisher(Person):
 	def __init__(self):
@@ -308,6 +505,14 @@ class Publisher(Person):
 		self.place = ""
 		self.time = ""
 		self.placeTime = ""
+	def getYear(self):
+		if self.time != "":
+			year = extractClosingYear(self.time)
+			return(year)
+		if self.placeTime != "":
+			year = extractClosingYear(self.placeTime)
+			return(year)
+		return(None)
 
 class Attribute:
 	concordance = {'1' : 'Sache', '2' : 'Bibelstelle', '3' : 'Zitat', '4' : 'Emblem', '5' : 'Motiv', '6' : 'Person', '7' : 'Devise', '8' : 'Ort', '9' : 'Ereignis', '10' : 'Person', 'B' : 'Beruf', 'O' : 'Ort', 'P' : 'Person'}
@@ -321,7 +526,7 @@ class Attribute:
 		self.seealso = []
 
 class XMLReader:
-	def read(XML, element):
+	def readElement(XML, element):
 		if XML == "":
 			return(0)
 		ret = []
@@ -334,7 +539,7 @@ class XMLReader:
 				content[child.tag] = child.text
 			ret.append(content)
 		return(ret)
-		read = classmethod(read)
+		readElement = classmethod(readElement)
         
 def extractSeeAlso(seeAlso):
 	seeAlso = seeAlso.replace(", -- > ", ", --> ").replace(", > ", ", --> ")
@@ -403,5 +608,34 @@ def cleanDescription(description):
 
 def removeLinebreaks(text, replacement=" "):
 	text = text.replace("\n", replacement)
+	text = text.replace('\n', replacement)
 	text = text.replace("  ", " ")
-	return(text)        
+	return(text)
+
+def extractYear(string):
+	match = re.search(r"[0-9]{3,4}", string)
+	try:
+		return(match.group(0))
+	except:
+		return(None)
+
+def extractClosingYear(string):
+	match = re.search(r"[\s\.]([0-9]{3,4}\Z)", string)
+	try:
+		return(match.group(1))
+	except:
+		return(None)
+
+def extractYearFromSpan(string)		:
+	match = re.search(r"([0-9]{3,4})[^0-9]+([0-9]{3,4})", string)
+	try:
+		year = int(match.group(1)) + int(match.group(2))
+		year = int(year / 2)
+		return(year)
+	except:
+		match = re.search(r"[0-9]{3,4}", string)
+		try:		
+			year = int(match.group(0))
+			return(year)
+		except:
+			return(None)

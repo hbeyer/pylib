@@ -22,7 +22,7 @@ class Request_SRU:
 		#self.query_pica_enc = self.query_pica_enc.replace(",", "%2C")
 		self.query_pica_enc = up.quote(self.query_pica_enc)
 		self.url = self.make_URL()
-		fileobject = ur.urlopen(self.url)
+		fileobject = ur.urlopen(self.url, None, 10)
 		tree = et.parse(fileobject)
 		root = tree.getroot()
 		nbs = root.findall('.//{http://docs.oasis-open.org/ns/search-ws/sruResponse}numberOfRecords')

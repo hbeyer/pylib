@@ -28,6 +28,8 @@ class Shelfmark:
 			ret += ' (' + self.part + ')'
 		return(ret)
 def convertOld(old):
+	if old[0:1] == "\"":
+		old = old + ")"
 	new = old.strip("\"")
 	if new.find("Helmst") > 0 or new.find("QuH") == 0:
 		new = "H: " + new
@@ -63,10 +65,39 @@ def convertOld(old):
 		pass
 	else:
 		num = re.search(r"([0-9][a-z]{1,2})\. ([0-9])", new).group(2)
-		new = new.replace(numlet + ". " + num, numlet + "." + num)
+		new = new.replace(numlet + ". " + num, numlet + "." + num)	
 	new = new.replace("  ", " ")
+	new = new.replace("Li 5530 (", "Li 5530 Slg. Hardt (*, ")	
+	new = insertPoint(new)
+	new = adjustMus(new)
 	return(new)
+def adjustMus(sm):
+	if "Mus" not in sm:
+		return(sm)
+	sm = sm.replace("Mus.", "Musica ")
+	sm = sm.replace(" div", " div.")
+	sm = sm.replace(" coll.inc.", " coll. inc.")
+	sm = sm.replace(" Coll.Inc.", " coll. inc.")
+	sm = sm.replace("fol.", " 2°")
+	sm = sm.replace("H: ", "")
+	sm = sm.replace("  ", " ")
+	sm = sm.replace("..", ".")
+	sm = sm.strip()
+	return(sm)
+def insertPoint(sm):
+	stops = ["Schulenburg", "Kapsel"]
+	for stop in stops:
+		if stop in sm:
+			return(sm)
+	try:
+		word = re.search(r"[A-Z][a-z]{2,}", sm).group(0)
+	except:
+		return(sm)
+	else:
+		sm = sm.replace(word, word + ".")
+		sm = sm.replace("..", ".")
+		return(sm)
 def searchable(sm):
 	sm = sm.replace("(", "\(")
 	sm = sm.replace(")", "\)")
-	return(sm)
+	return(sm)		

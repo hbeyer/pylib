@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from lib import mets
+from lib import opac
 
-builder = mets.METSBuilder("mss/ed000242", "Ms. theol. lat. oct. 91 , Bl. 67b-68b")
+grab = opac.grabber("per beyer and tit drama")
+print(str(grab.numFound))
+#xml = grab.getXML()
+#print(xml)

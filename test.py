@@ -3,5 +3,5 @@
 
 from lib import bookwheel as bw
 
-test = bw.Catalogue.getYear(899)
-print(test)
+eva = bw.ListEvaluation("pages-luther.txt")
+eva.save("luther")

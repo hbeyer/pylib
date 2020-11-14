@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from lib import csvt
+import collections
+
 class Catalogue:
 # Daten nach Maria von Katte, Herzog August und die Kataloge seiner Bibliothek, in: Wolfenbütteler Beiträge 1 (1972), S. 168-199, hier S. 177-182
 	struct = [
@@ -111,7 +114,7 @@ class Catalogue:
 	{ "start":6888, "end":6936, "group":"Libri Varii", "dateBegin":"1687-1688", "year":1688, "writer":"J. T. Reinerding" },	
 	{ "start":6937, "end":6937, "group":"Libri Varii", "dateBegin":"1688", "year":1688, "writer":"J. T. Reinerding" },	
 	{ "start":6938, "end":6938, "group":"Libri Varii", "dateBegin":"1689", "year":1689, "writer":"J. T. Reinerding" },	
-	{ "start":6939, "end":3946, "group":"Libri Varii", "dateBegin":"1690", "year":1690, "writer":"J. T. Reinerding" },	
+	{ "start":6939, "end":6946, "group":"Libri Varii", "dateBegin":"1690", "year":1690, "writer":"J. T. Reinerding" },	
 	{ "start":6947, "end":6949, "group":"Libri Varii", "dateBegin":"1691", "year":1691, "writer":"J. T. Reinerding" },	
 	{ "start":6950, "end":6954, "group":"Libri Varii", "dateBegin":"1692", "year":1692, "writer":"J. T. Reinerding" },	
 	{ "start":6955, "end":6961, "group":"Libri Varii", "dateBegin":"1693", "year":1693, "writer":"J. T. Reinerding" },	
@@ -125,13 +128,29 @@ class Catalogue:
 		for sect in self.struct:
 			if sect["start"] <= page and sect["end"] >= page:
 				return(sect)
-		return(null)
+		return(None)
 	def getYear(self, page):
 		sect = Catalogue.getSection(page)
 		try:
 			ret = sect["year"]
 		except:
-			return(null)
+			return(None)
 		return(ret)
 Catalogue.getSection = classmethod(Catalogue.getSection)
 Catalogue.getYear = classmethod(Catalogue.getYear)
+
+# Das Folgende generiert eine Auswertung im CSV-Format zu einer Liste mit Seitenzahlen aus dem Bücherradkatalog
+# Die Seitenzahlen werden getrennt durch Zeilenumbruch in einer Datei unter path abgespeichert
+class ListEvaluation:
+	def __init__(self, path):
+		file = open(path)
+		self.data = [int(num.strip()) for num in file]
+		self.counter = collections.Counter(self.data)
+		self.result = []
+	def save(self, fileName):
+		for num in self.counter:
+			sect = Catalogue.getSection(num)
+			self.result.append([str(num), str(self.counter[num]), sect["group"], sect["dateBegin"], str(sect["year"]), sect["writer"]])
+		table = csvt.Table(["Seite", "Frequenz", "Klasse", "Datum_ab", "Jahr", "Schreiber"], self.result)
+		table.save(fileName)
+		return(True)

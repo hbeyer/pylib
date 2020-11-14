@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from lib import opac
+from lib import bookwheel as bw
 
-grab = opac.grabber("per beyer and tit drama")
-print(str(grab.numFound))
-#xml = grab.getXML()
-#print(xml)
+test = bw.Catalogue.getYear(899)
+print(test)

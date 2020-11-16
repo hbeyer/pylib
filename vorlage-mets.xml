@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets xmlns:mods="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://www.loc.gov/METS/"
+    xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/mods.xsd http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd">
+    <metsHdr CREATEDATE="2020-07-16T17:54:58.863+02:00">
+        <agent OTHERTYPE="SOFTWARE" ROLE="CREATOR" TYPE="OTHER">
+            <name>Handschriftendatenbank der Herzog August Bibliothek Wolfenbüttel</name>
+        </agent>
+    </metsHdr>
+    <dmdSec ID="DMDLOG_0000">
+        <mdWrap MDTYPE="TEIHDR">
+            <xmlData>
+                <teiHeader xmlns="http://www.tei-c.org/ns/1.0">
+                    <fileDesc>
+                        <titleStmt>
+                            <title>Provisorisches METS-Dokument</title>
+                            <respStmt>
+                                <resp>Erstellt durch </resp>
+                                <name type="person">Hartmut Beyer</name>
+                                <name type="org">Herzog August Bibliothek Wolfenbüttel</name>
+                            </respStmt>
+                        </titleStmt>
+                        <!--<editionStmt>
+                            <edition>Elektronische Ausgabe nach TEI P5</edition>
+                            <respStmt>
+                                <resp>TEI-P5 konforme Kodierung durch </resp>
+                                <name type="person">Irina Rau</name>
+                                <name type="org">Herzog August Bibliothek Wolfenbüttel</name>
+                            </respStmt>
+                        </editionStmt>-->
+                        <publicationStmt>
+                            <publisher>
+                                <name type="org">Herzog August Bibliothek Wolfenbüttel</name>
+                                <ptr target="http://www.hab.de"/>
+                            </publisher>
+                            <date type="issued" when="2020-07-15">15.07.2020</date>
+                            <!--<date type="digitised" when=""></date>-->
+                            <distributor>Herzog August Bibliothek</distributor>
+                            <availability status="free">
+                                <licence
+                                    target="https://creativecommons.org/publicdomain/zero/1.0/deed.de">
+                                    <!--<p>Für das Signaturdokument verzichtet die Herzog August Bibliothek auf alle Nutzungsrechte.</p>-->
+                                    <p>Für die Nutzung weiterer Daten wie Digitalisaten gelten gegebenenfalls andere Lizenzen. Vgl. die <ref
+                                            target="http://diglib.hab.de/?link=012"
+                                            >Copyright Information</ref> der Herzog August Bibliothek Wolfenbüttel.</p>
+                                </licence>
+                            </availability>
+                            <pubPlace>
+                                <ptr type="purl"
+                                    target="http://diglib.hab.de/mss/ed000213/start.htm"/>
+                                <ptr type="thumbnailForPresentations"
+                                    target="http://diglib.hab.de/mss/ed000213/thumbs/00001.jpg"/>
+                            </pubPlace>
+                            <!--<idno type="URN">urn:nbn:de:gbv:23-mss/ed000213</idno>-->
+                        </publicationStmt>
+                        <sourceDesc>
+                            <msDesc xml:id="prov1" xml:lang="de">
+                                <msIdentifier>
+                                    <settlement>-</settlement>
+                                    <!-- Aufbewahrungsort -->
+                                    <repository>-</repository>
+                                    <!-- Besitzende Institution -->
+                                    <collection>-</collection>
+                                    <!-- Sammlung -->
+                                    <idno sortKey="Sortierform">-</idno>
+                                    <!-- Signatur -->
+                                </msIdentifier>
+                                <head>
+                                    <title>-</title>
+                                    <!--<origDate when=""></origDate>
+                                    <origPlace>-</origPlace>-->
+                                </head>
+                                <physDesc>
+                                    <!--<objectDesc form="codex">
+                                        <supportDesc material="chart">
+                                            <support>
+                                                <p>
+                                                    <material>Papier</material>
+                                                </p>
+                                            </support>
+                                            <extent>
+                                                <measure type="leavesCount">1 Bl.</measure>
+                                            </extent>
+                                        </supportDesc>
+                                    </objectDesc>-->
+                                </physDesc>
+                                <additional>
+                                    <!--<listBibl>
+                                        <head>Edition</head>
+                                        <bibl>Stefania Salvadori: Edition EE 129. in Kritische Gesamtausgabe der Schriften und Briefe Andreas Bodensteins von Karlstadt. Hg. von Thomas Kaufmann, bearb. von Harald Bollbuck, Ulrich Bubenheimer, Timo Janssen, Stefania Salvadori und Alejandro Zorzin unter Mitarbeit von Jennifer Bunselmeier, Alyssa Evans, Dario Kampkaspar und Antje Marx. Wolfenbüttel 2012-. [Zur <ref target="http://dev2.hab.de/edoc/view.html?id=kgk_129_transcript">Edition</ref>]</bibl>
+                                    </listBibl>-->
+                                </additional>
+                            </msDesc>
+                        </sourceDesc>
+                    </fileDesc>
+                    <encodingDesc>
+                        <projectDesc>
+                            <p>Handschrift digitalisiert im Rahmen des Projektes <name type="project">Kritische Gesamtausgabe der Schriften und Briefe Andreas Bodensteins von Karlstadt</name>.</p>
+                        </projectDesc>
+                    </encodingDesc>
+                </teiHeader>
+            </xmlData>
+        </mdWrap>
+    </dmdSec>
+    <amdSec ID="AMD">
+        <rightsMD ID="RIGHTS">
+            <mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVRIGHTS">
+                <xmlData>
+                    <dv:rights xmlns:dv="http://www.dfg-viewer.de">
+                        <dv:owner>Herzog August Bibliothek Wolfenbüttel</dv:owner>
+                        <dv:ownerLogo>http://www.hab.de/images/logo_dfg_viewer.gif</dv:ownerLogo>
+                        <dv:ownerSiteURL>http://www.hab.de/</dv:ownerSiteURL>
+                        <dv:ownerContact>mailto:auskunft@hab.de</dv:ownerContact>
+                    </dv:rights>
+                </xmlData>
+            </mdWrap>
+        </rightsMD>
+        <digiprovMD ID="DIGIPROV">
+            <mdWrap MDTYPE="OTHER" MIMETYPE="text/xml" OTHERMDTYPE="DVLINKS">
+                <xmlData>
+                    <dv:links xmlns:dv="http://www.dfg-viewer.de">
+                        <!--<dv:reference>http://diglib.hab.de/?mss&amp;list=ms&amp;id=dd-hsta-10024-gr-loc-10300-2-48r-48v</dv:reference>-->
+                        <dv:presentation>http://diglib.hab.de/mss/ed000213/start.htm</dv:presentation>
+                    </dv:links>
+                </xmlData>
+            </mdWrap>
+        </digiprovMD>
+    </amdSec>
+    <fileSec>
+        <fileGrp USE="DOWNLOAD">
+            <!--<file ID="FILE_00001_DOWNLOAD" MIMETYPE="application/pdf">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/download/00001.pdf"/>
+            </file>
+            <file ID="FILE_00002_DOWNLOAD" MIMETYPE="application/pdf">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/download/00002.pdf"/>
+            </file>
+            <file ID="FILE_00003_DOWNLOAD" MIMETYPE="application/pdf">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/download/00003.pdf"/>
+            </file>-->
+        </fileGrp>
+        <fileGrp USE="THUMBS">
+            <!--<file ID="FILE_00001_THUMBS" MIMETYPE="image/jpeg" USE="PREVIEW">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/thumbs/00001.jpg"/>
+            </file>
+            <file ID="FILE_00002_THUMBS" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/thumbs/00002.jpg"/>
+            </file>
+            <file ID="FILE_00003_THUMBS" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/thumbs/00003.jpg"/>
+            </file>-->
+        </fileGrp>
+        <fileGrp USE="DEFAULT">
+            <!--<file ID="FILE_00001_DEFAULT" MIMETYPE="image/jpeg" USE="PREVIEW">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/00001.jpg"/>
+            </file>
+            <file ID="FILE_00002_DEFAULT" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/00002.jpg"/>
+            </file>
+            <file ID="FILE_00003_DEFAULT" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/00003.jpg"/>
+            </file>-->
+        </fileGrp>
+        <fileGrp USE="ORIGINAL">
+            <!--<file ID="FILE_00001_ORIGINAL" MIMETYPE="image/jpeg" USE="PREVIEW">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/max/00001.jpg"/>
+            </file>
+            <file ID="FILE_00002_ORIGINAL" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/max/00002.jpg"/>
+            </file>
+            <file ID="FILE_00003_ORIGINAL" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/max/00003.jpg"/>
+            </file>-->
+        </fileGrp>
+        <fileGrp USE="MAX">
+            <!--<file ID="FILE_00001_MAX" MIMETYPE="image/jpeg" USE="PREVIEW">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/max/00001.jpg"/>
+            </file>
+            <file ID="FILE_00002_MAX" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/max/00002.jpg"/>
+            </file>
+            <file ID="FILE_00003_MAX" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/max/00003.jpg"/>
+            </file>-->
+        </fileGrp>
+        <fileGrp USE="MIN">
+            <!--<file ID="FILE_00001_MIN" MIMETYPE="image/jpeg" USE="PREVIEW">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/min/00001.jpg"/>
+            </file>
+            <file ID="FILE_00002_MIN" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/min/00002.jpg"/>
+            </file>
+            <file ID="FILE_00003_MIN" MIMETYPE="image/jpeg">
+                <FLocat xmlns:xlink="http://www.w3.org/1999/xlink" LOCTYPE="URL" xlink:href="http://diglib.hab.de/mss/ed000213/min/00003.jpg"/>
+            </file>-->
+        </fileGrp>
+    </fileSec>
+    <structMap TYPE="LOGICAL">
+        <div ADMID="AMD"
+            CONTENTIDS="http://diglib.hab.de/?db=mss&amp;list=ms&amp;id=dd-hsta-10024-gr-loc-10300-2-48r-48v"
+            DMDID="DMDLOG_0000" ID="LOG_0000" LABEL="" TYPE="manuscript"/>
+    </structMap>
+    <structMap TYPE="PHYSICAL">
+        <div ID="PHYS_0000" TYPE="physSequence">
+            <fptr FILEID="FULLDOWNLOAD"/>
+            <!--<div ID="PHYS_00001" ORDER="1" TYPE="page">
+                <fptr FILEID="FILE_00001_DOWNLOAD"/>
+                <fptr FILEID="FILE_00001_THUMBS"/>
+                <fptr FILEID="FILE_00001_DEFAULT"/>
+                <fptr FILEID="FILE_00001_MAX"/>
+                <fptr FILEID="FILE_00001_MIN"/>
+            </div>
+            <div ID="PHYS_00002" ORDER="2" TYPE="page">
+                <fptr FILEID="FILE_00002_DOWNLOAD"/>
+                <fptr FILEID="FILE_00002_THUMBS"/>
+                <fptr FILEID="FILE_00002_DEFAULT"/>
+                <fptr FILEID="FILE_00002_MAX"/>
+                <fptr FILEID="FILE_00002_MIN"/>
+            </div>
+            <div ID="PHYS_00003" ORDER="3" TYPE="page">
+                <fptr FILEID="FILE_00003_DOWNLOAD"/>
+                <fptr FILEID="FILE_00003_THUMBS"/>
+                <fptr FILEID="FILE_00003_DEFAULT"/>
+                <fptr FILEID="FILE_00003_MAX"/>
+                <fptr FILEID="FILE_00003_MIN"/>
+            </div>-->
+        </div>
+    </structMap>
+    <structLink>
+        <!--<smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:from="LOG_0000" xlink:to="PHYS_0000"/>
+        <smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:from="LOG_0000" xlink:to="PHYS_00001"/>
+        <smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:from="LOG_0000" xlink:to="PHYS_00002"/>
+        <smLink xmlns:xlink="http://www.w3.org/1999/xlink" xlink:from="LOG_0000" xlink:to="PHYS_00003"/>-->
+    </structLink>
+</mets>

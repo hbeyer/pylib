@@ -57,7 +57,7 @@ class METSBuilder:
                                 self.struct.append({ "page" : page, "label" : None })
                                 i += 1
         def build(self):
-                tree = et.parse('vorlage.xml')
+                tree = et.parse('vorlage-mets.xml')
                 root = tree.getroot()
                 titleEl = root.findall('.//{http://www.tei-c.org/ns/1.0}head/{http://www.tei-c.org/ns/1.0}title')
                 try:

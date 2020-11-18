@@ -53,6 +53,34 @@ print(makeName("Hartmut", "Beyer", "Magister artium"))
 """
 
 """
+# Eine anonyme Funktion
+x = lambda e, f: str(e) + " - " + str(f)
+print(x(1758, "Hochkirch"))
+"""
+
+"""
+# Gruppieren einer Datensammlung nach einem darin enthaltenen Kriterium:
+
+import itertools
+from operator import itemgetter
+
+books = [
+	{"author":"Luther, Martin", "title":"Ein Sendbrief von dem harten Büchlein wider die Bauren", "year":"1525"},
+	{"author":"Luther, Martin", "title":"An die Pfarrherrn, wider den Wucher zu predigen", "year":"1540"},
+	{"author":"Luther, Martin", "title":"Vom Ehebruch vnd Weglauffen", "year":"1540"} ,   
+	{"author":"Melanchthon, Philipp", "title":"De Officio Principum", "year":"1540"},
+	{"author":"Melanchthon, Philipp", "title":"Commentaria in Epistolam Pauli ad Col.", "year":"1547"},
+	{"author":"Luther, Martin", "title":"Ettlich Artickelstuck so Mart.Luther erhalten wil wider die gantze Satans schuole", "year":"1530"},    
+	{"author":"Bugenhagen, Johannes", "title":"Wie es uns zu Wittenberg in der Stadt gegangen ist in diesem vergangen Krieg", "year":"1540"}    
+]
+sorted_books = sorted(books, key=itemgetter("year"))
+groups = itertools.groupby(sorted_books, key=lambda x:x["year"])
+
+for group in groups:
+	print(group[0] + ": " + "/".join([row["author"] for row in group[1]]))
+"""
+
+"""
 # Eine Klasse
 class Person:
 	def __init__(self, forename, surname):

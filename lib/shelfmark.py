@@ -10,6 +10,9 @@ class Shelfmark:
 		self.core = ''
 		self.part = ''
 		self.valid = 0
+		self.group = ''
+		self.number = ''
+		self.format = ''
 		extract = re.search(r"(A|H|M|Bibel-S\.|Ältere Einblattdrucke|aeltere einblattdrucke|S: Alv\.|Cod\. Guelf\.):? ([^\(]+)", self.whole)
 		if extract != None:
 			if extract.group(1):
@@ -27,7 +30,65 @@ class Shelfmark:
 		if self.part:
 			ret += ' (' + self.part + ')'
 		return(ret)
-def convertOld(old):
+	def getFormat(self):
+		extract = re.search(r"2°|4°|8°|12°|16°", self.whole)
+		try:
+			self.format = extract.group(0)
+		except:
+			return(None)
+		else:
+			return(self.format)
+	def getGroup(self):
+		if self.collection == "A":
+			extract = re.search(r"Theol|Jur|Hist|Bell|Pol|Oec|Eth|Med|Geogr|Astr|Phys|Geom|Arit|Poet|Log|Rhet|Gram|Quod", self.whole)
+			conc = {"Quod":"Quodl", "Gram":"Gramm", "Arit":"Arith", "Astr":"Astron"}
+			try:
+				self.group = extract.group(0)
+			except:
+				return(None)
+			try:
+				self.group = conc[self.group]
+			except:
+				pass
+			self.group = self.group + "."
+		elif self.collection == "M":
+			extract = re.search(r"[ABCDEFGHJKLMNOPQRSTUVZ][a-z]N?", self.whole)
+			try:
+				self.group = extract.group(0)
+			except:
+				return(None)
+		elif self.collection == "H":
+			extract = re.search(r"\s([A-Z])\s", self.whole)
+			try:
+				self.group = extract.group(1)
+			except:
+				return(None)
+		return(self.group)
+	def getNumber(self):
+		if self.collection == "H":
+			extract = re.search(r"\s([0-9]+[a-z]{0,2})\.?(2°|4°|8°|12°)?\s", self.whole)
+		else:
+			extract = re.search(r"\s([0-9a-z\.-]+)\s", self.whole)
+		try:
+			self.number = extract.group(1)
+		except:
+			return(None)
+		return(self.number)
+class SortableShelfmark(Shelfmark):
+		def __init__(self, whole):
+			super().__init__(whole)
+			self.getFormat()
+			self.getGroup()
+			self.getNumber()
+			pass
+		def __str__(self):
+			ret = "Bestand: " + self.collection + ", Klasse: " + self.group + ", Nummer: " + self.number
+			if self.format:
+				ret = ret + ", Format: " + self.format
+			if self.part:
+				ret = ret + ", Stücktitel: " + self.part
+			return(ret)
+def convertVD16(old):
 	if old[0:1] == "\"":
 		old = old + ")"
 	new = old.strip("\"")

@@ -87,7 +87,7 @@ class Person:
 		self.forename = forename
 		self.surename = surname
 
-person = Person('Ben', 'Gurion')
+person = Person('David', 'Ben-Gurion')
 print(person.forename)
 """
 

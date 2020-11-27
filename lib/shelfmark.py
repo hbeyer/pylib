@@ -6,27 +6,57 @@ import re
 class Shelfmark:
 	def __init__(self, whole):
 		self.whole = whole.strip()
-		self.collection = ''
-		self.core = ''
-		self.part = ''
-		self.valid = 0
-		self.group = ''
-		self.number = ''
-		self.format = ''
-		extract = re.search(r"(A|H|M|Bibel-S\.|Ältere Einblattdrucke|aeltere einblattdrucke|S: Alv\.|Cod\. Guelf\.):? ([^\(]+)", self.whole)
-		if extract != None:
-			if extract.group(1):
-				self.collection = extract.group(1).strip()
-			if extract.group(2):
-				self.core = extract.group(2).strip()
-		extract = re.search(r"\(([0-9]{1,2})\)", self.whole)
-		if extract != None:
-			if extract.group(1):
-				self.part = extract.group(1)
-		if self.collection and self.core:
-			self.valid = 1
+		self.root = ""
+		self.bareRoot = ""
+		self.collection = ""
+		self.part = ""
+		self.group = ""
+		self.number = ""
+		self.format = ""
+		self.volume = ""		
+		self.valid = False		
+		extract = re.search(r"(A:|H:|M:|Bibel-S\.|Ältere Einblattdrucke|aeltere einblattdrucke|Alv\.|Cod\. Guelf\.|Xylogr|Druckfragm|Wa |Xb |Wt |We |Schulenb|Xd )", self.whole)
+		conc = { 
+			"A:":"A", 
+			"H:":"H", 
+			"M:":"M", 
+			"Bibel-S.":"BS", 
+			"aeltere einblattdrucke":"AEB", 
+			"Ältere Einblattdrucke":"AEB", 
+			"Alv.":"Alv", 
+			"Xylogr":"XYL", 
+			"Druckfragm":"FGM", 
+			"Wa ":"NE", 
+			"Xb ":"NE", 
+			"Wt ":"NE", 
+			"We ": "BR", 
+			"Schulenb":"SLB", 
+			"Xd ":"DUB"
+		}
+		try:
+			self.collection = conc[extract.group(1)]
+		except:
+			return(None)
+		extract = re.search(r"(.+)\s\(([0-9]{1,2})\)$", self.whole)
+		try:
+			self.part = extract.group(2)				
+		except:
+			pass
+		try:
+			self.root = extract.group(1)
+		except:
+			self.root = self.whole
+		if self.collection == "AEB":
+			self.root = self.root.replace("aelt", "Ält")
+			self.root = self.root.replace("einbl", "Einbl")
+		if self.collection in ["A", "H", "M"]:
+			self.bareRoot = self.root.replace(self.collection + ": ", "")
+		else:
+			self.bareRoot = self.root
+		if self.collection and self.root:
+			self.valid = True
 	def __str__(self):
-		ret = self.collection + ': ' + self.core
+		ret = self.root
 		if self.part:
 			ret += ' (' + self.part + ')'
 		return(ret)
@@ -41,7 +71,7 @@ class Shelfmark:
 	def getGroup(self):
 		if self.collection == "A":
 			extract = re.search(r"Theol|Jur|Hist|Bell|Pol|Oec|Eth|Med|Geogr|Astr|Phys|Geom|Arit|Poet|Log|Rhet|Gram|Quod", self.whole)
-			conc = {"Quod":"Quodl", "Gram":"Gramm", "Arit":"Arith", "Astr":"Astron"}
+			conc = {"Gram":"Gramm", "Arit":"Arith", "Astr":"Astron"}
 			try:
 				self.group = extract.group(0)
 			except:
@@ -58,7 +88,7 @@ class Shelfmark:
 			except:
 				return(None)
 		elif self.collection == "H":
-			extract = re.search(r"\s([A-Z])\s", self.whole)
+			extract = re.search(r"\s([A-Z]|QuH|Y[a-z])\s", self.whole)
 			try:
 				self.group = extract.group(1)
 			except:
@@ -66,21 +96,60 @@ class Shelfmark:
 		return(self.group)
 	def getNumber(self):
 		if self.collection == "H":
-			extract = re.search(r"\s([0-9]+[a-z]{0,2})\.?(2°|4°|8°|12°)?\s", self.whole)
+			extract = re.search(r"H: ([A-Z]|QuH|Y[a-z])\s([0-9]+[a-z]{0,2}\*?)\.?(2°|4°|8°|12°)?", self.whole)
+			try:
+				self.number = extract.group(2)
+			except:
+				 return(None)
+		elif self.collection == "A":
+			extract = re.search(r"A: ([0-9\.-a-z]+)\s[A-Z][a-z]+\.", self.whole)
+			try:
+				self.number = extract.group(1)
+			except:
+				 return(None)
+		elif self.collection == "M":
+			extract = re.search(r"M: ([A-Z][a-z]|QuN)\s((gr\.-2°|2°|4°|8°|12°)\s)?((Mischbd\.|Sammelbd\.|Kapsel)\s)?([0-9\.]+)", self.whole)
+			try:
+				self.number = extract.group(6)
+			except:
+				return(None)
+		elif self.collection == "XYL":
+			extract = re.search(r"([0-9]+)\sXyl", self.whole)
+			try:
+				self.number = extract.group(1)
+			except:
+				return(None)
+		elif self.collection == "AEB":
+			extract = re.search(r"drucke\s([0-9]+)", self.whole)
+			try:
+				self.number = extract.group(1)
+			except:
+				return(None)
 		else:
-			extract = re.search(r"\s([0-9a-z\.-]+)\s", self.whole)
-		try:
-			self.number = extract.group(1)
-		except:
-			return(None)
+			extract = re.search(r"\s([0-9\.]+[a-z]?)[^°]", self.whole)
+			try:
+				self.number = extract.group(1)
+			except:
+				extract = re.search(r"\s([0-9\.]+[a-z]?)$", self.whole)
+				try:
+					self.number = extract.group(1)
+				except:
+					return(None)
 		return(self.number)
-class SortableShelfmark(Shelfmark):
+	def getVolumeNo(self):
+		extract = re.search(r":([0-9\.-]{1,4})", self.whole)
+		try:
+			self.volume = extract.group(1)
+		except:
+			pass
+class StructuredShelfmark(Shelfmark):
 		def __init__(self, whole):
-			super().__init__(whole)
+			super().__init__(whole)			
 			self.getFormat()
 			self.getGroup()
 			self.getNumber()
-			pass
+			self.getVolumeNo()
+			self.sortable = self.makeSortable()
 		def __str__(self):
 			ret = "Bestand: " + self.collection + ", Klasse: " + self.group + ", Nummer: " + self.number
 			if self.format:
@@ -88,6 +157,63 @@ class SortableShelfmark(Shelfmark):
 			if self.part:
 				ret = ret + ", Stücktitel: " + self.part
 			return(ret)
+		def sortableNum(self, num):
+			parts = num.split(".")
+			parts = self.separateLetters(parts)
+			parts = [p.zfill(4) for p in parts]
+			return(".".join(parts))
+		def separateLetters(self, parts):
+			ret = []
+			for p in parts:
+				extract = re.search(r"([0-9]+)([a-z]+)", p)
+				try:
+					sp = [extract.group(1), extract.group(2)]
+				except:
+					sp = [p]
+				ret.extend(sp)
+			return(ret)
+		def translateGroup(self):
+			if self.collection != "A":
+				return(self.group)
+			conc = {
+				"Theol.":"01Theol",
+				"Jur.":"02Jur",
+				"Hist.":"03Hist",
+				"Bell.":"04Bell",
+				"Pol.":"05Pol",
+				"Oec.":"06Oec",
+				"Eth.":"07Eth",
+				"Med.":"08Med",
+				"Geogr.":"09Geog",
+				"Astron.":"10Astr",
+				"Phys.":"11Phys",
+				"Geom.":"12Geom",
+				"Arith.":"13Arit",
+				"Poet.":"14Poet",
+				"Log.":"15Log",
+				"Rhet.":"16Rhet",
+				"Gramm.":"17Gram",
+				"Quod.":"18Quod"
+			}
+			if self.group in conc:
+				return(conc[self.group]) 
+			else:
+				print("Fehler bei " + self.whole + "!")
+				return(self.group)
+		def makeSortable(self):
+			sortColl = self.collection.ljust(3, "0")
+			sortFormat = "00"
+			if self.format != "" and self.collection != "A":
+				sortFormat = self.format.replace("°", "").zfill(2)
+			sortGroup = "000000"
+			if self.group:
+				sortGroup = self.translateGroup()
+				sortGroup = sortGroup.strip(".").ljust(6, "0")
+			res = [sortColl, sortGroup, sortFormat, self.sortableNum(self.number), self.sortableNum(self.volume)]
+			if self.part:
+				res.append(self.part.zfill(4))
+			return(".".join(res))
+
 def convertVD16(old):
 	if old[0:1] == "\"":
 		old = old + ")"
@@ -161,4 +287,4 @@ def insertPoint(sm):
 def searchable(sm):
 	sm = sm.replace("(", "\(")
 	sm = sm.replace(")", "\)")
-	return(sm)		
+	return(sm)

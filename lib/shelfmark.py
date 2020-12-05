@@ -37,7 +37,7 @@ class Shelfmark:
 			self.collection = conc[extract.group(1)]
 		except:
 			return(None)
-		extract = re.search(r"(.+)\s\(([0-9]{1,2})\)$", self.whole)
+		extract = re.search(r"(.+)\s\(([0-9a-d]{1,2})\)$", self.whole)
 		try:
 			self.part = extract.group(2)				
 		except:
@@ -200,7 +200,7 @@ class StructuredShelfmark(Shelfmark):
 			else:
 				print("Fehler bei " + self.whole + "!")
 				return(self.group)
-		def makeSortable(self):
+		def makeSortableRoot(self):
 			sortColl = self.collection.ljust(3, "0")
 			sortFormat = "00"
 			if self.format != "" and self.collection != "A":
@@ -210,9 +210,57 @@ class StructuredShelfmark(Shelfmark):
 				sortGroup = self.translateGroup()
 				sortGroup = sortGroup.strip(".").ljust(6, "0")
 			res = [sortColl, sortGroup, sortFormat, self.sortableNum(self.number), self.sortableNum(self.volume)]
-			if self.part:
-				res.append(self.part.zfill(4))
 			return(".".join(res))
+		def makeSortable(self):
+			sr = self.makeSortableRoot()
+			if self.part:
+				sr += self.part.zfill(4)
+			return(sr)
+class ShelfmarkList():
+	def __init__(self, content = []):
+		self.content = []
+		self.volumeDict = {}
+		for sm in content:
+			self.addSM(sm)
+		self.volumeList = []
+	def addSM(self, sm):
+		if isinstance(sm, StructuredShelfmark):
+			self.content.append(sm)
+	def makeVolumes(self):
+		for shm in self.content:
+			if shm.part:
+				try:
+					self.volumeDict[shm.bareRoot].parts.append(shm.part)
+				except:
+					self.volumeDict[shm.bareRoot] = Volume(shm.bareRoot, shm.makeSortableRoot(), [shm.part])
+			else:
+				self.volumeDict[shm.bareRoot] = Volume(shm.bareRoot, shm.makeSortableRoot())
+		self.makeVolumeList()
+	def makeVolumeList(self):
+		self.volumeList = [self.volumeDict[vol] for vol in self.volumeDict]
+		self.volumeList = sorted(self.volumeList, key=lambda v:v.sortable)
+	def getByRoot(self, root):
+		try:
+			return(self.volumeDict[root])
+		except:
+			return(None)
+class Volume():
+	def __init__(self, bareRoot, sortable, parts = []):
+		self.root = bareRoot
+		self.sortable = sortable
+		self.parts = []
+		self.partStr = ""
+		for part in parts:
+			self.parts.append(part)
+	def makePartStr(self):
+		self.parts = sorted(self.parts, key=lambda p:p.zfill(3))
+		self.partStr = ", ".join(self.parts)
+	def __str__(self):
+		self.makePartStr()
+		ret = self.root
+		if self.partStr:
+			ret += " (" + self.partStr + ")"
+		return(ret)
 
 def convertVD16(old):
 	if old[0:1] == "\"":
@@ -287,4 +335,4 @@ def insertPoint(sm):
 def searchable(sm):
 	sm = sm.replace("(", "\(")
 	sm = sm.replace(")", "\)")
-	return(sm)
+	return(sm)		

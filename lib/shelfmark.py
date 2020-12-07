@@ -96,11 +96,15 @@ class Shelfmark:
 		return(self.group)
 	def getNumber(self):
 		if self.collection == "H":
-			extract = re.search(r"H: ([A-Z]|QuH|Y[a-z])\s([0-9]+[a-z]{0,2}\*?)\.?(2°|4°|8°|12°)?", self.whole)
+			extract = re.search(r"H: ([A-Z]|Y[a-z])\s([0-9]+[a-z]{0,2}\*?)\.?(2°|4°|8°|12°)?", self.whole)
 			try:
 				self.number = extract.group(2)
 			except:
-				 return(None)
+				extract = re.search(r"H:\sQuH\s([0-9]+\.?([0-9]+)?)", self.whole)
+				try:
+					self.number = extract.group(1)
+				except:
+					return(None)
 		elif self.collection == "A":
 			extract = re.search(r"A: ([0-9\.-a-z]+)\s[A-Z][a-z]+\.", self.whole)
 			try:
@@ -223,6 +227,16 @@ class ShelfmarkList():
 		for sm in content:
 			self.addSM(sm)
 		self.volumeList = []
+	def __iter__(self):
+		self.a = 0
+		return(self)
+	def __next__(self):
+		if self.a < len(self.volumeList):
+			ret = self.volumeList[self.a]
+			self.a += 1
+			return(ret)
+		else:
+			raise StopIteration		
 	def addSM(self, sm):
 		if isinstance(sm, StructuredShelfmark):
 			self.content.append(sm)

@@ -165,6 +165,9 @@ class StructuredShelfmark(Shelfmark):
 			parts = num.split(".")
 			parts = self.separateLetters(parts)
 			parts = [p.zfill(4) for p in parts]
+			diff = 4 - len(parts)
+			for num in range(0, diff):
+				parts.append("0000")
 			return(".".join(parts))
 		def separateLetters(self, parts):
 			ret = []
@@ -180,7 +183,7 @@ class StructuredShelfmark(Shelfmark):
 			if self.collection != "A":
 				return(self.group)
 			conc = {
-				"Theol.":"01Theol",
+				"Theol.":"01Theo",
 				"Jur.":"02Jur",
 				"Hist.":"03Hist",
 				"Bell.":"04Bell",
@@ -207,8 +210,8 @@ class StructuredShelfmark(Shelfmark):
 		def makeSortableRoot(self):
 			sortColl = self.collection.ljust(3, "0")
 			sortFormat = "00"
-			if self.format != "" and self.collection != "A":
-				sortFormat = self.format.replace("°", "").zfill(2)
+			#if self.format != "" and self.collection != "A":
+			sortFormat = self.format.replace("°", "").zfill(2)
 			sortGroup = "000000"
 			if self.group:
 				sortGroup = self.translateGroup()

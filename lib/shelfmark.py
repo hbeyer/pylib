@@ -11,6 +11,7 @@ class Shelfmark:
 		self.collection = ""
 		self.part = ""
 		self.group = ""
+		self.form = ""
 		self.number = ""
 		self.format = ""
 		self.volume = ""		
@@ -23,7 +24,7 @@ class Shelfmark:
 			"Bibel-S.":"BS", 
 			"aeltere einblattdrucke":"AEB", 
 			"Ältere Einblattdrucke":"AEB", 
-			"Alv.":"Alv", 
+			"Alv.":"ALV", 
 			"Xylogr":"XYL", 
 			"Druckfragm":"FGM", 
 			"Wa ":"NE", 
@@ -94,6 +95,14 @@ class Shelfmark:
 			except:
 				return(None)
 		return(self.group)
+	def getForm(self):
+		extract = re.search(r"Sammelb|Mischb|Kapsel", self.whole)
+		conc = { "Sammelb":"Sammelbd.", "Mischb":"Mischbd.", "Kapsel":"Kapsel" }
+		try:
+			self.form = conc[extract.group(0)]
+		except:
+			pass
+		return(self.form)
 	def getNumber(self):
 		if self.collection == "H":
 			extract = re.search(r"H: ([A-Z]|Y[a-z])\s([0-9]+[a-z]{0,2}\*?)\.?(2°|4°|8°|12°)?", self.whole)
@@ -151,6 +160,7 @@ class StructuredShelfmark(Shelfmark):
 			super().__init__(whole)			
 			self.getFormat()
 			self.getGroup()
+			self.getForm()
 			self.getNumber()
 			self.getVolumeNo()
 			self.sortable = self.makeSortable()
@@ -209,19 +219,35 @@ class StructuredShelfmark(Shelfmark):
 				return(self.group)
 		def makeSortableRoot(self):
 			sortColl = self.collection.ljust(3, "0")
-			sortFormat = "00"
-			#if self.format != "" and self.collection != "A":
-			sortFormat = self.format.replace("°", "").zfill(2)
+			sortFormat = "99"
+			if self.format != "":
+				sortFormat = self.format.replace("°", "").zfill(2)
 			sortGroup = "000000"
 			if self.group:
 				sortGroup = self.translateGroup()
 				sortGroup = sortGroup.strip(".").ljust(6, "0")
-			res = [sortColl, sortGroup, sortFormat, self.sortableNum(self.number), self.sortableNum(self.volume)]
+			sortForm = "0"
+			if self.form != "":
+				sortForm = self.form[0]
+			res = [sortColl, sortGroup, sortFormat, sortForm, self.sortableNum(self.number), self.sortableNum(self.volume)]
 			return(".".join(res))
+		def makeSortablePart(self, part):
+			num = "0000"
+			let = "00"
+			extract = re.search(r"([0-9]+)([a-z]+)?", part)
+			try:
+				num = extract.group(1)[0:3]
+			except:
+				pass
+			try:
+				let = extract.group(2)[0:1]
+			except:
+				pass
+			return(num.zfill(4) + let.zfill(2))
 		def makeSortable(self):
 			sr = self.makeSortableRoot()
 			if self.part:
-				sr += self.part.zfill(4)
+				sr += self.makeSortablePart(self.part)
 			return(sr)
 class ShelfmarkList():
 	def __init__(self, content = []):
@@ -267,16 +293,44 @@ class Volume():
 		self.sortable = sortable
 		self.parts = []
 		self.partStr = ""
+		self.compStr = ""
 		for part in parts:
 			self.parts.append(part)
 	def makePartStr(self):
-		self.parts = sorted(self.parts, key=lambda p:p.zfill(3))
+		self.parts = sorted(self.parts, key=lambda p:StructuredShelfmark.makeSortablePart(None, p))
 		self.partStr = ", ".join(self.parts)
+	def makeCompStr(self):
+		self.parts = sorted(self.parts, key=lambda p:StructuredShelfmark.makeSortablePart(None, p))
+		if len(self.parts) < 3:
+			self.compStr = ", ".join(self.parts)
+			return(False)
+		for part in self.parts:
+			try:
+				partInt = int(part)
+			except:
+				self.compStr = ", ".join(self.parts)
+				return(False)
+		length = len(self.parts)
+		compParts = [self.parts[0]]
+		i = 1
+		while i < length - 1:
+			if int(self.parts[i + 1]) == int(self.parts[i]) + 1 and int(self.parts[i - 1]) == int(self.parts[i]) - 1:
+				if compParts[len(compParts) - 1] != "-":
+					compParts.append("-")
+			else:
+				compParts.append(self.parts[i])
+			i += 1
+		compParts.append(self.parts[length - 1])
+		compStr = ", ".join(compParts)
+		compStr = compStr.replace(", -, ", "-")
+		self.compStr = compStr
+		return(True)
 	def __str__(self):
-		self.makePartStr()
 		ret = self.root
-		if self.partStr:
-			ret += " (" + self.partStr + ")"
+		if self.parts:
+			self.makePartStr()
+			self.makeCompStr()
+			ret += " (" + self.compStr + ")"
 		return(ret)
 
 def convertVD16(old):

@@ -383,13 +383,13 @@ class Artwork:
 		for pub in self.publishers:
 			if pub.getYear() != None:
 				return(pub.getYear())
-		for artist in self.artists:
-			if artist.getYear() != None:
-				return(artist.getYear())
-		for pers in self.personsRepr:
-			if pers.getYear() != None:
-				if int(pers.getYear()) > 1500:
-					return(pers.getYear())
+#		for artist in self.artists:
+#			if artist.getYear() != None:
+#				return(artist.getYear())
+#		for pers in self.personsRepr:
+#			if pers.getYear() != None:
+#				if int(pers.getYear()) > 1500:
+#					return(pers.getYear())
 		return(None)
 	def extractTechnique(self):
 		tech = self.technique
@@ -430,10 +430,8 @@ class Artwork:
 	def getLikeA(self):
 		descr = self.descriptionClean
 		match = re.search(r" A ([0-9]+)", descr)
-		#match = re.search(r"[wW]ie (in |das folgende )?A ([0-9]+)", descr)
 		try:
 			return(match.group(1))
-			#return(match.group(2))
 		except:
 			return(None)
 
@@ -507,10 +505,9 @@ class Publisher(Person):
 		self.placeTime = ""
 	def getYear(self):
 		if self.time != "":
-			year = extractClosingYear(self.time)
-			return(year)
+			return(self.time[-4:])
 		if self.placeTime != "":
-			year = extractClosingYear(self.placeTime)
+			year = extractYearPlaceTime(self.placeTime)
 			return(year)
 		return(None)
 
@@ -619,12 +616,42 @@ def extractYear(string):
 	except:
 		return(None)
 
-def extractClosingYear(string):
-	match = re.search(r"[\s\.]([0-9]{3,4}\Z)", string)
+def extractYearPlaceTime(string):
+	extract = re.search(r"/(1\d{3})$", string)
 	try:
-		return(match.group(1))
+		return(extract.group(1))
+	except:
+		pass	
+	extract = re.search(r"[–-](1\d{3})", string)
+	try:
+		return(extract.group(1))
+	except:
+		pass
+	extract = re.search(r"[a-z]\s(1\d{3})", string)
+	try:
+		return(extract.group(1))
+	except:
+		pass
+	extract = re.search(r"([12]\d)\. Jh", string)
+	try:
+		jh = extract.group(1)
 	except:
 		return(None)
+	conc = { "15":1450, "16":1550, "17":1650, "18":1750, "19":1850, "20":1950 }
+	try:
+		jh = conc[jh]
+	except:
+		return(None)
+	extract = re.search(r"([12])\. Hälfte", string)
+	try:
+		hf = extract.group(1)
+	except:
+		return(str(jh))
+	if hf == "1":
+		return(str(jh - 25))
+	if hf == "2":
+		return(str(jh + 25))	
+	return(None)
 
 def extractYearFromSpan(string)		:
 	match = re.search(r"([0-9]{3,4})[^0-9]+([0-9]{3,4})", string)

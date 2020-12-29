@@ -404,15 +404,16 @@ class Artwork:
 		return(None)
 	def extractTechnique(self):
 		tech = self.technique
-		match = re.findall(r"Kupferstich|Radierung|Schabkunst|Lithographie|Farblithographie|Holzschnitt|Stahlstich|Holzstich|Roulettestich|Umrißkupfer|Umrisskupfer|Punktierstich|Punzstich|Aquatinta|Silhouettenstich|Umrissradierung|Silhouettendruck|Silhouettenzeichnung|Photogr|Farbtuschzeichnung|Tuschzeichnung|Kreidezeichnung|Farbzeichnung|Farbezeichnung|Federzeichnung|Zeichnung|Crayonmanier|Scherenschnitt|in Braun|koloriert", tech)
+		match = re.findall(r"Kupferstich|Radierung|Schabkunst|Lithographie|Farblithographie|Holzschnitt|Stahlstich|Holzstich|Roulettestich|Umrißkupfer|Umrisskupfer|Punktierstich|Punzstich|Aquatinta|Silhouettenstich|Umrissradierung|Silhouettendruck|Silhouettenzeichnung|Photogr|Farbtuschzeichnung|Tuschzeichnung|Kreidezeichnung|Farbzeichnung|Farbezeichnung|Federzeichnung|Zeichnung|Crayonmanier|Scherenschnitt|in Braun[ d]|koloriert", tech)
 		ret = []
-		conc = {"Farbezeichnung":"Farbzeichnung", "Photogr":"Fotografie", "Umrißkupfer":"Umrisskupfer"}
+		conc = {"Farbezeichnung":"Farbzeichnung", "Photogr":"Fotografie", "Umrißkupfer":"Umrisskupfer", "in Braun ":"Braundruck", "in Braund":"Braundruck"}
 		for el in match:
 			try:
 				ret.append(conc[el])
 			except:
 				ret.append(el)
 		ret.sort()
+		ret = set(ret)
 		try:
 			return("/".join(ret))
 		except:
@@ -515,12 +516,13 @@ class Publisher(Person):
 		self.time = ""
 		self.placeTime = ""
 	def getYear(self):
-		if self.time != "":
-			return(self.time[-4:])
-		if self.placeTime != "":
-			year = extractYearPlaceTime(self.placeTime)
+		if re.fullmatch(r"1[456789]\d{2}", self.time) != None:
+			return(self.time)
+		year = extractYearPrecisely(self.time)
+		if year != None:
 			return(year)
-		return(None)
+		year = extractYearPlaceTime(self.placeTime)
+		return(year)
 
 class Attribute:
 	concordance = {'1' : 'Sache', '2' : 'Bibelstelle', '3' : 'Zitat', '4' : 'Emblem', '5' : 'Motiv', '6' : 'Person', '7' : 'Devise', '8' : 'Ort', '9' : 'Ereignis', '10' : 'Person', 'B' : 'Beruf', 'O' : 'Ort', 'P' : 'Person'}
@@ -628,7 +630,7 @@ def extractYear(string):
 		return(None)
 
 def extractYearPrecisely(string):
-	match = re.search(r"[\s–/-](1[0-9]{3})", string)
+	match = re.search(r"[\s–/-](1[456789][0-9]{2})", string)
 	try:
 		return(match.group(1))
 	except:

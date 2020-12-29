@@ -206,14 +206,25 @@ class SerializerSel(SerializerCSV):
 	def __init__(self, collection):
 		super().__init__(collection)
 		controllCollection = ArtCollection(self.collection.db)
-		copyFields = ['technique', 'yearNormalized', 'portraitType', 'orientation']
 		for item in self.collection:
 			item.keywords_technique = item.extractTechnique()
+			item.sourceYear = None
 			item.yearNormalized = item.getNormalizedYear()
+			if item.yearNormalized != None:
+				item.sourceYear = "publisher"
+			else:
+				item.yearNormalized = extractYearPrecisely(item.technique)
+				if item.yearNormalized != None:
+					item.sourceYear = "technique"
+				else:
+					item.yearNormalized = extractYearPrecisely(item.source)
+					if item.yearNormalized != None:
+						item.sourceYear = "source"
 			item.portraitType = item.getPortraitType()
 			item.orientation = item.getOrientation()
 			item.likeA = item.getLikeA()
 			if item.likeA != None:
+				controllCollection.content = []
 				controllCollection.loadByANumber(item.likeA)
 				try:
 					model = controllCollection.content[0]
@@ -224,17 +235,24 @@ class SerializerSel(SerializerCSV):
 						item.keywords_technique = model.extractTechnique()
 					if item.yearNormalized == "" or item.yearNormalized == None:
 						item.yearNormalized = model.getNormalizedYear()
+						if item.yearNormalized != None:
+							item.sourceYear = "publisherA"
+						else:
+							item.yearNormalized = extractYearPrecisely(model.technique)
+							if item.yearNormalized != None:
+								item.sourceYear = "techniqueA"
+							else:
+								item.yearNormalized = extractYearPrecisely(model.source)
+								if item.yearNormalized != None:
+									item.sourceYear = "sourceA"
 					if item.portraitType == "" or item.portraitType == None:
 						item.portraitType = model.getPortraitType()
 					if item.orientation == "" or item.orientation == None:
-						item.orientation = model.getOrientation()
-		self.artworkFields = ['id', 'anumber', 'keywords_technique', 'yearNormalized', 'portraitType', 'orientation', 'likeA', 'descriptionClean', 'technique']
+						item.orientation = model.getOrientation()					
+		self.artworkFields = ['id', 'anumber', 'keywords_technique', 'yearNormalized', 'sourceYear', 'portraitType', 'orientation', 'likeA', 'descriptionClean', 'technique', 'source']
 		self.numberPersons = 0
-		self.personFields = ['name', 'yearStart', 'yearEnd', 'dateBirth', 'placeBirth', 'dateDeath', 'placeDeath']
 		self.numberArtists = 0
-		self.artistFields = ['name', 'role', 'lifetime', 'description']
 		self.numberPublishers = 0
-		self.publisherFields = ['name', 'place', 'time', 'placetime']
 		self.artworkAttributes = False
 
 class Artwork:	
@@ -383,13 +401,6 @@ class Artwork:
 		for pub in self.publishers:
 			if pub.getYear() != None:
 				return(pub.getYear())
-#		for artist in self.artists:
-#			if artist.getYear() != None:
-#				return(artist.getYear())
-#		for pers in self.personsRepr:
-#			if pers.getYear() != None:
-#				if int(pers.getYear()) > 1500:
-#					return(pers.getYear())
 		return(None)
 	def extractTechnique(self):
 		tech = self.technique
@@ -616,6 +627,13 @@ def extractYear(string):
 	except:
 		return(None)
 
+def extractYearPrecisely(string):
+	match = re.search(r"[\s–/-](1[0-9]{3})", string)
+	try:
+		return(match.group(1))
+	except:
+		return(None)
+
 def extractYearPlaceTime(string):
 	extract = re.search(r"/(1\d{3})$", string)
 	try:
@@ -646,11 +664,11 @@ def extractYearPlaceTime(string):
 	try:
 		hf = extract.group(1)
 	except:
-		return(str(jh))
+		return("ca " + str(jh))
 	if hf == "1":
-		return(str(jh - 25))
+		return("ca " + str(jh - 25))
 	if hf == "2":
-		return(str(jh + 25))	
+		return("ca " + str(jh + 25))	
 	return(None)
 
 def extractYearFromSpan(string)		:

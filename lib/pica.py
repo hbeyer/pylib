@@ -85,7 +85,7 @@ class Record:
 			self.date = ""
 		self.shelfmarks = self.getValues("209A", "a")
 	def __str__(self):
-		ret = "record: PPN " + self.ppn + ", VDN: " + "|".join(self.vdn) + ", BSB-ID: " + "|".join(self.vd16m) + ", Jahr: " + self.date
+		ret = "record: PPN " + self.ppn + ", VDN: " + "|".join(self.vdn) + ", Jahr: " + self.date
 		return(ret)
 	def getValues(self, field, subfield):
 		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='" + subfield + "']")

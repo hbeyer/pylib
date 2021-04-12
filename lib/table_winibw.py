@@ -39,6 +39,20 @@ class Table():
 			sig = sm.StructuredShelfmark(row[field])
 			row["Sortierform"] = sig.sortable
 		return(True)
+	def addParallels(self, fieldMan = "PPN", fieldEx = "Signatur"):
+		if fieldMan not in self.fields:
+			print("Keine Spalte " + fieldMan + " gefunden.")
+			return(False)
+		if fieldEx not in self.fields:
+			print("Keine Spalte " + fieldEx + " gefunden.")
+			return(False)
+		for row in self.content:
+			parallels = []
+			for rowSub in self.content:
+				if row[fieldMan] == rowSub[fieldMan] and row[fieldEx] != rowSub[fieldEx]:
+					parallels.append(rowSub[fieldEx])
+			row["Parallelexemplare"] = ";".join(parallels)
+		self.fields.append("Parallelexemplare")
 	def save(self, fileName = "myTable"):
 		body = [[row[key] for key in row] for row in self.content]
 		table = csvt.Table(self.fields, body)

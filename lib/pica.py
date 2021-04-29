@@ -64,6 +64,7 @@ class webReader(Reader):
 class Record:
 	def __init__(self, node):
 		self.node = node
+		self.copies = []
 		try:
 			self.ppn = self.getValues("003@", "0").pop(0)
 		except:
@@ -87,8 +88,50 @@ class Record:
 	def __str__(self):
 		ret = "record: PPN " + self.ppn + ", VDN: " + "|".join(self.vdn) + ", Jahr: " + self.date
 		return(ret)
+	def getCopies(self):
+		goon = True
+		occ = 1
+		while goon == True:
+			occstr = str(occ).zfill(2)
+			sigg = self.getRepValues("209A", "a", occstr)
+			epn = self.getRepValues("203@", "0", occstr)
+			provv = self.getProvenances(occstr)
+			try:
+				copy = Copy(sigg.pop(0), provv, epn.pop(0))
+			except:
+				goon = False
+			else:
+				self.copies.append(copy)
+				occ += 1
 	def getValues(self, field, subfield):
 		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='" + subfield + "']")
 		if fields:
-			return([field.text for field in fields])
+			return([field.text.strip() for field in fields])
 		return([])
+	def getRepValues(self, field, subfield, occurrence):
+		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "'][@occurrence='" + occurrence + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='" + subfield + "']")
+		if fields:
+			return([field.text.strip() for field in fields])
+		return([])
+	def getProvenances(self, occurrence):
+		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='244Z'][@occurrence='" + occurrence + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='9']/../{info:srw/schema/5/picaXML-v1.0}subfield[@code='a']")
+		if fields:
+			return([field.text.strip() for field in fields])
+		return([])
+
+class Copy:
+	def __init__(self, sm, provenances = [], epn = None):
+		self.sm = sm
+		self.provenances = provenances
+		self.epn = epn
+	def __str__(self):
+		ret = "Signatur: " + self.sm
+		try:
+			ret += ", Provenienz: " + ";".join(self.provenances)
+		except:
+			pass
+		try:
+			ret += ", EPN: " + self.epn
+		except:
+			pass
+		return(ret)

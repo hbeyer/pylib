@@ -19,6 +19,16 @@ class Table():
 		self.content = [row for row in reader]
 		fieldDict = self.content.pop(0)
 		self.fields = [tup for tup in fieldDict if tup != ""]
+	def __iter__(self):
+		self.a = 0
+		return(self)
+	def __next__(self):
+		if self.a < len(self.content):
+			ret = self.content[self.a]
+			self.a += 1
+			return(ret)
+		else:
+			raise StopIteration			
 	def getByField(self, field):
 		ret = [row[field] for row in self.content]
 		return(ret)

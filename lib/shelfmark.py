@@ -38,22 +38,31 @@ class Shelfmark:
 			self.collection = conc[extract.group(1)]
 		except:
 			return(None)
-		extract = re.search(r"(.+)\s\(([0-9a-d]{1,2})\)$", self.whole)
-		try:
-			self.part = extract.group(2)				
-		except:
-			pass
-		try:
-			self.root = extract.group(1)
-		except:
-			self.root = self.whole
-		if self.collection == "AEB":
-			self.root = self.root.replace("aelt", "Ält")
-			self.root = self.root.replace("einbl", "Einbl")
-		if self.collection in ["A", "H", "M"]:
-			self.bareRoot = self.root.replace(self.collection + ": ", "")
+		if "Slg. Hardt" in self.whole:
+			self.root = "M: Li 5530"
+			self.bareRoot = "Li 5530"
+			extract = re.search(r"\(\d+,\s?(\d+[a-z]?)((, \(?(\d+)\d?))?\)$", self.whole)
+			try:
+				self.part = extract.group(1)
+			except:
+				print("Problem bei " + self.whole)
 		else:
-			self.bareRoot = self.root
+			extract = re.search(r"(.+)\s\(([0-9a-d]{1,2})\)$", self.whole)
+			try:
+				self.part = extract.group(2)				
+			except:
+				pass
+			try:
+				self.root = extract.group(1)
+			except:
+				self.root = self.whole
+			if self.collection == "AEB":
+				self.root = self.root.replace("aelt", "Ält")
+				self.root = self.root.replace("einbl", "Einbl")
+			if self.collection in ["A", "H", "M"]:
+				self.bareRoot = self.root.replace(self.collection + ": ", "")
+			else:
+				self.bareRoot = self.root
 		if self.collection and self.root:
 			self.valid = True
 	def __str__(self):
@@ -96,8 +105,8 @@ class Shelfmark:
 				return(None)
 		return(self.group)
 	def getForm(self):
-		extract = re.search(r"Sammelb|Mischb|Kapsel", self.whole)
-		conc = { "Sammelb":"Sammelbd.", "Mischb":"Mischbd.", "Kapsel":"Kapsel" }
+		extract = re.search(r"Sammelb|Mischb|Kapsel|Sammelma", self.whole)
+		conc = { "Sammelb":"Sammelbd.", "Mischb":"Mischbd.", "Kapsel":"Kapsel", "Sammelma":"Sammelmappe" }
 		try:
 			self.form = conc[extract.group(0)]
 		except:
@@ -277,7 +286,10 @@ class ShelfmarkList():
 				except:
 					self.volumeDict[shm.bareRoot] = Volume(shm.bareRoot, shm.makeSortableRoot(), [shm.part])
 			else:
-				self.volumeDict[shm.bareRoot] = Volume(shm.bareRoot, shm.makeSortableRoot())
+				if shm.bareRoot in self.volumeDict.keys():
+					self.volumeDict[shm.bareRoot].parts.append("x")
+				else:
+					self.volumeDict[shm.bareRoot] = Volume(shm.bareRoot, shm.makeSortableRoot())
 		self.makeVolumeList()
 	def makeVolumeList(self):
 		self.volumeList = [self.volumeDict[vol] for vol in self.volumeDict]

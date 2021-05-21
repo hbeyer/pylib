@@ -13,3 +13,12 @@ class Table:
 			writer.writerow(self.fields)
 			for row in self.content:
 				writer.writerow(row)
+	def load(self, path):
+		try:
+			file = open(path + ".csv", "r")
+		except:
+			print("Keine Datei unter " + path)
+			return(None)
+		reader = csv.reader(file, delimiter=";")
+		self.content = [row for row in reader]
+		self.fields = self.content.pop(0)

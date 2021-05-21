@@ -2,26 +2,22 @@
 # -*- coding: utf-8 -*-
 
 
-from lib import table_winibw as tw
+#from lib import table_winibw as tw
 from lib import csvt
-from lib import shelfmark as sm
+from lib import geo
+#from lib import shelfmark as sm
 
 """
-test = "M: Li 5530 Slg. Hardt (57, 1147)"
-sig = sm.StructuredShelfmark(test)
-print(sig)
+table = csvt.Table(["placeName", "getty", "gnd", "long", "lat"], [["Frankfurt am Main", "7005293", "4018118-2", "", ""], ["Frankfurt (Oder)", "7005972", "4018122-4", "", ""], ["Dresden", "7004455", "4012995-0", "", ""], ["München", "7134068", "4127793-4", "", ""]])
+table.save("placeData")
 """
 
-table = tw.Table("source/Luther_Mittlere.csv")
-table.filter(lambda row: row if row["Signatur"][0:2] == "M:" else None)
-table.filter(lambda row: row if row["Jahr"][0:2] == "17" else None)
-sigg = table.getByField("Signatur")
-smList = sm.ShelfmarkList([sm.StructuredShelfmark(sig) for sig in sigg])
-smList.makeVolumes()
-for vol in smList:
-	print(vol)
 """
-table.addSortable()
-table.addParallels()
-table.save("Luther_Mittlere-bearb")
+table.load("placeData")
+print(table.fields)
 """
+
+geo = geo.GeoDB("placeData.csv")
+geo.addPlace("Berlin", "7209905", "4005728-8")
+print(geo.table.content)
+geo.save()

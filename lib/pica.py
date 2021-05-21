@@ -3,8 +3,8 @@
 
 import glob
 import urllib.request as ul
-import os
 import xml.etree.ElementTree as et
+import re
 
 class Reader:
 	def __init__(self, path):
@@ -66,50 +66,74 @@ class Record:
 		self.node = node
 		self.persons = []
 		self.copies = []
+		self.places = []
+		self.publishers = []
 		try:
 			self.ppn = self.getValues("003@", "0").pop(0)
 		except:
 			self.ppn = ""
-		try:			
+		try:
 			self.bbg = self.getValues("002@", "0").pop(0)
 		except:
 			self.bbg = ""
 		self.vd17 = self.getValues("006W", "0")
 		try:
+			self.catRule = self.getValues("010E", "e").pop(0)
+		except:
+			self.catRule = "rak"
+		try:
 			self.title = self.getValues("021A", "a").pop(0)
 		except:
 			self.title = ""
 		try:
+			self.title = self.title + ". " + self.getValues("021A", "d").pop(0)
+		except:
+			pass
+		try:
+			self.resp = self.getValues("021A", "h").pop(0)
+		except:
+			self.resp = ""
+		try:
+			self.lang = self.getValues("010@", "a")
+		except:
+			pass
+		try:
+			self.langOrig = self.getValues("010@", "c")
+		except:
+			pass			
+		try:
+			self.gatt = self.getValues("044S", "a")
+		except:
+			self.gatt = []
+		try:
 			self.pages = self.getValues("034D", "a").pop(0)
 		except:
 			self.pages = ""
+		self.normPages = 0
+		if self.pages != "":
+			self.getNormP()
+		try:
+			self.format = self.getValues("034I", "a").pop(0)
+		except:
+			self.format = ""
 		self.altTitles = self.getValues("027a", "a")
 		self.vd16m = self.getValues("006L", "0")
 		try:
 			self.date = self.getValues("011@", "a").pop(0)
 		except:
 			self.date = ""
+		try:
+			self.digi = self.getValues("017D", "u")
+		except:
+			pass
 		self.shelfmarks = self.getValues("209A", "a")
 		self.loadPersons()
 		self.loadCopies()
+		self.loadPlaces()
+		self.loadPublishers()
 	def __str__(self):
 		ret = "record: PPN " + self.ppn + ", VD17: " + "|".join(self.vd17) + ", Jahr: " + self.date
 		return(ret)
-	def getCopies(self):
-		goon = True
-		occ = 1
-		while goon == True:
-			occstr = str(occ).zfill(2)
-			sigg = self.getRepValues("209A", "a", occstr)
-			epn = self.getRepValues("203@", "0", occstr)
-			provv = self.getProvenances(occstr)
-			try:
-				copy = Copy(sigg.pop(0), provv, epn.pop(0))
-			except:
-				goon = False
-			else:
-				self.copies.append(copy)
-				occ += 1
 	def loadPersons(self):
 		subfields = ["7", "A", "D", "P", "L", "a", "d", "p", "l"]
 		creatorData = self.getNestedValues("028A", subfields)
@@ -154,7 +178,47 @@ class Record:
 			cop.isil = isil
 			self.copies.append(cop)
 			count += 1
-		#Über alle drei gemeinsam iterieren und Copy-Objekte anlegen
+	def loadPlaces(self):
+			placeData = self.getNestedValuesMulti("033D", ["p", "4"])
+			for row in placeData:
+				try:
+					placeName = row["p"]
+				except:
+					continue
+				else:
+					try:
+						rel = row["4"]
+					except:
+						rel = None
+					self.places.append(Place(placeName, rel))
+	def loadPublishers(self):
+		subfields = ["7", "A", "D", "P", "L", "E", "M", "a", "d", "p", "l", "e", "m"]
+		pubData = self.getNestedValuesMulti("028A", subfields)
+		for row in pubData:
+			pub = Person()
+			pub.role = "publisher"
+			pub.importPICA(row)
+			self.publishers.append(pub)
+	def getNormP(self):
+		if self.catRule == "rda":
+			extract = re.findall(r"(\d+) (ungezählte )?Seiten", self.pages)
+			for group in extract:
+				self.normPages += int(group[0])
+			extract = re.findall(r"(\d+) (ungezählte |ungezähltes )?Bl[äa]tt", self.pages)
+			for group in extract:
+				self.normPages += int(group[0])*2
+			extract = re.findall(r"(\d+) B[oö]gen", self.pages)
+			for group in extract:
+				self.normPages += int(group)*2				
+			return(True)
+		else:
+			extract = re.findall(r"(\d+) S\.?", self.pages)
+			for group in extract:
+				self.normPages += int(group)
+			extract = re.findall(r"\[?(\d+)\]? Bl\.?", self.pages)
+			for group in extract:
+				self.normPages += int(group)*2
+		return(True)			
 	def getValues(self, field, subfield):
 		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='" + subfield + "']")
 		if fields:
@@ -216,6 +280,8 @@ class Person:
 		self.namePart1 = ""
 		self.namePart2 = ""
 		self.gnd = ""
+		self.dateBirth = None
+		self.dateDeath = None
 	def __str__(self):
 		if self.forename and self.surname:
 			self.persName = self.surname + ", " + self.forename
@@ -254,7 +320,16 @@ class Person:
 			self.gnd = row["7"].replace("gnd/", "")
 		except:
 			pass
+		try:
+			self.dateBirth = row["e"]
+		except:
+			pass
+		try:
+			self.dateDeath = row["m"]
+		except:
+			pass			
 		return(True)
+
 class Copy:
 	def __init__(self, sm, provenances = [], epn = None):
 		self.place = ""
@@ -265,16 +340,18 @@ class Copy:
 		self.epn = epn
 	def __str__(self):
 		ret = "Signatur: " + self.sm
-		try:
+		if self.isil != "":
 			ret = "ISIL: " + self.isil + " " + ret
-		except:
-			pass
-		try:
+		if self.provenances != []:
 			ret += ", Provenienz: " + ";".join(self.provenances)
-		except:
-			pass
-		try:
+		if self.epn != None:
 			ret += ", EPN: " + self.epn
-		except:
-			pass
 		return(ret)
+
+class Place:
+	def __init__(self, placeName, rel = None):
+		self.placeName = placeName
+		self.getty = None
+		self.geoNames = None
+		self.gnd = None
+		self.rel = rel

@@ -251,3 +251,13 @@ for line in reader:
 conn.commit()
 conn.close()
 """
+
+"""
+# Ablage von Programmdaten in einer Datei
+
+import pickle
+ser = ["Himbeer", "Zitrone", "Ananas"]
+pickle.dump(ser, open("obst.p", "wb"))
+obst = pickle.load(open("obst.p", "rb"))
+print(obst)
+"""

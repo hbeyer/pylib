@@ -11,6 +11,6 @@ from lib import geo
 #print(test)
 
 
-db = geo.GeoDB()
+db = geo.DB()
 db.getGeoData()
 db.save()

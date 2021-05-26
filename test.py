@@ -10,6 +10,16 @@ from lib import geo
 #test = geo.getGeoDataGND("4057260-2")
 #print(test)
 
+"""
+isill = set()
+reader = pica.downloadReader("../../Temporäres/2021-05-05_VD17-komplett")
+#reader = pica.downloadReader("source/vd17")
+for node in reader:
+	rec = pica.Record(node)
+	isill.add(rec.isilRec)
+for il in isill:
+	print(il)
+"""
 
 db = geo.DB()
 db.getGeoData()

@@ -33,7 +33,7 @@ class DB:
 	def save(self):
 		self.table.content.sort(key=lambda row: row[0])
 		self.table.save(self.path.replace(".csv", ""))
-	def addPlace(self, placeName, getty = "", gnd = "", long = "", lat = ""):
+	def addPlace(self, placeName, getty = "", gnd = "", long = "", lat = "", comment = ""):
 		placeName = normalizePlaceName(placeName)
 		for row in self.table.content:
 			if placeName == row[0]:
@@ -42,24 +42,33 @@ class DB:
 				return(False)
 			if gnd != "" and gnd == row[2]:
 				return(False)
-		new = [placeName, getty, gnd, long, lat]
+		new = [placeName, getty, gnd, long, lat, comment]
 		self.table.content.append(new)
 		self.makeIndex()
 		return(True)
 	def getGeoData(self):
 		for row in self.table.content:
-			if row[1] != "":
-				gd = getGeoDataGetty(row[1])
-			elif row[2] != "":
-				gd = getGeoDataGND(row[2])
-			if gd != False:
-				row[3] = gd[0]
-				row[4] = gd[1]
-			else:
-				print(row[0] + " - " + row[1])
-				continue
+			gd = False
+			if row[3] == "":
+				if row[1] != "":
+					gd = getGeoDataGetty(row[1])
+				elif row[2] != "":
+					gd = getGeoDataGND(row[2])
+				if gd != False:
+					row[3] = gd[0]
+					row[4] = gd[1]
+				elif row[1] != "":
+					print(row[0] + " - http://vocab.getty.edu/page/tgn/" + row[1])
+				elif row[2] != "":
+					print(row[0] + " - http://d-nb.info/gnd/4494563-2" + row[2])
+				else:
+					print("Leer: " + row[0])
 def normalizePlaceName(placeName):
-	placeName = re.sub(r"![0-9Xx]!", "", str(placeName))
+	try:
+		placeName = re.find(r"!.+!([^;]+) ; ID: gnd", str(placeName)).group(1)
+	except:
+		pass
+	#placeName = re.sub(r"![0-9Xx]!", "", str(placeName))
 	placeName = placeName.replace("?", "")
 	placeName = placeName.strip()
 	placeName = placeName.replace("$g", ", ")
@@ -70,7 +79,9 @@ def normalizePlaceName(placeName):
 	conc = { 
 		"00696074X" : "", 
 		"|bema|*ad*Digitalisierung UB Leipzig$2014-2016" : "", 
+		"Text lat." : "", 
 		"Normierter Ort" : "", 
+		"Normierter Ort neu" : "", 
 		"S.l." : "s.l.", 
 		"Fingiert" : "fingiert", 
 		"Altenburg, Thüringen" : "Altenburg", 
@@ -93,6 +104,7 @@ def normalizePlaceName(placeName):
 		"Burgdorf" : "Basel", # Fehler im VD17
 		"Annaberg <Erzgebirge>" : "Annaberg-Buchholz", 
 		"Annaberg" : "Annaberg-Buchholz", 
+		"St. Annaberg" : "Annaberg-Buchholz", 
 		"Augspurg" : "Augsburg", 
 		"Clausthal-Zellerfeld" : "Clausthal", 
 		"Dillingen a.d. Donau" : "Dillingen", 
@@ -196,15 +208,23 @@ def normalizePlaceName(placeName):
 		"Kempten (Allgäu)" : "Kempten", 
 		"Koppenhagen" : "Kopenhagen", 
 		"Köthen (Anhalt)" : "Köthen", 
+		"Lauenburg" : "Lauenburg an der Elbe",
 		"Lauingen (Donau)" : "Lauingen",
 		"Lauingen, Donau" : "Lauingen",		
+		"Lauffenburg" : "Laufenburg",		
 		"Landsberg" : "Landsberg am Lech",		
 		"Leipzig; Frankfurt, Main" : "Leipzig",		
 		"leipzig" : "Leipzig",		
+		"Leipzig." : "Leipzig",		
+		"Leuwarden" : "Leeuwarden",		
+		"Lindau (Bodensee)" : "Lindau",		
 		"Lipsiae" : "Leipzig",		
 		"Lignitz" : "Liegnitz",
-		"Lissa <Posen>" : "Lissa",
+		"Lissa <Posen>" : "Leszno",
+		"Lissa" : "Leszno",
 		"Lindau, Bodensee" : "Lindau (Bodensee)",
+		"Lucern" : "Luzern",
+		"Luxembourg" : "Luxemburg",
 		"Löwenburg, Schweiz" : "Löwenburg JU",
 		"Madgeburg" : "Magdeburg",
 		"Magdaeburg" : "Magdeburg",
@@ -216,12 +236,17 @@ def normalizePlaceName(placeName):
 		"Meissen" : "Meißen",
 		"Minden (Westf)" : "Minden",
 		"Minden, Westfalen" : "Minden",
+		"Mintzel" : "Hof",
 		"Mühlhausen/Thüringen" : "Mühlhausen",
+		"Mühlheim" : "Mühlheim am Rhein",
 		"Münster (Westf)" : "Münster",
 		"Münster, Westfalen" : "Münster",
-		"Naumburg (Saale)" : "Naumburg",
+		"Münden" : "Hann. Münden",
+		"Naumburg" : "Naumburg (Saale)",
+		"Nehrling" : "",
 		"Neisse" : "Neiße",
 		"Neuburg, Donau" : "Neuburg",
+		"Neuburg a.d. Donau" : "Neuburg",
 		"Neuheus" : "Neuhaus",
 		"Newhaus" : "Neuhaus",
 		"Newhauß" : "Neuhaus",
@@ -229,17 +254,24 @@ def normalizePlaceName(placeName):
 		"Neustadt, Aisch" : "Neustadt an der Aisch",
 		"Neustadt, Weinstraße" : "Neustadt an der Weinstraße",
 		"Neustadt, Saale" : "Neustadt an der Saale",
-		"Bad Neustadt an der Saale" : "Neustadt an der Saale",
+		"Nimwegen" : "Nijmegen",
+		"Bad Neustadt an der Saale" : "Neustadt an der Saale",		
+		"Norden (Landkreis Aurich)" : "Norden",
 		"Nürnebrg" : "Nürnberg",
 		"Obermarchthal" : "Obermarchtal",
 		"Oberursel (Taunus)" : "Oberursel",
-		"Oettingen i. Bay." : "Oettingen",
+		"Oettingen i. Bay." : "Oettingen in Bayern",
+		"Oettingen" : "Oettingen in Bayern",
 		"Öttingen" : "Oettingen",
 		"Offenbach am Main" : "Offenbach",
+		"Osterode" : "Osterode am Harz",
+		"Philadelphia" : "fingiert",
+		"Pirmont" : "Pyrmont",
 		"Prag." : "Prag",
 		"Rawitsch" : "Rawicz",
 		"Regenburg" : "Regensburg",
 		"Regenspurg" : "Regensburg",
+		"Reimers" : "Altona",
 		"Rostochii" : "Rostock",
 		"Rothenburg <Tauber>" : "Rothenburg ob der Tauber",
 		"Rothenburg" : "Rothenburg ob der Tauber",
@@ -248,6 +280,8 @@ def normalizePlaceName(placeName):
 		"Stargard Szczeciński" : "Stargard in Pommern",
 		"Saalfeld/Saale" : "Saalfeld",
 		"Schneeberg, Erzgebirgskreis" : "Schneeberg",
+		"Schneeberg (Erzgebirgskreis)" : "Schneeberg",
+		"Schorndorf (Rems-Murr-Kreis)" : "Schorndorf",
 		"Stargard in Pommern" : "Stargard",
 		"Statthagen" : "Stadthagen",
 		"Steinau" : "Steinau an der Oder",
@@ -258,6 +292,7 @@ def normalizePlaceName(placeName):
 		"Argentorati" : "Straßburg",
 		"Sulzbach, Oberpfalz" : "Sulzbach",
 		"Toruń" : "Thorn",
+		"Wangen" : "Wangen im Allgäu",
 		"Wallstadt [i.e. Frankfurt, Main " : "Frankfurt am Main",
 		"Weissenfels" : "Weißenfels",
 		"Weißenfels <Halle, Saale>" : "Weißenfels",
@@ -267,6 +302,7 @@ def normalizePlaceName(placeName):
 		"Wittenbergae" : "Wittenberg",
 		"Wolffenbüttel" : "Wolfenbüttel",
 		"Wollgast" : "Wolgast",
+		"Ysni" : "Isny",
 		"Zerbst/Anhalt" : "Zerbst",
 		"Zugl.: Frankfurt <Oder>" : "Frankfurt (Oder)",
 		"Züllichow" : "Züllichau",

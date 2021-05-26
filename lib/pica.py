@@ -77,6 +77,17 @@ class Record:
 		except:
 			self.bbg = ""
 		self.vd17 = self.getValues("006W", "0")
+		bud = None
+		try:
+			bud = self.getValues("001A", "0").pop(0)
+		except:
+			pass
+		else:
+			self.isilRec = bud.split(":").pop(0)
+			try:
+				self.dateRec = bud.split(":").pop(1)
+			except:
+				pass
 		try:
 			self.catRule = self.getValues("010E", "e").pop(0)
 		except:
@@ -105,6 +116,7 @@ class Record:
 			self.gatt = self.getValues("044S", "a")
 		except:
 			self.gatt = []
+		self.gatt = map(lambda term: re.sub("!.+!", "", str(term)), self.gatt)
 		try:
 			self.pages = self.getValues("034D", "a").pop(0)
 		except:

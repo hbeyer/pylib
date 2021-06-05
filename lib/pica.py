@@ -64,22 +64,27 @@ class webReader(Reader):
 class Record:
 	def __init__(self, node):
 		self.node = node
+		self.data = {}
+		self.getData()
 		self.persons = []
 		self.copies = []
 		self.places = []
 		self.publishers = []
 		try:
-			self.ppn = self.getValues("003@", "0").pop(0)
+			self.ppn = self.data["003@"]["01"]["0"].pop(0)
 		except:
 			self.ppn = ""
 		try:
-			self.bbg = self.getValues("002@", "0").pop(0)
+			self.bbg = self.data["002@"]["01"]["0"].pop(0)
 		except:
 			self.bbg = ""
-		self.vd17 = self.getValues("006W", "0")
+		try:
+			self.vd17 = self.data["006W"]["01"]["0"]
+		except:
+			self.vd17 = []
 		bud = None
 		try:
-			bud = self.getValues("001A", "0").pop(0)
+			bud = self.data["001A"]["01"]["0"].pop(0)
 		except:
 			pass
 		else:
@@ -89,56 +94,72 @@ class Record:
 			except:
 				pass
 		try:
-			self.catRule = self.getValues("010E", "e").pop(0)
+			self.catRule = self.data["010E"]["01"]["e"].pop(0)
 		except:
 			self.catRule = "rak"
 		try:
-			self.title = self.getValues("021A", "a").pop(0)
+			self.title = self.data["021A"]["01"]["a"].pop(0)
 		except:
 			self.title = ""
 		try:
-			self.title = self.title + ". " + self.getValues("021A", "d").pop(0)
+			self.title = self.title + ". " + self.data["021A"]["01"]["d"].pop(0)
 		except:
 			pass
 		try:
-			self.resp = self.getValues("021A", "h").pop(0)
+			self.resp = self.data["021A"]["01"]["h"].pop(0)
 		except:
 			self.resp = ""
 		try:
-			self.lang = self.getValues("010@", "a")
+			self.lang = self.data["010@"]["01"]["a"]
+		except:
+			self.lang = []
+		try:
+			self.langOrig = self.data["010@"]["01"]["c"]
+		except:
+			self.langOrig = []
+		self.gatt = []
+		try:
+			gatDict = self.data["044S"]
 		except:
 			pass
+		else:
+			for occ in gatDict:
+				try:
+					self.gatt.extend(gatDict[occ]["a"])
+				except:
+					pass
+		# Funktioniert igendwie nicht
+		#self.gatt = map(lambda term: re.sub("!.+!", "", str(term)), self.gatt)
 		try:
-			self.langOrig = self.getValues("010@", "c")
-		except:
-			pass			
-		try:
-			self.gatt = self.getValues("044S", "a")
-		except:
-			self.gatt = []
-		self.gatt = map(lambda term: re.sub("!.+!", "", str(term)), self.gatt)
-		try:
-			self.pages = self.getValues("034D", "a").pop(0)
+			self.pages = self.data["034D"]["01"]["a"].pop(0)
 		except:
 			self.pages = ""
 		self.normPages = 0
 		if self.pages != "":
 			self.getNormP()
 		try:
-			self.format = self.getValues("034I", "a").pop(0)
+			self.format = self.data["034I"]["01"]["a"].pop(0)
 		except:
 			self.format = ""
-		self.altTitles = self.getValues("027a", "a")
-		self.vd16m = self.getValues("006L", "0")
 		try:
-			self.date = self.getValues("011@", "a").pop(0)
+			self.vd16m = self.data["006L"]["01"]["0"]
+		except:
+			self.vd16m = []
+		try:
+			self.date = self.data["011@"]["01"]["a"].pop(0)
 		except:
 			self.date = ""
+		self.digi = []
 		try:
-			self.digi = self.getValues("017D", "u")
+			digiDict = self.data["017D"]
 		except:
 			pass
-		self.shelfmarks = self.getValues("209A", "a")
+		else:
+			for key in digiDict:
+				try:
+					self.digi.extend(digiDict[key]["u"])
+				except:
+					pass
 		self.loadPersons()
 		self.loadCopies()
 		self.loadPlaces()
@@ -146,6 +167,34 @@ class Record:
 	def __str__(self):
 		ret = "record: PPN " + self.ppn + ", VD17: " + "|".join(self.vd17) + ", Jahr: " + self.date
 		return(ret)
+	def getData(self):
+		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
+		occDict = {}
+		for fn in fields:
+			tag = fn.get("tag")
+			occ = fn.get("occurrence")
+			if occ == None:
+				try:
+					occDict[tag] += 1
+				except:
+					occDict[tag] = 1
+				occ = str(occDict[tag]).zfill(2)
+			children = fn.findall("*")
+			for ch in children:
+				code = ch.get("code")
+				try:
+					self.data[tag][occ][code].append(ch.text)
+				except:
+					try:
+						self.data[tag][occ][code] = [ch.text]
+					except:
+						try:
+							self.data[tag][occ] = { code: [ch.text] }
+						except:
+							try:
+								self.data[tag] = { occ: { code: [ch.text] } }
+							except:
+								pass
 	def loadPersons(self):
 		subfields = ["7", "A", "D", "P", "L", "a", "d", "p", "l"]
 		creatorData = self.getNestedValues("028A", subfields)

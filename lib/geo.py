@@ -24,6 +24,7 @@ class DB:
 				print("Dublette: " + row[0])
 			count += 1		
 	def getByName(self, name):
+		name = normalizePlaceName(name)
 		try:
 			row = self.table.content[self.index[name][0]]
 		except:
@@ -101,11 +102,15 @@ def normalizePlaceName(placeName):
 		"Brandenburg <Havel>" : "Brandenburg", 
 		"Breisach" : "Breisach am Rhein",
 		"Bruntraut" : "Pruntrut",
+		"Brno" : "Brünn",
 		"Burgdorf" : "Basel", # Fehler im VD17
+		"Bruxelles" : "Brüssel", # Fehler im VD17
+		"Bucuresti" : "Bukarest", # Fehler im VD17
 		"Annaberg <Erzgebirge>" : "Annaberg-Buchholz", 
 		"Annaberg" : "Annaberg-Buchholz", 
 		"St. Annaberg" : "Annaberg-Buchholz", 
 		"Augspurg" : "Augsburg", 
+		"Cambridge/Massachusetts" : "Cambridge/Mass.", 
 		"Clausthal-Zellerfeld" : "Clausthal", 
 		"Dillingen a.d. Donau" : "Dillingen", 
 		"Dillingen a. d. Donau" : "Dillingen", 
@@ -159,6 +164,8 @@ def normalizePlaceName(placeName):
 		"Freiburg, Breisgau" : "Freiburg im Breisgau",
 		"Freiburg" : "Freiburg im Breisgau",
 		"Freiburg i. Br." : "Freiburg im Breisgau",		
+		"Freiburg/Breisgau" : "Freiburg im Breisgau",		
+		"Freiburg/Br." : "Freiburg im Breisgau",		
 		"FReiberg" : "Freiberg",		
 		"Freystadt, Schlesien" : "Freystadt in Schlesien",		
 		"Freystadt, Niederschlesien" : "Freystadt in Schlesien",		
@@ -170,6 +177,8 @@ def normalizePlaceName(placeName):
 		"Giessen" : "Gießen",
 		"Gioeßen" : "Gießen",
 		"Geifswald" : "Greifswald",
+		"Gniezno (Gnesen)" : "Gnesen",
+		"Gniezno" : "Gnesen",
 		"Gothag" : "Gotha",
 		"Grossenhain" : "Großenhain",
 		"Grönau" : "Groß Grönau",
@@ -205,6 +214,7 @@ def normalizePlaceName(placeName):
 		"Königsberg, Preussen" : "Königsberg",
 		"Königsberga" : "Königsberg",
 		"Königsgberg" : "Königsberg",
+		"Kobenhavn" : "Kopenhagen",
 		"Kempten (Allgäu)" : "Kempten", 
 		"Koppenhagen" : "Kopenhagen", 
 		"Köthen (Anhalt)" : "Köthen", 
@@ -225,6 +235,7 @@ def normalizePlaceName(placeName):
 		"Lindau, Bodensee" : "Lindau (Bodensee)",
 		"Lucern" : "Luzern",
 		"Luxembourg" : "Luxemburg",
+		"Louvain" : "Löwen",
 		"Löwenburg, Schweiz" : "Löwenburg JU",
 		"Madgeburg" : "Magdeburg",
 		"Magdaeburg" : "Magdeburg",
@@ -252,6 +263,7 @@ def normalizePlaceName(placeName):
 		"Newhauß" : "Neuhaus",
 		"Neustadt a. d. Aisch" : "Neustadt an der Aisch",
 		"Neustadt, Aisch" : "Neustadt an der Aisch",
+		"Neustadt/Aisch" : "Neustadt an der Aisch",
 		"Neustadt, Weinstraße" : "Neustadt an der Weinstraße",
 		"Neustadt, Saale" : "Neustadt an der Saale",
 		"Nimwegen" : "Nijmegen",
@@ -267,6 +279,7 @@ def normalizePlaceName(placeName):
 		"Osterode" : "Osterode am Harz",
 		"Philadelphia" : "fingiert",
 		"Pirmont" : "Pyrmont",
+		"Poznań" : "Posen",
 		"Prag." : "Prag",
 		"Rawitsch" : "Rawicz",
 		"Regenburg" : "Regensburg",
@@ -276,6 +289,7 @@ def normalizePlaceName(placeName):
 		"Rothenburg <Tauber>" : "Rothenburg ob der Tauber",
 		"Rothenburg" : "Rothenburg ob der Tauber",
 		"Rodolstadt" : "Rudolstadt",
+		"Roma" : "Rom",
 		"Stargard" : "Stargard in Pommern",
 		"Stargard Szczeciński" : "Stargard in Pommern",
 		"Saalfeld/Saale" : "Saalfeld",
@@ -292,8 +306,11 @@ def normalizePlaceName(placeName):
 		"Argentorati" : "Straßburg",
 		"Sulzbach, Oberpfalz" : "Sulzbach",
 		"Toruń" : "Thorn",
+		"Torun" : "Thorn",
 		"Wangen" : "Wangen im Allgäu",
 		"Wallstadt [i.e. Frankfurt, Main " : "Frankfurt am Main",
+		"Warszawa" : "Warschau",
+		"Warszava" : "Warschau",
 		"Weissenfels" : "Weißenfels",
 		"Weißenfels <Halle, Saale>" : "Weißenfels",
 		"Wilna" : "Vilnius",
@@ -302,11 +319,15 @@ def normalizePlaceName(placeName):
 		"Wittenbergae" : "Wittenberg",
 		"Wolffenbüttel" : "Wolfenbüttel",
 		"Wollgast" : "Wolgast",
+		"Wroclaw" : "Breslau",
+		"Wrocław" : "Breslau",
 		"Ysni" : "Isny",
 		"Zerbst/Anhalt" : "Zerbst",
 		"Zugl.: Frankfurt <Oder>" : "Frankfurt (Oder)",
 		"Züllichow" : "Züllichau",
 		"öln" : "Köln",
+		"'s-Gravenhage" : "Den Haag",
+		"'s Gravenhage" : "Den Haag"
 		}
 	try:
 		placeName = conc[placeName]

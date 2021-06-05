@@ -21,4 +21,5 @@ class Table:
 			return(None)
 		reader = csv.reader(file, delimiter=";")
 		self.content = [row for row in reader]
-		self.fields = self.content.pop(0)
+		if self.fields == []:
+			self.fields = self.content.pop(0)

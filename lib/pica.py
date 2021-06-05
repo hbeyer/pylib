@@ -160,10 +160,10 @@ class Record:
 					self.digi.extend(digiDict[key]["u"])
 				except:
 					pass
-		self.loadPersons()
+		#self.loadPersons()
 		self.loadCopies()
-		self.loadPlaces()
-		self.loadPublishers()
+		#self.loadPlaces()
+		#self.loadPublishers()
 	def __str__(self):
 		ret = "record: PPN " + self.ppn + ", VD17: " + "|".join(self.vd17) + ", Jahr: " + self.date
 		return(ret)
@@ -217,6 +217,26 @@ class Record:
 			per.importPICA(row)
 			self.persons.append(per)
 	def loadCopies(self):
+		try:
+			sigRow = self.data["209A"]
+		except:
+			pass
+		else:
+			for occ in sigRow:
+				try:
+					sm = sigRow[occ]["a"].pop(0)
+				except:
+					sm = None
+				else:
+					cp = Copy(sm)
+					try:
+						isil = self.data["202D"][occ]["a"].pop(0)
+					except:
+						pass
+					else:
+						cp.isil = isil
+					self.copies.append(cp)
+	"""def loadCopies(self):
 		copyData = self.getNestedValuesOcc("209A", ["a"])
 		copyDataLib1 = self.getNestedValuesOcc("201D", ["0"])
 		copyDataLib2 = self.getNestedValuesOcc("202D", ["a"])
@@ -238,7 +258,7 @@ class Record:
 			cop = Copy(sm)
 			cop.isil = isil
 			self.copies.append(cop)
-			count += 1
+			count += 1"""
 	def loadPlaces(self):
 			placeData = self.getNestedValuesMulti("033D", ["p", "4"])
 			for row in placeData:

@@ -78,10 +78,6 @@ class Record:
 			self.bbg = self.data["002@"]["01"]["0"].pop(0)
 		except:
 			self.bbg = ""
-		try:
-			self.vd17 = self.data["006W"]["01"]["0"]
-		except:
-			self.vd17 = []
 		bud = None
 		try:
 			bud = self.data["001A"]["01"]["0"].pop(0)
@@ -160,10 +156,10 @@ class Record:
 					self.digi.extend(digiDict[key]["u"])
 				except:
 					pass
-		#self.loadPersons()
+		self.loadPersons()
 		self.loadCopies()
-		#self.loadPlaces()
-		#self.loadPublishers()
+		self.loadPlaces()
+		self.loadPublishers()
 	def __str__(self):
 		ret = "record: PPN " + self.ppn + ", VD17: " + "|".join(self.vd17) + ", Jahr: " + self.date
 		return(ret)
@@ -181,7 +177,7 @@ class Record:
 				occ = str(occDict[tag]).zfill(2)
 			children = fn.findall("*")
 			for ch in children:
-				code = ch.get("code")
+				code = ch.get("code").lower()
 				try:
 					self.data[tag][occ][code].append(ch.text)
 				except:
@@ -236,49 +232,30 @@ class Record:
 					else:
 						cp.isil = isil
 					self.copies.append(cp)
-	"""def loadCopies(self):
-		copyData = self.getNestedValuesOcc("209A", ["a"])
-		copyDataLib1 = self.getNestedValuesOcc("201D", ["0"])
-		copyDataLib2 = self.getNestedValuesOcc("202D", ["a"])
-		count = 0
-		for row in copyData:
-			sm = ""
-			isil = ""
-			try:
-				sm = row["a"]
-			except:
-				pass
-			try:
-				isil = copyDataLib2[count]["a"]
-			except:
-				try:
-					isil = copyDataLib1[count]["0"].split(":").pop(0)
-				except:
-					pass
-			cop = Copy(sm)
-			cop.isil = isil
-			self.copies.append(cop)
-			count += 1"""
 	def loadPlaces(self):
-			placeData = self.getNestedValuesMulti("033D", ["p", "4"])
-			for row in placeData:
-				try:
-					placeName = row["p"]
-				except:
-					continue
-				else:
-					try:
-						rel = row["4"]
-					except:
-						rel = None
-					self.places.append(Place(placeName, rel))
+		try:
+			placeList = self.data["033D"]
+		except:
+			return(None)
+		for occ in placeList:
+			try:
+				placeName = placeList[occ]["p"].pop(0)
+			except:
+				continue
+			try:
+				placeRel = placeList[occ]["4"].pop(0)
+			except:
+				placeRel = ""
+			self.places.append(Place(placeName, placeRel))
 	def loadPublishers(self):
-		subfields = ["7", "A", "D", "P", "L", "E", "M", "a", "d", "p", "l", "e", "m"]
-		pubData = self.getNestedValuesMulti("028A", subfields)
-		for row in pubData:
+		try:
+			pubRow = self.data["028A"]
+		except:
+			return(None)
+		for occ in pubRow:
 			pub = Person()
 			pub.role = "publisher"
-			pub.importPICA(row)
+			pub.importStructData(pubRow[occ])
 			self.publishers.append(pub)
 	def getNormP(self):
 		if self.catRule == "rda":
@@ -300,16 +277,6 @@ class Record:
 			for group in extract:
 				self.normPages += int(group)*2
 		return(True)			
-	def getValues(self, field, subfield):
-		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='" + subfield + "']")
-		if fields:
-			return([field.text.strip() for field in fields])
-		return([])
-	def getRepValues(self, field, subfield, occurrence):
-		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "'][@occurrence='" + occurrence + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='" + subfield + "']")
-		if fields:
-			return([field.text.strip() for field in fields])
-		return([])
 	def getNestedValues(self, field, subfields, occurrence = None):
 		if occurrence != None:
 			fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "'][@occurrence='" + occurrence + "']/{info:srw/schema/5/picaXML-v1.0}subfield")
@@ -353,6 +320,13 @@ class Record:
 			return([field.text.strip() for field in fields])
 		return([])
 
+class RecordVD17(Record):
+	def __init__(self, node):
+		super().__init__(node)	
+		try:
+			self.vd17 = self.data["006W"]["01"]["0"]
+		except:
+			self.vd17 = []
 class Person:
 	def __init__(self):
 		self.persName = ""
@@ -363,16 +337,18 @@ class Person:
 		self.gnd = ""
 		self.dateBirth = None
 		self.dateDeath = None
-	def __str__(self):
+	def makePersName(self):
 		if self.forename and self.surname:
 			self.persName = self.surname + ", " + self.forename
-		elif self.namePart1 and namePart2:
+		elif self.namePart1 and self.namePart2:
 			self.persName = self.namePart1 + " " + self.namePart2
 		elif self.namePart1:
 			self.persName = self.namePart1
+		ret = self.persName		
+	def __str__(self):
 		ret = self.persName
 		try:
-			ret.append(" GND: " + self.gnd)
+			ret += " GND: " + self.gnd
 		except:
 			pass
 		return(ret)
@@ -408,7 +384,43 @@ class Person:
 		try:
 			self.dateDeath = row["m"]
 		except:
-			pass			
+			pass
+		self.makePersName()
+		return(True)
+	def importStructData(self, row):
+		try:
+			self.forename = row["d"].pop(0)
+		except:
+			pass
+		try:
+			self.surname = row["a"].pop(0)
+		except:
+			pass
+		try:
+			self.namePart1 = row["p"].pop(0)
+		except:
+			pass
+		try:
+			self.namePart2 = row["l"].pop(0)
+		except:
+			pass
+		try:
+			self.role = row["b"].pop(0)
+		except:
+			pass
+		try:
+			self.gnd = row["7"].pop(0).replace("gnd/", "")
+		except:
+			pass
+		try:
+			self.dateBirth = row["e"].pop(0)
+		except:
+			pass
+		try:
+			self.dateDeath = row["m"].pop(0)
+		except:
+			pass
+		self.makePersName()
 		return(True)
 
 class Copy:

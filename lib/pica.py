@@ -65,11 +65,11 @@ class Record:
 	def __init__(self, node):
 		self.node = node
 		self.data = {}
-		self.getData()
 		self.persons = []
 		self.copies = []
 		self.places = []
 		self.publishers = []
+		self.getData()		
 		try:
 			self.ppn = self.data["003@"]["01"]["0"].pop(0)
 		except:
@@ -192,26 +192,36 @@ class Record:
 							except:
 								pass
 	def loadPersons(self):
-		subfields = ["7", "A", "D", "P", "L", "a", "d", "p", "l"]
-		creatorData = self.getNestedValues("028A", subfields)
-		if creatorData != {}:
-			per = Person()
-			per.role = "creator"
-			per.importPICA(creatorData)
-			self.persons.append(per)
-		creator2Data = self.getNestedValuesOcc("028B", subfields)
-		for row in creator2Data:
-			per = Person()
-			per.role = "creator"
-			per.importPICA(row)
-			self.persons.append(per)	
-		subfields.append("B")
-		contributorData = self.getNestedValuesMulti("028C", subfields)
-		for row in contributorData:
-			per = Person()
-			per.role = "contributor"
-			per.importPICA(row)
-			self.persons.append(per)
+		try:
+			creatorList = self.data["028A"]
+		except:
+			pass
+		else:
+			for occ in creatorList:
+				per = Person()
+				per.role = "creator"
+				per.importStructData(creatorList[occ])
+				self.persons.append(per)
+		try:
+			creatorList2 = self.data["028B"]
+		except:
+			pass
+		else:
+			for occ in creatorList2:
+				per = Person()
+				per.role = "creator"
+				per.importStructData(creatorList2[occ])
+				self.persons.append(per)
+		try:
+			contributorList = self.data["028C"]
+		except:
+			pass
+		else:
+			for occ in contributorList:
+				per = Person()
+				per.role = "contributor"
+				per.importStructData(contributorList[occ])
+				self.persons.append(per)			
 	def loadCopies(self):
 		try:
 			sigRow = self.data["209A"]
@@ -231,6 +241,10 @@ class Record:
 						pass
 					else:
 						cp.isil = isil
+					try:
+						cp.provenances = self.data["244Z"][occ]["a"]
+					except:
+						pass
 					self.copies.append(cp)
 	def loadPlaces(self):
 		try:
@@ -249,7 +263,7 @@ class Record:
 			self.places.append(Place(placeName, placeRel))
 	def loadPublishers(self):
 		try:
-			pubRow = self.data["028A"]
+			pubRow = self.data["033J"]
 		except:
 			return(None)
 		for occ in pubRow:
@@ -276,49 +290,7 @@ class Record:
 			extract = re.findall(r"\[?(\d+)\]? Bl\.?", self.pages)
 			for group in extract:
 				self.normPages += int(group)*2
-		return(True)			
-	def getNestedValues(self, field, subfields, occurrence = None):
-		if occurrence != None:
-			fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "'][@occurrence='" + occurrence + "']/{info:srw/schema/5/picaXML-v1.0}subfield")
-		else:
-			fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "']/{info:srw/schema/5/picaXML-v1.0}subfield")
-		row = {}
-		for fieldNode in fields:
-			for sf in subfields:
-				if fieldNode.attrib["code"] == sf:
-					row[sf.lower()] = fieldNode.text
-		return(row)
-	def getNestedValuesOcc(self, field, subfields):
-		ret = []
-		goon = True
-		occ = 1
-		while goon == True:
-			occstr = str(occ).zfill(2)
-			vall = self.getNestedValues(field, subfields, occstr)
-			if vall == {}:
-				goon = False
-				return(ret)
-			else:
-				ret.append(vall)
-				occ += 1
-		return(ret)
-	def getNestedValuesMulti(self, field, subfields):
-		ret = []
-		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='" + field + "']")
-		for fieldNode in fields:
-			row = {}
-			for sf in subfields:
-				try: 
-					row[sf.lower()] = fieldNode.find("{info:srw/schema/5/picaXML-v1.0}subfield[@code='" + sf + "']").text
-				except:
-					pass
-			ret.append(row)
-		return(ret)
-	def getProvenances(self, occurrence):
-		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield[@tag='244Z'][@occurrence='" + occurrence + "']/{info:srw/schema/5/picaXML-v1.0}subfield[@code='9']/../{info:srw/schema/5/picaXML-v1.0}subfield[@code='a']")
-		if fields:
-			return([field.text.strip() for field in fields])
-		return([])
+		return(True)
 
 class RecordVD17(Record):
 	def __init__(self, node):
@@ -344,6 +316,8 @@ class Person:
 			self.persName = self.namePart1 + " " + self.namePart2
 		elif self.namePart1:
 			self.persName = self.namePart1
+		elif self.surname:
+			self.persName = self.surname
 		ret = self.persName		
 	def __str__(self):
 		ret = self.persName
@@ -352,41 +326,6 @@ class Person:
 		except:
 			pass
 		return(ret)
-	def importPICA(self, row):
-		try:
-			self.forename = row["d"]
-		except:
-			pass
-		try:
-			self.surname = row["a"]
-		except:
-			pass
-		try:
-			self.namePart1 = row["p"]
-		except:
-			pass
-		try:
-			self.namePart2 = row["l"]
-		except:
-			pass
-		try:
-			self.role = row["b"]
-		except:
-			pass
-		try:
-			self.gnd = row["7"].replace("gnd/", "")
-		except:
-			pass
-		try:
-			self.dateBirth = row["e"]
-		except:
-			pass
-		try:
-			self.dateDeath = row["m"]
-		except:
-			pass
-		self.makePersName()
-		return(True)
 	def importStructData(self, row):
 		try:
 			self.forename = row["d"].pop(0)

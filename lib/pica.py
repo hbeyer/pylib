@@ -6,61 +6,6 @@ import urllib.request as ul
 import xml.etree.ElementTree as et
 import re
 
-class Reader:
-	def __init__(self, path):
-		self.path = path
-		self.recs = []
-	def getRecs(self, file):
-		tree = et.parse(file)
-		root = tree.getroot()
-		recs = root.findall('.//{http://docs.oasis-open.org/ns/search-ws/sruResponse}record')
-		if recs:
-			return(recs)
-		print("Keine Datensätze")
-		return([])
-
-class downloadReader(Reader):
-	def __init__(self, path):
-		super().__init__(path)
-		self.files = glob.glob(self.path + "/*.xml")
-		self.unread = self.files
-	def readFile(self):
-		while self.unread:
-			path = self.unread.pop(0)
-			try:
-				file = open(path, "r", encoding="utf-8")
-			except:
-				pass
-			else:
-				return(self.getRecs(file))
-		return(None)
-	def __iter__(self):
-		self.recs = self.readFile()
-		return(self)
-	def __next__(self):
-		try:
-			rec = self.recs.pop(0)
-		except:
-			self.recs = self.readFile()
-			try:
-				rec = self.recs.pop(0)
-			except:
-				raise StopIteration
-			else: 
-				return(rec)
-		else:
-			return(rec)
-	
-class webReader(Reader):
-	def __init__(self, path):
-		super().__init__(path)
-		try:
-			file = ul.urlopen(self.path)
-		except:
-			print(self.path + " ist keine funktionierende URL")
-		else:
-			self.recs = self.getRecs(file)
-
 class Record:
 	def __init__(self, node):
 		self.node = node

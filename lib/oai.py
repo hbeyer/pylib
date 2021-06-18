@@ -5,6 +5,7 @@ import urllib.parse as up
 import urllib.request as ur
 import xml.etree.ElementTree as et
 import os.path as op
+import glob
 
 class Request_OAI:
     def __init__(self):

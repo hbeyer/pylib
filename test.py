@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from lib import lido
 from lib import xmlreader as xr
 
-reader = xr.SRUDownloadReader("source/vd17")
+reader = xr.OAIDownloadReader("source/vkk")
 for node in reader:
-	print(node)
+	rec = lido.Record(node)
+	print(rec.image)

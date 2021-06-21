@@ -244,6 +244,20 @@ class RecordVD17(Record):
 			self.vd17 = self.data["006W"]["01"]["0"]
 		except:
 			self.vd17 = []
+	def __str__(self):
+		ret = "record: PPN " + self.ppn + ", VD17: " + "|".join(self.vd17) + ", Jahr: " + self.date
+		return(ret)
+class RecordVD16(Record):
+	def __init__(self, node):
+		super().__init__(node)	
+		try:
+			self.vd16 = self.data["006V"]["01"]["0"]
+		except:
+			self.vd16 = []
+	def __str__(self):
+		ret = "record: PPN " + self.ppn + ", VD16: " + "|".join(self.vd16) + ", Jahr: " + self.date
+		return(ret)
+		
 class Person:
 	def __init__(self):
 		self.persName = ""

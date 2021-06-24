@@ -249,7 +249,7 @@ class SerializerSel(SerializerCSV):
 						item.portraitType = model.getPortraitType()
 					if item.orientation == "" or item.orientation == None:
 						item.orientation = model.getOrientation()					
-		self.artworkFields = ['id', 'anumber', 'keywords_technique', 'yearNormalized', 'sourceYear', 'portraitType', 'orientation', 'likeA', 'descriptionClean', 'technique', 'source']
+		self.artworkFields = ['id', 'anumber', 'keywords_technique', 'yearNormalized', 'sourceYear', 'portraitType', 'orientation', 'likeA', 'descriptionClean', 'technique', 'source', 'transcription']
 		self.numberPersons = 0
 		self.numberArtists = 0
 		self.numberPublishers = 0

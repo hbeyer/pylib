@@ -106,7 +106,7 @@ class Record:
 		self.loadPlaces()
 		self.loadPublishers()
 	def __str__(self):
-		ret = "record: PPN " + self.ppn + ", VD17: " + "|".join(self.vd17) + ", Jahr: " + self.date
+		ret = "record: PPN " + self.ppn + ", Jahr: " + self.date
 		return(ret)
 	def getData(self):
 		fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
@@ -257,7 +257,17 @@ class RecordVD16(Record):
 	def __str__(self):
 		ret = "record: PPN " + self.ppn + ", VD16: " + "|".join(self.vd16) + ", Jahr: " + self.date
 		return(ret)
-		
+class RecordVD18(Record):
+	def __init__(self, node):
+		super().__init__(node)	
+		try:
+			self.vd18 = self.data["006M"]["01"]["0"]
+		except:
+			self.vd18 = []
+	def __str__(self):
+		ret = "record: PPN " + self.ppn + ", VD18: " + "|".join(self.vd18) + ", Jahr: " + self.date
+		return(ret)		
+
 class Person:
 	def __init__(self):
 		self.persName = ""
@@ -277,7 +287,7 @@ class Person:
 			self.persName = self.namePart1
 		elif self.surname:
 			self.persName = self.surname
-		ret = self.persName		
+		return(self.persName)
 	def __str__(self):
 		ret = self.persName
 		try:

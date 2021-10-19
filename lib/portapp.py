@@ -630,7 +630,7 @@ def extractYear(string):
 		return(None)
 
 def extractYearPrecisely(string):
-	match = re.search(r"[\s–/-](1[456789][0-9]{2})", string)
+	match = re.search(r"[.\s–/-](1[456789][0-9]{2})", string)
 	try:
 		return(match.group(1))
 	except:

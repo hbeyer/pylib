@@ -117,7 +117,7 @@ class Isil:
 		"0547" : "DE-547",
 		"0032" : "DE-32",
 		"5051" : "DE-B791",
-		"HDUB" : "DE-16" 
+		"HDUB" : "DE-16", 
 		"0211" : "DE-211" 
 	}    
 def getBib(code, vd17 = True):

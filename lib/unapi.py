@@ -25,4 +25,4 @@ class Request_unAPI:
 		if op.exists(path) == False:
 			ur.urlretrieve(self.url, path)
 		if op.exists(path):
-			print("PPN " + self.ppn + " in " + self.format + " heruntergeladen nach " + self.folder)
+			return(True)

@@ -72,4 +72,4 @@ class Request_HAB(Request_SRU):
 	def __init__(self):
 		super().__init__()
 		self.base = 'http://sru.gbv.de/opac-de-23'
-		self.fileName = "SRU_HAB"				
+		self.fileName = "SRU_HAB"

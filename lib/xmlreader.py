@@ -80,3 +80,10 @@ class webReader(Reader):
 		except:
 			raise StopIteration
 		return(rec)
+
+class unAPIReader(Reader):
+	def __init__(self, path, tag = "", namespace = ""):
+		super().__init__(path, tag, namespace)
+		file = open(path, "r")
+		tree = et.parse(file)
+		self.node = tree.getroot()

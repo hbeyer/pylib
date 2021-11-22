@@ -101,6 +101,11 @@ class Record:
 					self.digi.extend(digiDict[key]["u"])
 				except:
 					pass
+		if self.bbg[0] == "O":
+			try:
+				self.digi = self.data["209R"]["01"]["u"].pop(0)
+			except:
+				pass
 		self.loadPersons()
 		self.loadCopies()
 		self.loadPlaces()

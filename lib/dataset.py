@@ -5,7 +5,10 @@ class Dataset:
 	def __init__(self):
 		self.fields = {}
 	def addEntry(self, field, entry):
-		self.fields[field].append(entry)
+		try:
+			self.fields[field].append(entry)
+		except:
+			print("Feld " +  field + " ist nicht definiert")
 	def getEntries(self, field):
 		try:
 			return(self.fields[field])
@@ -48,5 +51,6 @@ class DatasetDC(Dataset):
 			"publisher" : [],
 			"rights" : [],
 			"source" : [],
-			"relation" : []
+			"relation" : [],
+			"date" : []
 		}

@@ -71,6 +71,14 @@ class Record:
 					pass
 		# Funktioniert igendwie nicht
 		#self.gatt = map(lambda term: re.sub("!.+!", "", str(term)), self.gatt)
+		self.subjects = []
+		try:
+			subDict = self.data["044K"]
+		except:
+			pass
+		else:
+			for occ in subDict:
+				self.subjects.append(subDict[occ]["a"].pop(0))
 		try:
 			self.pages = self.data["034D"]["01"]["a"].pop(0)
 		except:
@@ -272,6 +280,23 @@ class RecordVD18(Record):
 	def __str__(self):
 		ret = "record: PPN " + self.ppn + ", VD18: " + "|".join(self.vd18) + ", Jahr: " + self.date
 		return(ret)		
+class RecordInc(Record):
+	def __init__(self, node):
+		super().__init__(node)
+		self.gw = ""
+		self.istc = ""
+		self.borm = ""
+		try:
+			bibDict = self.data["009P"]
+		except:
+			pass
+		else:
+			for occ in bibDict:
+				for link in bibDict[occ]["a"]:
+					if link.find("gesamtkatalog") != -1:
+						self.gw = link
+					elif link.find("istc") != -1:
+						self.istc = link
 
 class Person:
 	def __init__(self):

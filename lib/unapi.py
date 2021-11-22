@@ -19,15 +19,6 @@ class Request_unAPI:
 		self.format = format
 		self.ppn = ppn
 		self.url = self.base + self.ppn + "&format=" + self.format
-		fileobject = ur.urlopen(self.url, None, 10)
-		tree = et.parse(fileobject)
-		root = tree.getroot()
-		nbs = root.findall('.//{http://docs.oasis-open.org/ns/search-ws/sruResponse}numberOfRecords')
-		for ele in nbs:
-			self.numFound = int(ele.text)
-			self.url = self.make_URL(500)
-			break
-		return(self.numFound)
 	def download(self, folder = ""):
 		self.folder = folder
 		path = self.folder + "/" + self.ppn + "-" + self.format + ".xml"

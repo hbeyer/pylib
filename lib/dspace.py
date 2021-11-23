@@ -3,32 +3,27 @@
 
 from lib import pica
 from lib import sru
-from lib import unapi as ua
 from lib import xmlreader as xr
-from lib import shelfmark as sm
 from lib import dataset as ds
 import xml.etree.ElementTree as et
 import urllib.request as ur
 import re
 import os
+import json
 
 class Harvester():
-	def __init__(self, ppnO, folder = "downloads"):
+	def __init__(self, ppnO, diglib = "inkunabeln", folder = "downloads"):
 		self.ppnO = ppnO
 		self.folder = folder
-		self.path = self.folder + "/" + self.ppnO
-		try:
-			os.mkdir(self.path)
-		except:
-			pass
-		reqU = ua.Request_unAPI()
-		reqU.prepare(ppnO, "picaxml")
-		reqU.download(self.path)
-		reader = xr.unAPIReader(self.path + "/" + self.ppnO + "-" + "picaxml.xml")
-		node = reader.node
+		self.diglib = diglib #Besser automatisch setzen
+		file = ur.urlopen("http://unapi.k10plus.de/?id=gvk:ppn:" + self.ppnO + "&format=picaxml")
+		tree = et.parse(file)
+		node = tree.getroot()		
 		self.recO = pica.Record(node)
 		self.sig = self.recO.copies[0].sm
-		self.normSig = re.search("http://diglib.hab.de/inkunabeln/(.+)/start.htm", self.recO.digi).group(1)
+		self.normSig = re.search("http://diglib.hab.de/" + self.diglib + "/(.+)/start.htm", self.recO.digi).group(1)
+		self.path = self.folder + "/" + self.normSig
+		self.recA = None
 		sigSRU = self.sig.replace("(", "").replace(")", "").replace(" ", "+")
 		req = sru.Request_HAB()
 		req.prepare("pica.sgb=" + sigSRU)
@@ -37,8 +32,57 @@ class Harvester():
 			rc = pica.RecordInc(node)
 			if rc.bbg[0] == "A":
 				self.recA = rc
-				reqU.prepare(self.recA.ppn)
-				reqU.download(self.path)
+				self.ppnA = self.recA.ppn
+		if self.recA == None:
+			self.recA = self.recO
+		self.imageList = []
+	def go(self):
+		self.makeFolder()
+		self.downloadXML()
+		self.downloadImages()
+		self.extractMetadata()
+		self.saveMetadata()
+	def makeFolder(self):
+		if os.path.exists(self.path):
+			pass
+		else:
+			os.mkdir(self.path)
+	def downloadXML(self):
+		urlO = "http://unapi.k10plus.de/?id=gvk:ppn:" + self.ppnO + "&format=picaxml"
+		try:
+			ur.urlretrieve(urlO, self.path + "/o-aufnahme.xml")
+		except:
+			print("Laden der O-Aufnahme fehlgeschlagen")
+		try:
+			ur.urlretrieve("http://unapi.k10plus.de/?id=gvk:ppn:" + self.ppnA + "&format=picaxml", self.path + "/a-aufnahme.xml")
+		except:
+			print("Laden der A-Aufnahme fehlgeschlagen")		
+		urlMets = "http://oai.hab.de/?verb=GetRecord&metadataPrefix=mets&identifier=oai:diglib.hab.de:ppn_" + self.ppnO
+		try:
+			ur.urlretrieve(urlMets, self.path + "/mets.xml")
+		except:
+			print("Laden der METS fehlgeschlagen")
+		urlStruct = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/facsimile.xml"
+		try:
+			ur.urlretrieve(urlStruct, self.path + "/facsimile.xml")
+		except:
+			print("Laden der facsimile.xml fehlgeschlagen")
+		urlTranscr = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/tei-struct.xml"
+		try:
+			ur.urlretrieve(urlStruct, self.path + "/tei-struct.xml")
+		except:
+			print("Keine tei-struct.xml gefunden")
+	def downloadImages(self):
+		file = open(self.path + "/facsimile.xml")
+		tree = et.parse(file)
+		root = tree.getroot()
+		for gr in root:
+			imName = gr.attrib["url"].split("/").pop()
+			self.imageList.append(imName)
+		for im in self.imageList:
+			#path = "\\\\maserver.hab.de\\Auftraege\\Master\\" + self.diglib + "\\" + self.normSig + "\\" + im.replace("jpg", "tif")
+			path = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/" + im
+			ur.urlretrieve(path, self.path + "/" + im)
 	def extractMetadata(self):
 		self.meta = ds.DatasetDC()
 		self.meta.addEntry("identifier", ds.Entry(self.recO.digi))
@@ -63,23 +107,15 @@ class Harvester():
 		self.meta.addEntry("rights", ds.Entry("CC BY-SA 3.0"))
 		self.meta.addEntry("rights", ds.Entry("http://diglib.hab.de/copyright.html"))
 		self.meta.addEntry("source", ds.Entry("Wolfenbüttel, Herzog August Bibliothek, " + self.sig))
-		if self.recA.gw != "":
+		try:
 			self.meta.addEntry("relation", ds.Entry(self.recA.gw))
-		if self.recA.istc != "":
+		except:
+			pass
+		try:
 			self.meta.addEntry("relation", ds.Entry(self.recA.istc))
-	def loadFiles(self):
-		urlMets = "http://oai.hab.de/?verb=GetRecord&metadataPrefix=mets&identifier=oai:diglib.hab.de:ppn_" + self.ppnO
-		try:
-			ur.urlretrieve(urlMets, self.path + "/mets.xml")
 		except:
-			print("Laden der METS fehlgeschlagen")
-		urlStruct = "http://diglib.hab.de/inkunabeln/" + self.normSig + "/facsimile.xml"
-		try:
-			ur.urlretrieve(urlStruct, self.path + "/facsimile.xml")
-		except:
-			print("Laden der facsimile.xml fehlgeschlagen")
-		urlTranscr = "http://diglib.hab.de/inkunabeln/" + self.normSig + "/tei-struct.xml"
-		try:
-			ur.urlretrieve(urlStruct, self.path + "/tei-struct.xml")
-		except:
-			print("Keine tei-struct.xml gefunden")
+			pass
+	def saveMetadata(self):
+		meta = self.meta.toDict()
+		with open( self.path + "/metadata.json" , "w" ) as target:
+			json.dump(meta, target)

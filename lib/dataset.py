@@ -19,6 +19,13 @@ class Dataset:
 		for name in self.fields:
 			ret[name] = ";".join([str(entry) for entry in self.fields[name]])
 		return(ret)
+	def toList(self):
+		ret = []
+		for name in self.fields:
+			for entry in self.fields[name]:
+				ret.append({name : str(entry)})
+		return(ret)
+
 
 class Entry:
 	def __init__(self, value, lang = None, authSys = "", authID = ""):
@@ -31,7 +38,7 @@ class Entry:
 		if self.language != None:
 			ret = ret + "@" + self.language
 		if self.authSys and self.authID:
-			ret = ret + " " + self.authSys + ": " + self.authID
+			ret = ret + "#" + self.authSys + "_" + self.authID
 		return(ret)
 
 class DatasetDC(Dataset):

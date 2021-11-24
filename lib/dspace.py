@@ -12,16 +12,21 @@ import os
 import json
 
 class Harvester():
-	def __init__(self, ppnO, diglib = "inkunabeln", folder = "downloads"):
+	def __init__(self, ppnO, folder = "downloads", diglib = "inkunabeln"):
 		self.ppnO = ppnO
 		self.folder = folder
-		self.diglib = diglib #Besser automatisch setzen
+		self.diglib = diglib
 		file = ur.urlopen("http://unapi.k10plus.de/?id=gvk:ppn:" + self.ppnO + "&format=picaxml")
 		tree = et.parse(file)
 		node = tree.getroot()		
 		self.recO = pica.Record(node)
 		self.sig = self.recO.copies[0].sm
-		self.normSig = re.search("http://diglib.hab.de/" + self.diglib + "/(.+)/start.htm", self.recO.digi).group(1)
+		search = re.search("http://diglib.hab.de/([^/]+)/([^/]+)/start.htm", self.recO.digi)
+		try:
+			self.diglib = search.group(1)
+		except:
+			pass
+		self.normSig = search.group(2)
 		self.path = self.folder + "/" + self.normSig
 		self.recA = None
 		sigSRU = self.sig.replace("(", "").replace(")", "").replace(" ", "+")
@@ -81,6 +86,7 @@ class Harvester():
 			self.imageList.append(imName)
 		for im in self.imageList:
 			#path = "\\\\maserver.hab.de\\Auftraege\\Master\\" + self.diglib + "\\" + self.normSig + "\\" + im.replace("jpg", "tif")
+			#ur.urlretrieve(path, self.path + "/" + im.replace("jpg", "tif"))
 			path = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/" + im
 			ur.urlretrieve(path, self.path + "/" + im)
 	def extractMetadata(self):
@@ -103,7 +109,10 @@ class Harvester():
 			self.meta.addEntry("language", ds.Entry(lng))
 		for sub in self.recA.subjects:
 			self.meta.addEntry("subject", ds.Entry(sub))
-		self.meta.addEntry("description", ds.Entry("Digitalisierte Inkunabel aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
+		if self.diglib == "inkunabeln" or int(self.recA.date) <= 1500:
+			self.meta.addEntry("description", ds.Entry("Digitalisierte Inkunabel aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
+		else:
+			self.meta.addEntry("description", ds.Entry("Digitalisierter Druck aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
 		self.meta.addEntry("rights", ds.Entry("CC BY-SA 3.0"))
 		self.meta.addEntry("rights", ds.Entry("http://diglib.hab.de/copyright.html"))
 		self.meta.addEntry("source", ds.Entry("Wolfenbüttel, Herzog August Bibliothek, " + self.sig))
@@ -116,6 +125,6 @@ class Harvester():
 		except:
 			pass
 	def saveMetadata(self):
-		meta = self.meta.toDict()
-		with open( self.path + "/metadata.json" , "w" ) as target:
-			json.dump(meta, target)
+		meta = self.meta.toList()
+		with open(self.path + "/metadata.json", "w") as target:
+			json.dump(meta, target, indent=2, ensure_ascii=False)

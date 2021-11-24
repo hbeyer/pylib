@@ -10,6 +10,8 @@ import urllib.request as ur
 import re
 import os
 import json
+import shutil
+import glob
 
 class Harvester():
 	def __init__(self, ppnO, folder = "downloads", diglib = "inkunabeln"):
@@ -27,6 +29,7 @@ class Harvester():
 		except:
 			pass
 		self.normSig = search.group(2)
+		self.folderMA = self.getFolderMA()
 		self.path = self.folder + "/" + self.normSig
 		self.recA = None
 		sigSRU = self.sig.replace("(", "").replace(")", "").replace(" ", "+")
@@ -41,12 +44,14 @@ class Harvester():
 		if self.recA == None:
 			self.recA = self.recO
 		self.imageList = []
-	def go(self):
+	def go(self, overwriteImages = False):
+		print("Harvesten des Digitalisats mit der PPN " + self.ppnO)
 		self.makeFolder()
 		self.downloadXML()
-		self.downloadImages()
+		self.downloadImages(overwriteImages = overwriteImages)
 		self.extractMetadata()
 		self.saveMetadata()
+		print("Dateien geladen im Ordner " + self.path)
 	def makeFolder(self):
 		if os.path.exists(self.path):
 			pass
@@ -74,21 +79,25 @@ class Harvester():
 			print("Laden der facsimile.xml fehlgeschlagen")
 		urlTranscr = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/tei-struct.xml"
 		try:
-			ur.urlretrieve(urlStruct, self.path + "/tei-struct.xml")
+			ur.urlretrieve(urlTranscr, self.path + "/tei-struct.xml")
 		except:
 			print("Keine tei-struct.xml gefunden")
-	def downloadImages(self):
-		file = open(self.path + "/facsimile.xml")
-		tree = et.parse(file)
-		root = tree.getroot()
-		for gr in root:
-			imName = gr.attrib["url"].split("/").pop()
-			self.imageList.append(imName)
-		for im in self.imageList:
-			#path = "\\\\maserver.hab.de\\Auftraege\\Master\\" + self.diglib + "\\" + self.normSig + "\\" + im.replace("jpg", "tif")
-			#ur.urlretrieve(path, self.path + "/" + im.replace("jpg", "tif"))
-			path = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/" + im
-			ur.urlretrieve(path, self.path + "/" + im)
+	def downloadImages(self, overwriteImages):
+		try:
+			file = open(self.path + "/facsimile.xml")
+		except:
+			print("Bilder von " + self.normSig + " konnten nicht geladen werden")
+		else:
+			tree = et.parse(file)
+			root = tree.getroot()
+			for gr in root:
+				imName = gr.attrib["url"].split("/").pop()
+				self.imageList.append(imName)
+			for im in self.imageList:
+				original = self.folderMA + im.replace("jpg", "tif")
+				target = self.path + "/" + im.replace("jpg", "tif")
+				if os.path.exists(target) == False or overwriteImages == True:
+						shutil.copyfile(original, target)
 	def extractMetadata(self):
 		self.meta = ds.DatasetDC()
 		self.meta.addEntry("identifier", ds.Entry(self.recO.digi))
@@ -109,10 +118,8 @@ class Harvester():
 			self.meta.addEntry("language", ds.Entry(lng))
 		for sub in self.recA.subjects:
 			self.meta.addEntry("subject", ds.Entry(sub))
-		if self.diglib == "inkunabeln" or int(self.recA.date) <= 1500:
-			self.meta.addEntry("description", ds.Entry("Digitalisierte Inkunabel aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
-		else:
-			self.meta.addEntry("description", ds.Entry("Digitalisierter Druck aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
+		matType = self.getMatType()
+		self.meta.addEntry("description", ds.Entry(matType + " aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
 		self.meta.addEntry("rights", ds.Entry("CC BY-SA 3.0"))
 		self.meta.addEntry("rights", ds.Entry("http://diglib.hab.de/copyright.html"))
 		self.meta.addEntry("source", ds.Entry("Wolfenbüttel, Herzog August Bibliothek, " + self.sig))
@@ -128,3 +135,23 @@ class Harvester():
 		meta = self.meta.toList()
 		with open(self.path + "/metadata.json", "w") as target:
 			json.dump(meta, target, indent=2, ensure_ascii=False)
+	def getMatType(self):
+		if self.diglib == "inkunabeln" or re.match("14\d\d|1500", self.recA.date):
+			return("Digitalisierte Inkunabel")
+		return("Digitalisierter Druck")
+	def getFolderMA(self):
+		if self.diglib == "inkunabeln":
+			return("//MASERVER/Auftraege/Master/" + self.diglib + "/" + self.normSig + "/")
+		if self.diglib == "drucke":
+			proceed = True
+			druckNo = 1
+			while proceed == True:
+				path = "//MASERVER/Auftraege/Master/drucke" + str(druckNo).zfill(2) + "/drucke/" + self.normSig + "/"
+				if os.path.exists(path):
+					return(path)
+				druckNo += 1
+				if druckNo > 15:
+					proceed = False
+		return(None)
+				
+			

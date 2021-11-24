@@ -78,7 +78,10 @@ class Record:
 			pass
 		else:
 			for occ in subDict:
-				self.subjects.append(subDict[occ]["a"].pop(0))
+				try:
+					self.subjects.append(subDict[occ]["a"].pop(0))
+				except:
+					pass
 		try:
 			self.pages = self.data["034D"]["01"]["a"].pop(0)
 		except:

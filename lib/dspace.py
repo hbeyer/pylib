@@ -12,13 +12,14 @@ import os
 import json
 import shutil
 import glob
+import logging
 
 class Harvester():
 	def __init__(self, ppnO, folder = "downloads", diglib = "inkunabeln"):
 		self.ppnO = ppnO
 		self.folder = folder
 		self.diglib = diglib
-		file = ur.urlopen("http://unapi.k10plus.de/?id=gvk:ppn:" + self.ppnO + "&format=picaxml")
+		file = ur.urlopen(f"http://unapi.k10plus.de/?id=gvk:ppn:{self.ppnO}&format=picaxml")
 		tree = et.parse(file)
 		node = tree.getroot()		
 		self.recO = pica.Record(node)
@@ -27,10 +28,10 @@ class Harvester():
 		try:
 			self.diglib = search.group(1)
 		except:
-			pass
+			logging.warning("Die normalisierte Signatur konnte nicht gefunden werden")
 		self.normSig = search.group(2)
 		self.folderMA = self.getFolderMA()
-		self.path = self.folder + "/" + self.normSig
+		self.path = f"{self.folder}/{self.normSig}"
 		self.recA = None
 		sigSRU = self.sig.replace("(", "").replace(")", "").replace(" ", "+")
 		req = sru.Request_HAB()
@@ -45,49 +46,45 @@ class Harvester():
 			self.recA = self.recO
 		self.imageList = []
 	def go(self, overwriteImages = False):
-		print("Harvesten des Digitalisats mit der PPN " + self.ppnO)
+		logging.info(f"Harvesten des Digitalisats mit der PPN {self.ppnO}")
 		self.makeFolder()
 		self.downloadXML()
 		self.downloadImages(overwriteImages = overwriteImages)
 		self.extractMetadata()
 		self.saveMetadata()
-		print("Dateien geladen im Ordner " + self.path)
+		logging.info(f"Dateien geladen im Ordner {self.path}")
 	def makeFolder(self):
 		if os.path.exists(self.path):
 			pass
 		else:
 			os.mkdir(self.path)
 	def downloadXML(self):
-		urlO = "http://unapi.k10plus.de/?id=gvk:ppn:" + self.ppnO + "&format=picaxml"
+		urlO = f"http://unapi.k10plus.de/?id=gvk:ppn:{self.ppnO}&format=picaxml"
 		try:
 			ur.urlretrieve(urlO, self.path + "/o-aufnahme.xml")
 		except:
-			print("Laden der O-Aufnahme fehlgeschlagen")
+			logging.warning("Laden der O-Aufnahme fehlgeschlagen")
 		try:
-			ur.urlretrieve("http://unapi.k10plus.de/?id=gvk:ppn:" + self.ppnA + "&format=picaxml", self.path + "/a-aufnahme.xml")
+			ur.urlretrieve(f"http://unapi.k10plus.de/?id=gvk:ppn:{self.ppnA}&format=picaxml", f"{self.path}/a-aufnahme.xml")
 		except:
-			print("Laden der A-Aufnahme fehlgeschlagen")		
-		urlMets = "http://oai.hab.de/?verb=GetRecord&metadataPrefix=mets&identifier=oai:diglib.hab.de:ppn_" + self.ppnO
+			logging.info("Laden der A-Aufnahme fehlgeschlagen")		
+		urlMets = f"http://oai.hab.de/?verb=GetRecord&metadataPrefix=mets&identifier=oai:diglib.hab.de:ppn_{self.ppnO}"
 		try:
 			ur.urlretrieve(urlMets, self.path + "/mets.xml")
 		except:
-			print("Laden der METS fehlgeschlagen")
-		urlStruct = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/facsimile.xml"
+			logging.info("Laden der METS fehlgeschlagen")
+		urlStruct = f"http://diglib.hab.de/{self.diglib}/{self.normSig}/facsimile.xml"
 		try:
 			ur.urlretrieve(urlStruct, self.path + "/facsimile.xml")
 		except:
-			print("Laden der facsimile.xml fehlgeschlagen")
-		urlTranscr = "http://diglib.hab.de/" + self.diglib + "/" + self.normSig + "/tei-struct.xml"
+			logging.warning("Laden der facsimile.xml fehlgeschlagen")
+		urlTranscr = f"http://diglib.hab.de/{self.diglib}/{self.normSig}/tei-struct.xml"
 		try:
 			ur.urlretrieve(urlTranscr, self.path + "/tei-struct.xml")
 		except:
-			print("Keine tei-struct.xml gefunden")
+			logging.info("Keine tei-struct.xml gefunden")
 	def downloadImages(self, overwriteImages):
-		try:
-			file = open(self.path + "/facsimile.xml")
-		except:
-			print("Bilder von " + self.normSig + " konnten nicht geladen werden")
-		else:
+		with open(self.path + "/facsimile.xml", "r") as file:
 			tree = et.parse(file)
 			root = tree.getroot()
 			for gr in root:
@@ -122,7 +119,7 @@ class Harvester():
 		self.meta.addEntry("description", ds.Entry(matType + " aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
 		self.meta.addEntry("rights", ds.Entry("CC BY-SA 3.0"))
 		self.meta.addEntry("rights", ds.Entry("http://diglib.hab.de/copyright.html"))
-		self.meta.addEntry("source", ds.Entry("Wolfenbüttel, Herzog August Bibliothek, " + self.sig))
+		self.meta.addEntry("source", ds.Entry(f"Wolfenbüttel, Herzog August Bibliothek, {self.sig}"))
 		try:
 			self.meta.addEntry("relation", ds.Entry(self.recA.gw))
 		except:
@@ -141,17 +138,15 @@ class Harvester():
 		return("Digitalisierter Druck")
 	def getFolderMA(self):
 		if self.diglib == "inkunabeln":
-			return("//MASERVER/Auftraege/Master/" + self.diglib + "/" + self.normSig + "/")
+			return(f"//MASERVER/Auftraege/Master/{self.diglib}/{self.normSig}/")
 		if self.diglib == "drucke":
 			proceed = True
 			druckNo = 1
 			while proceed == True:
-				path = "//MASERVER/Auftraege/Master/drucke" + str(druckNo).zfill(2) + "/drucke/" + self.normSig + "/"
+				path = f"//MASERVER/Auftraege/Master/drucke{str(druckNo).zfill(2)}/drucke/{self.normSig}/"
 				if os.path.exists(path):
 					return(path)
 				druckNo += 1
 				if druckNo > 15:
 					proceed = False
 		return(None)
-				
-			

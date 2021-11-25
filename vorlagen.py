@@ -11,9 +11,23 @@ print(mylist)
 """
 
 """
+# Iterieren über eine Liste mit Zugriff auf die Indices
+mylist = ['Lerche', 'Schneider', 'Zimmermann', 'Kästner', 'Raabe', 'Schmidt-Glintzer', 'Burschel']
+for ind, val in enumerate(mylist):
+    print(f"{ind}: {val}")
+"""
+
+"""
 # Ein Tupel (ist unveränderlich)
 mytuple = ('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag')
 #print(mytuple[3:6])
+"""
+
+"""
+# Unpacking eines Tupel
+mytuple = ('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag')
+Mohn, Dienst, Mitte, Donner, Frei, Sams, Sonne = mytuple
+print(f"Das Sams kommt an diesem Tag: {Sams}")
 """
 
 """
@@ -29,7 +43,7 @@ for i in myset:
 # Ein Dictionary
 mydict = {'Mann':'vyras', 'Frau':'moteris','Fisch':'žuvis', 'Biber':'bebras', 'Stadt':'miestas', 'König':'karalius'}
 for x, y in mydict.items():
-  print(x + ' heißt auf Litauisch ' + y)
+  print(f"{x} heißt auf Litauisch {y}")
 """
     
 """
@@ -77,7 +91,8 @@ sorted_books = sorted(books, key=itemgetter("year"))
 groups = itertools.groupby(sorted_books, key=lambda x:x["year"])
 
 for group in groups:
-	print(group[0] + ": " + "/".join([row["author"] for row in group[1]]))
+	#print(group[0] + ": " + "/".join([row["author"] for row in group[1]]))
+        print(f'{group[0]}: {"/".join([row["author"] for row in group[1]])}')
 """
 
 """
@@ -122,9 +137,9 @@ print(string)
 """
 # Einlesen einer Datei, Durchsuchen mit einem regulären Ausdruck und Wiedergabe des Ergebnisses
 import re
-string = open('ergebnis_gw.txt').read()
-istc = re.findall(r"ISTC (.+)\.", string)
-print('|'.join(istc))
+with open("test.txt", "r") as file:
+    istc = re.findall(r"ISTC (.+)", file.read())
+    print('|'.join(istc))
 """
 
 """
@@ -260,4 +275,20 @@ ser = ["Himbeer", "Zitrone", "Ananas"]
 pickle.dump(ser, open("obst.p", "wb"))
 obst = pickle.load(open("obst.p", "rb"))
 print(obst)
+"""
+
+"""
+# Einen Logger betreiben
+
+import logging
+
+# Das Folgende sorgt dafür, dass ab diesem Level Meldungen angezeigt werden
+# Sollte da stehen, wo der Code ausgeführt wird (u. U. main() nutzen)
+logging.basicConfig(level=logging.DEBUG)
+
+logging.debug("Die Checksumme beträgt 45678")
+logging.info("Es wurden alle Dateien geladen")
+logging.warning("Laden der nicht essenziellen Datei xy fehlgeschlagen")
+logging.error("Es ist ein Problem aufgetreten")
+logging.critical("Wegen eines Problems muss das Programm beendet werden")
 """

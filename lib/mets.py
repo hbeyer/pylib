@@ -128,6 +128,6 @@ def extractNumber(number):
                 return(None)
         
 def removeLinebreaks(text, replacement=" "):
-	text = text.replace("\n", replacement)
-	text = text.replace("  ", " ")
-	return(text)
+    text = text.replace("\n", replacement)
+    text = text.replace("  ", " ")
+    return(text)

@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import logging
+
 class Dataset:
     def __init__(self):
         self.fields = {}
@@ -27,17 +29,17 @@ class Dataset:
         return(ret)
 
 class Entry:
-    def __init__(self, value, lang = None, authSys = "", authID = ""):
+    def __init__(self, value, lang = None, auth_sys = "", auth_id = ""):
         self.value = value
         self.language = lang
-        self.authSys = authSys
-        self.authID = authID
+        self.auth_sys = auth_sys
+        self.auth_id = auth_id
     def __str__(self):
         ret = self.value
         if self.language != None:
             ret = ret + "@" + self.language
-        if self.authSys and self.authID:
-            ret = ret + "#" + self.authSys + "_" + self.authID
+        if self.auth_sys and self.auth_id:
+            ret = ret + "#" + self.auth_sys + "_" + self.auth_id
         return(ret)
 
 class DatasetDC(Dataset):

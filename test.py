@@ -2,12 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from lib import dspace as ds
-from lib import dataset as dts
-
+from ext import dspace_rest_client
 import logging
+import random
 logging.basicConfig(level=logging.INFO)
 
-dset = dts.DatasetDC()
-ety = dts.Entry("G. Julius Caesar", None, "GND", "118518275")
-dset.addEntry("contributor", ety)
-print(dset.toList())

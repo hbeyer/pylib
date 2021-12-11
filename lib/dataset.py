@@ -4,28 +4,27 @@
 class Dataset:
     def __init__(self):
         self.fields = {}
-    def addEntry(self, field, entry):
+    def add_entry(self, field, entry):
         try:
             self.fields[field].append(entry)
         except:
         	logging.error(f"Feld {field} ist nicht definiert")
-    def getEntries(self, field):
+    def get_entries(self, field):
         try:
             return(self.fields[field])
         except:
             return(None)
-    def toDict(self):
+    def to_dict(self):
         ret = {}
         for name in self.fields:
             ret[name] = ";".join([str(entry) for entry in self.fields[name]])
         return(ret)
-    def toList(self):
+    def to_list(self):
         ret = []
         for name in self.fields:
             for entry in self.fields[name]:
                 ret.append({name : str(entry)})
         return(ret)
-
 
 class Entry:
     def __init__(self, value, lang = None, authSys = "", authID = ""):
@@ -45,19 +44,26 @@ class DatasetDC(Dataset):
     def __init__(self):
         super().__init__()
         self.fields = {
-            "identifier" : [],
-            "format" : [],
-            "type" : [],
-            "language" : [],
-            "title" : [],
-            "subject" : [],
-            "coverage" : [],
-            "description" : [],
-            "creator" : [],
-            "contributor" : [],
-            "publisher" : [],
-            "rights" : [],
-            "source" : [],
-            "relation" : [],
-            "date" : []
+            "dc.identifier" : [],
+            "dc.identifier.urn" : [],
+            "dc.format" : [],
+            "dc.type" : [],
+            "dc.language" : [],
+            "dc.title" : [],
+            "dc.subject" : [],
+            "dc.coverage" : [],
+            "dc.description" : [],
+            "dc.creator" : [],
+            "dc.contributor" : [],
+            "dc.publisher" : [],
+            "dc.rights" : [],
+            "dc.rights.uri" : [],
+            "dcterms.rightsHolder" : [],
+            "dc.source" : [],
+            "dc.relation" : [],
+            "dc.date" : [],
+            "dc.date.embargo" : [],
+            "dcterms.extent" : [],
+            "dcterms.isPartOf" : [],
+            "dc.date.embargo" : [],
         }

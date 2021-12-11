@@ -28,9 +28,9 @@ class Harvester():
         try:
             self.diglib = search.group(1)
         except:
-            logging.warning("Die normalisierte Signatur konnte nicht gefunden werden")
+            raise Exception("Die normalisierte Signatur konnte nicht gefunden werden")
         self.normSig = search.group(2)
-        self.folderMA = self.getFolderMA()
+        self.folderMA = self.get_folder_MA()
         self.path = f"{self.folder}/{self.normSig}"
         self.recA = None
         sigSRU = self.sig.replace("(", "").replace(")", "").replace(" ", "+")
@@ -45,20 +45,20 @@ class Harvester():
         if self.recA == None:
             self.recA = self.recO
         self.imageList = []
-    def go(self, overwriteImages = False):
+    def to_folder(self, overwriteImages = False):
         logging.info(f"Harvesten des Digitalisats mit der PPN {self.ppnO}")
-        self.makeFolder()
-        self.downloadXML()
-        self.downloadImages(overwriteImages = overwriteImages)
-        self.extractMetadata()
-        self.saveMetadata()
+        self.make_folder()
+        self.download_XML()
+        self.download_images(overwriteImages = overwriteImages)
+        self.extract_metadata()
+        self.save_metadata()
         logging.info(f"Dateien geladen im Ordner {self.path}")
-    def makeFolder(self):
+    def make_folder(self):
         if os.path.exists(self.path):
             pass
         else:
             os.mkdir(self.path)
-    def downloadXML(self):
+    def download_XML(self):
         urlO = f"http://unapi.k10plus.de/?id=gvk:ppn:{self.ppnO}&format=picaxml"
         try:
             ur.urlretrieve(urlO, self.path + "/o-aufnahme.xml")
@@ -83,7 +83,7 @@ class Harvester():
             ur.urlretrieve(urlTranscr, self.path + "/tei-struct.xml")
         except:
             logging.info("Keine tei-struct.xml gefunden")
-    def downloadImages(self, overwriteImages):
+    def download_images(self, overwriteImages):
         with open(self.path + "/facsimile.xml", "r") as file:
             tree = et.parse(file)
             root = tree.getroot()
@@ -95,48 +95,48 @@ class Harvester():
                 target = self.path + "/" + im.replace("jpg", "tif")
                 if os.path.exists(target) == False or overwriteImages == True:
                         shutil.copyfile(original, target)
-    def extractMetadata(self):
+    def extract_metadata(self):
         self.meta = ds.DatasetDC()
-        self.meta.addEntry("identifier", ds.Entry(self.recO.digi))
-        self.meta.addEntry("format", ds.Entry("Online resource", "eng"))
-        self.meta.addEntry("type", ds.Entry("Digitized book", "eng"))
-        self.meta.addEntry("title", ds.Entry(self.recA.title))
-        self.meta.addEntry("date", ds.Entry(self.recA.date))
+        self.meta.add_entry("identifier", ds.Entry(self.recO.digi))
+        self.meta.add_entry("format", ds.Entry("Online resource", "eng"))
+        self.meta.add_entry("type", ds.Entry("Digitized book", "eng"))
+        self.meta.add_entry("title", ds.Entry(self.recA.title))
+        self.meta.add_entry("date", ds.Entry(self.recA.date))
         for pers in self.recA.persons:
             pers.makePersName()
             if pers.role == "creator":
-                self.meta.addEntry("creator", ds.Entry(pers.persName, None, "GND", pers.gnd))
+                self.meta.add_entry("creator", ds.Entry(pers.persName, None, "GND", pers.gnd))
             else:
-                self.meta.addEntry("contributor", ds.Entry(pers.persName, None, "GND", pers.gnd))
+                self.meta.add_entry("contributor", ds.Entry(pers.persName, None, "GND", pers.gnd))
         for pub in self.recA.publishers:
             pub.makePersName()
-            self.meta.addEntry("publisher", ds.Entry(pub.persName, None, "GND", pub.gnd))
+            self.meta.add_entry("publisher", ds.Entry(pub.persName, None, "GND", pub.gnd))
         for lng in self.recA.lang:
-            self.meta.addEntry("language", ds.Entry(lng))
+            self.meta.add_entry("language", ds.Entry(lng))
         for sub in self.recA.subjects:
-            self.meta.addEntry("subject", ds.Entry(sub))
-        matType = self.getMatType()
-        self.meta.addEntry("description", ds.Entry(matType + " aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
-        self.meta.addEntry("rights", ds.Entry("CC BY-SA 3.0"))
-        self.meta.addEntry("rights", ds.Entry("http://diglib.hab.de/copyright.html"))
-        self.meta.addEntry("source", ds.Entry(f"Wolfenbüttel, Herzog August Bibliothek, {self.sig}"))
+            self.meta.add_entry("subject", ds.Entry(sub))
+        matType = self.get_mat_type()
+        self.meta.add_entry("description", ds.Entry(matType + " aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
+        self.meta.add_entry("rights", ds.Entry("CC BY-SA 3.0"))
+        self.meta.add_entry("rights", ds.Entry("http://diglib.hab.de/copyright.html"))
+        self.meta.add_entry("source", ds.Entry(f"Wolfenbüttel, Herzog August Bibliothek, {self.sig}"))
         try:
-            self.meta.addEntry("relation", ds.Entry(self.recA.gw))
+            self.meta.add_entry("relation", ds.Entry(self.recA.gw))
         except:
             pass
         try:
-            self.meta.addEntry("relation", ds.Entry(self.recA.istc))
+            self.meta.add_entry("relation", ds.Entry(self.recA.istc))
         except:
             pass
-    def saveMetadata(self):
-        meta = self.meta.toList()
+    def save_metadata(self):
+        meta = self.meta.to_list()
         with open(self.path + "/metadata.json", "w") as target:
             json.dump(meta, target, indent=2, ensure_ascii=False)
-    def getMatType(self):
+    def get_mat_type(self):
         if self.diglib == "inkunabeln" or re.match("14\d\d|1500", self.recA.date):
             return("Digitalisierte Inkunabel")
         return("Digitalisierter Druck")
-    def getFolderMA(self):
+    def get_folder_MA(self):
         if self.diglib == "inkunabeln":
             return(f"//MASERVER/Auftraege/Master/{self.diglib}/{self.normSig}/")
         if self.diglib == "drucke":

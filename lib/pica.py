@@ -70,7 +70,7 @@ class Record:
                 except:
                     pass
         # Funktioniert igendwie nicht
-        #self.gatt = map(lambda term: re.sub("!.+!", "", str(term)), self.gatt)
+        self.gatt = map(lambda term: re.sub("\!.+\!", "", str(term)), self.gatt)
         self.subjects = []
         try:
             subDict = self.data["044K"]

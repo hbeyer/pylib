@@ -13,9 +13,9 @@ class Table:
             writer.writerow(self.fields)
             for row in self.content:
                 writer.writerow(row)
-    def load(self, path):
+    def load(self, path, encoding = "utf-8"):
         try:
-            file = open(path + ".csv", "r")
+            file = open(path + ".csv", "r", encoding = encoding)
         except:
             print("Keine Datei unter " + path)
             return(None)

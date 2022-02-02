@@ -9,7 +9,6 @@ from lib import csvt
 # Verarbeitung von CSV-Tabellen, die in der WinIBW generiert und unter path abgelegt wurden
 class Table():
     def __init__(self, path):
-        file = open(path, "r", encoding="cp1252")
         try:
             file = open(path, "r", encoding="cp1252")
         except:

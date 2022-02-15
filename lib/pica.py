@@ -69,7 +69,6 @@ class Record:
                     self.gatt.extend(gatDict[occ]["a"])
                 except:
                     pass
-        # Funktioniert igendwie nicht
         self.gatt = map(lambda term: re.sub("\!.+\!", "", str(term)), self.gatt)
         self.subjects = []
         try:
@@ -221,6 +220,7 @@ class Record:
                 placeRel = placeList[occ]["4"].pop(0)
             except:
                 placeRel = ""
+            placeName = re.sub("\!.+\!", "", placeName)
             self.places.append(Place(placeName, placeRel))
     def loadPublishers(self):
         try:

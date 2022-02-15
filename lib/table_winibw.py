@@ -16,7 +16,8 @@ class Table():
             return(None)
         reader = csv.DictReader(file, delimiter=";")
         self.content = [row for row in reader]
-        fieldDict = self.content.pop(0)
+        #fieldDict = self.content.pop(0)
+        fieldDict = self.content[0]
         self.fields = [tup for tup in fieldDict if tup != ""]
     def __iter__(self):
         self.a = 0

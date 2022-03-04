@@ -1,20 +1,30 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from lib import geo
-from lib import csvt
 import logging
+from lib import xmlserializer as xs
+from lib import xmlreader as xr
+from lib import pica
 logging.basicConfig(level=logging.INFO)
 
-#test = geo.getGettyLabel("7012821")
-tbl = csvt.Table()
-tbl.load("source/pcp-geo")
-res = csvt.Table(["Ort_PCP", "Ort_Getty", "long", "lat", "GettyID"], [])
-for row in tbl.content:
-    label, _a, _b, long, lat, _c, _d, _e, getty = row
-    labelGetty = ""
-    if getty != "":
-        labelGetty = geo.getGettyLabel(getty)
-    res.content.append([label, str(labelGetty), long, lat, "http://vocab.getty.edu/page/tgn/7106209" + getty])
-    print(str(labelGetty))
-res.save("pcp-geodata")
+reader = xr.downloadReader("downloads/esm", "record", "info:srw/schema/5/picaXML-v1.0")
+
+ser = xs.Serializer("testSer", "collection")
+ser.add_nested("metadata", {
+    "heading" : "Provenienz Elisabeth Marie Sophie",
+    "description" : "Titel aus dem Vorbesitz der Herzogin Elisabeth Sophie Marie im OPAC der HAB",
+    "owner" : "Elisabeth Marie Sophie",
+    "ownerGND" : "104277122",
+    "year" : "1767",
+    "creatorReconstruction" : "Hartmut Beyer",
+    "yearReconstruction" : "2022",
+    "fileName" : "esm-opac"    
+    })
+for count, node in enumerate(reader):
+    rec = pica.Record(node)
+    logging.info(rec.vdn)
+    itemNode = rec.toLibreto("Elisabeth")
+    ser.add_node(itemNode)
+    if count > 100:
+        break
+ser.save()

@@ -14,6 +14,7 @@ import json
 import shutil
 import glob
 import logging
+import requests
 
 class Harvester():
     def __init__(self, ppn_o, folder = "downloads", diglib = "inkunabeln"):
@@ -175,7 +176,19 @@ class Harvester():
                     proceed = False
         return(None)
 
-def Uploader():
+
+class Uploader():
+    def __init__(self, user, password, rest_url, collection):
+        with requests.Session() as s:
+            resp = s.get(rest_url)
+            cookie = resp.cookies.get("DSPACE-XSRF-COOKIE")
+        print(cookie)
+        with requests.Session() as s:
+            p = s.post(rest_url + f"authn/login?user={user}&password={password}", data={ "user":user, "password":password  }, headers={ "X-XSRF-TOKEN":cookie })
+        print(p)
+
+"""
+class Uploader():
     def __init__(self, user, password, rest_url, collection):
         self.valid = False
         self.client = drc.DSpaceRestClient(user, password, rest_url, False, True)
@@ -186,3 +199,4 @@ def Uploader():
             raise Exception(f"ID für die Collection {collection} konnte nicht gefunden werden")
         else:
             self.valid = True
+"""

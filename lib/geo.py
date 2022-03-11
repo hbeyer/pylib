@@ -335,10 +335,7 @@ def normalizePlaceName(placeName):
         pass
     return(placeName)
 def getGeoDataGetty(id):
-    url = "https://ref.de.dariah.eu/tgnsearch/tgnquery.xql?id=" + id
-    fileobject = ul.urlopen(url, None, 10)
-    tree = et.parse(fileobject)
-    root = tree.getroot()
+    root = getGettyTree(id)
     latNode = root.find('.//{http://textgrid.info/namespaces/vocabularies/tgn}Latitude/{http://textgrid.info/namespaces/vocabularies/tgn}Decimal')
     longNode = root.find('.//{http://textgrid.info/namespaces/vocabularies/tgn}Longitude/{http://textgrid.info/namespaces/vocabularies/tgn}Decimal')
     try:
@@ -352,6 +349,20 @@ def getGeoDataGetty(id):
             return(False)
         else:
             return([longitude, latitude])
+def getGettyTree(id):
+    url = "https://ref.de.dariah.eu/tgnsearch/tgnquery.xql?id=" + id
+    fileobject = ul.urlopen(url, None, 10)
+    tree = et.parse(fileobject)
+    root = tree.getroot()
+    return(root)
+def getGettyLabel(id):
+    root = getGettyTree(id)
+    labelNode = root.find('.//{http://textgrid.info/namespaces/vocabularies/tgn}Preferred_Term/{http://textgrid.info/namespaces/vocabularies/tgn}Term_Text')
+    try:
+        label = labelNode.text.strip()
+    except:
+        return(None)
+    return(label)
 def getGeoDataGND(id):
     url = "http://d-nb.info/gnd/" + id + "/about/lds"
     fileobject = ul.urlopen(url, None, 10)

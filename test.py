@@ -2,17 +2,29 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import requests
+from lib import xmlserializer as xs
+from lib import xmlreader as xr
+from lib import pica
 logging.basicConfig(level=logging.INFO)
 
-class Uploader():
-    def __init__(self, user, password, rest_url, collection):
-        with requests.Session() as s:
-            resp = s.get(rest_url)
-            cookie = resp.cookies.get("DSPACE-XSRF-COOKIE")
-        print(cookie)
-        with requests.Session() as s:
-            p = s.post(rest_url + f"authn/login?user={user}&password={password}", data={ "user":user, "password":password  }, headers={ "X-XSRF-TOKEN":cookie })
-        print(p)
+reader = xr.downloadReader("downloads/esm", "record", "info:srw/schema/5/picaXML-v1.0")
 
-upl = Uploader("beyer@hab.de", "admin", "http://localhost:8080/server/api/", "Digitalisierte Inkunabeln")
+ser = xs.Serializer("testSer", "collection")
+ser.add_nested("metadata", {
+    "heading" : "Provenienz Elisabeth Marie Sophie",
+    "description" : "Titel aus dem Vorbesitz der Herzogin Elisabeth Sophie Marie im OPAC der HAB",
+    "owner" : "Elisabeth Marie Sophie",
+    "ownerGND" : "104277122",
+    "year" : "1767",
+    "creatorReconstruction" : "Hartmut Beyer",
+    "yearReconstruction" : "2022",
+    "fileName" : "esm-opac"    
+    })
+for count, node in enumerate(reader):
+    rec = pica.Record(node)
+    logging.info(rec.vdn)
+    itemNode = rec.toLibreto("Elisabeth")
+    ser.add_node(itemNode)
+    if count > 100:
+        break
+ser.save()

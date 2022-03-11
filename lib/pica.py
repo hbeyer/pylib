@@ -5,6 +5,8 @@ import glob
 import urllib.request as ul
 import xml.etree.ElementTree as et
 import re
+import logging
+#from lib import xmlserializer as xs
 
 class Record:
     def __init__(self, node):
@@ -14,7 +16,8 @@ class Record:
         self.copies = []
         self.places = []
         self.publishers = []
-        self.getData()        
+        self.vdn = ""
+        self.getData()
         try:
             self.ppn = self.data["003@"]["01"]["0"].pop(0)
         except:
@@ -41,7 +44,13 @@ class Record:
         try:
             self.title = self.data["021A"]["01"]["a"].pop(0)
         except:
-            self.title = ""
+            try:
+                self.title = self.data["047C"]["01"]["a"].pop(0)
+            except:
+                try:
+                    self.title = self.data["036C"]["01"]["a"].pop()
+                except:
+                    self.title = ""
         try:
             self.title = self.title + ". " + self.data["021A"]["01"]["d"].pop(0)
         except:
@@ -69,8 +78,7 @@ class Record:
                     self.gatt.extend(gatDict[occ]["a"])
                 except:
                     pass
-        # Funktioniert igendwie nicht
-        #self.gatt = map(lambda term: re.sub("!.+!", "", str(term)), self.gatt)
+        self.gatt = map(lambda term: re.sub("\!.+\!", "", str(term)), self.gatt)
         self.subjects = []
         try:
             subDict = self.data["044K"]
@@ -121,6 +129,7 @@ class Record:
         self.loadCopies()
         self.loadPlaces()
         self.loadPublishers()
+        self.getVD()        
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", Jahr: " + self.date
         return(ret)
@@ -221,6 +230,7 @@ class Record:
                 placeRel = placeList[occ]["4"].pop(0)
             except:
                 placeRel = ""
+            placeName = re.sub("\!.+\!", "", placeName)
             self.places.append(Place(placeName, placeRel))
     def loadPublishers(self):
         try:
@@ -252,6 +262,127 @@ class Record:
             for group in extract:
                 self.normPages += int(group)*2
         return(True)
+    def getVD(self):
+        try:
+            self.vdn = self.data["006V"]["01"]["0"].pop(0)
+        except:
+            try:
+                self.vdn = self.data["006W"]["01"]["0"].pop(0)
+            except:
+                try:
+                    self.vdn = self.data["006M"]["01"]["0"].pop(0)
+                except:
+                    pass
+    def toLibreto(self, prov = None):
+        itn = et.Element("item")
+        et.SubElement(itn, "id").text = "lid" + self.ppn
+        et.SubElement(itn, "titleCat").text = self.title
+        if self.persons != []:
+            persl = et.Element("persons")
+            for pers in self.persons:
+                persn = et.Element("person")
+                et.SubElement(persn, "persName").text = pers.persName
+                et.SubElement(persn, "gnd").text = pers.gnd
+                et.SubElement(persn, "role").text = pers.role
+                persl.append(persn)
+            itn.append(persl) 
+        if self.places != []:
+            placel = et.Element("places")
+            for pl in self.places:
+                placen = et.Element("place")
+                et.SubElement(placen, "placeName").text = pl.placeName
+                if pl.gnd != None:
+                    et.SubElement(placen, "gnd").text = pl.gnd
+                placel.append(placen)
+            itn.append(placel)
+        if self.publishers != []:
+            publ = et.Element("publishers")
+            for pub in self.publishers:
+                et.SubElement(publ, "publisher").text = pub.persName
+            itn.append(publ)
+        if self.date:
+            et.SubElement(itn, "year").text = self.date
+        if self.format:
+            et.SubElement(itn, "format").text = self.format
+        if self.lang != []:
+            langl = et.Element("languages")
+            for code in self.lang:
+                et.SubElement(langl, "language").text = code
+            itn.append(langl)
+        letter = self.bbg[0]
+        mediaType = assignMediaType(letter)
+        et.SubElement(itn, "mediaType").text = mediaType
+        genrel = et.Element("genres")
+        subjl = et.Element("subjects")
+        numSubj = 0
+        numGenres = 0
+        for gat in self.gatt:
+            if recognizeGenre(gat) == "genre":
+                et.SubElement(genrel, "genre").text = gat
+                numGenres += 1
+            else:
+                et.SubElement(subjl, "subject").text = gat
+                numSubj += 1
+        if numGenres > 0:
+            itn.append(genrel)
+        if numSubj > 0:
+            itn.append(subjl)
+        mann = et.Element("manifestation")
+        sysman = "K10plus"
+        idman = self.ppn
+        if self.vdn != "":
+            if self.vdn[0:4] == "VD16":
+                sysman = "VD16"
+                idman = self.vdn
+            elif self.vdn[0:4] == "VD17":
+                sysman = "VD17"
+                idman = self.vdn
+            elif self.vdn[0:4] == "VD18":
+                sysman = "VD18"
+                idman = self.vdn                
+        et.SubElement(mann, "systemManifestation").text = sysman
+        et.SubElement(mann, "idManifestation").text = idman
+        itn.append(mann)
+        chab = et.Element("copiesHAB")
+        numhab = 0
+        for cop in self.copies:
+            if "HAB" in cop.bib or "Herzog August" in cop.bib or cop.bib == "":
+                et.SubElement(chab, "copyHAB").text = cop.sm
+                numhab += 1
+        if numhab > 0:
+            itn.append(chab)
+        if prov != None:
+            for cop in self.copies:
+                provstr = ";".join(cop.provenances)
+                if prov in provstr:
+                    oi = et.Element("originalItem")
+                    if cop.bib == "":
+                        et.SubElement(oi, "institutionOriginal").text = "Herzog August Bibliothek Wolfenbüttel"
+                    else:
+                        et.SubElement(oi, "institutionOriginal").text = cop.bib                    
+                    et.SubElement(oi, "shelfmarkOriginal").text = cop.sm
+                    et.SubElement(oi, "provenanceAttribute").text = "; ".join(cop.provenances)
+                    itn.append(oi)
+                    break                    
+        return(itn)
+        
+def assignMediaType(letter):
+    conc = { 
+        "A" : "Druck",
+        "H" : "Handschrift",
+        "K" : "Karte",
+        "M" : "Musikalie"
+        }
+    try:
+        return(conc[letter])
+    except:
+        return("unbekannt")
+
+def recognizeGenre(gat):
+    genres = ['Adressbuch', 'Agende', 'Akademieschrift', 'Almanach', 'Amtsdruckschrift', 'Anleitung', 'Anstandsliteratur', 'Anthologie', 'Antiquariatskatalog', 'Anzeige', 'Aphorismus', 'Ars moriendi', 'Arzneibuch', 'Atlas', 'Auktionskatalog', 'Autobiographie', 'Ballade', 'Beichtspiegel', 'Bericht', 'Bibel', 'Bibliographie', 'Bibliothekskatalog', 'Biographie', 'Brevier', 'Brief', 'Briefsammlung', 'Briefsteller', 'Buchbinderanweisung', 'Buchhandelskatalog', 'Bücheranzeige', 'Chronik', 'Dissertation', 'Dissertation:theol.', 'Dissertation:phil.', 'Dissertation:med.', 'Dissertation:jur.', 'Dissertationensammlung', 'Drama', 'Edikt', 'Einblattdruck', 'Einführung', 'Elegie', 'Emblembuch', 'Entscheidungssammlung', 'Enzyklopädie', 'Epigramm', 'Epik', 'Epikedeion', 'Epos', 'Erbauungsliteratur', 'Erlebnisbericht', 'ErotischeLiteratur', 'Erzählung', 'Fabel', 'Fallsammlung', 'Fastnachtsspiel', 'Fibel', 'Festbeschreibung', 'Figurengedicht', 'Flugschrift', 'Formularsammlung', 'Frauenliteratur', 'Freimaurerliteratur', 'Führer', 'Fürstenspiegel', 'Gebet', 'Gebetbuch', 'Gelegenheitsschrift', 'Gelegenheitsschrift:Abschied', 'Gelegenheitsschrift:Amtsantritt', 'Gelegenheitsschrift:Begrüßung', 'Gelegenheitsschrift:Einladung', 'Gelegenheitsschrift:Einweihung', 'Gelegenheitsschrift:Fest', 'Gelegenheitsschrift:Friedensschluß', 'Gelegenheitsschrift:Geburt', 'Gelegenheitsschrift:Geburtstag', 'Gelegenheitsschrift:Gedenken', 'Gelegenheitsschrift:Hochzeit', 'Gelegenheitsschrift:Jubiläum', 'Gelegenheitsschrift:Konversion', 'Gelegenheitsschrift:Krönung', 'Gelegenheitsschrift:Namenstag', 'Gelegenheitsschrift:Neujahr', 'Gelegenheitsschrift:Promotion', 'Gelegenheitsschrift:Sieg', 'Gelegenheitsschrift:Taufe', 'Gelegenheitsschrift:Tod', 'Gelegenheitsschrift:Visitation', 'Gesangbuch', 'Gesellschaftsschrift', 'Gesetz', 'Gesetzessammlung', 'Grammatik', 'Handbuch', 'Hausväterliteratur', 'Heiligenvita', 'Hochschulschrift', 'Itinerar', 'Jagdliteratur', 'Jesuitendrama', 'Judaicum', 'Jugendbuch', 'Jugendsachbuch', 'Kalender', 'Kapitulation', 'Karte', 'Katalog', 'Katechismus', 'Kirchenlied', 'Kochbuch', 'Kolportageliteratur', 'Kommentar', 'Kommentar:jur.', 'Kommentar:lit.', 'Kommentar:theol.', 'Kommentar:hist.', 'Kommentar:polit.', 'Komödie', 'Konkordanz', 'Konsiliensammlung', 'Konsilium', 'Legende', 'Leichenpredigt', 'Leichenpredigtsammlung', 'Lesebuch', 'Lexikon', 'Libretto', 'Lied', 'Liedersammlung', 'Lyrik', 'Märchen', 'Märtyrerdrama', 'Mandat', 'Matrikel', 'Meßkatalog', 'Meßrelation', 'Missale', 'Mitgliederverzeichnis', 'Moralische Wochenschrift', 'Musikbuch', 'Musiknoten', 'Musterbuch', 'Novelle', 'Ordensliteratur', 'Ordensliteratur:Augustiner', 'Ordensliteratur:Augustiner-Barfüßer', 'Ordensliteratur:Augustiner-Chorherren', 'Ordensliteratur:Augustiner-Eremiten', 'Ordensliteratur:Barnabiten', 'Ordensliteratur:Benediktiner', 'Ordensliteratur:Chorherren', 'Ordensliteratur:Dominikaner', 'Ordensliteratur:Franziskaner', 'Ordensliteratur:Jesuiten', 'Ordensliteratur:Kapuziner', 'Ordensliteratur:Karmeliter', 'Ordensliteratur:Kartäuser', 'Ordensliteratur:Minimen', 'Ordensliteratur:Minoriten', 'Ordensliteratur:Oratorianer', 'Ordensliteratur:Prämonstratenser', 'Ordensliteratur:Terziaren', 'Ordensliteratur:Theatiner', 'Ordensliteratur:Unbeschuhte Karmeliter', 'Ordensliteratur:Zisterzienser', 'Ornamentstich', 'Ortsverzeichnis', 'Panegyrikos', 'Perioche', 'Pflanzenbuch', 'Pharmakopöe', 'Plan', 'Porträtwerk', 'Praktik', 'Predigt', 'Predigtsammlung', 'Preisschrift', 'Privileg', 'Psalter', 'Ratgeber', 'Rechenbuch', 'Rede', 'Regelsammlung', 'Regesten', 'Reisebericht', 'Reiseführer', 'Rezension', 'Rezensionszeitschrift', 'Richtlinie', 'Rituale', 'Roman', 'Sage', 'Satire', 'Satzung', 'Schäferdichtung', 'Schauspiel', 'Schreibmeisterbuch', 'Schulbuch', 'Schulprogramm', 'Schwank', 'Seuchenschrift', 'Spiel', 'Sprachführer', 'Sprichwortsammlung', 'Streitschrift', 'Streitschrift:polit.', 'Streitschrift:jur.', 'Streitschrift:theol.', 'Subskribentenliste', 'Subskriptionsanzeige', 'Tabelle', 'Tagebuch', 'Theaterzettel', 'Tierbuch', 'Tiermedizin', 'Topographie', 'Totentanz', 'Tragödie', 'Traktat', 'Trivialliteratur', 'Universitätsprogramm', 'Urkundenbuch', 'Verkaufskatalog', 'Verordnung', 'Verserzählung', 'Vertrag', 'Volksbuch', 'Volksschrifttum', 'Vorlesung', 'Vorlesungsverzeichnis', 'Wappenbuch', 'Wörterbuch', 'Zeitschrift', 'Zeitung', 'Zitatensammlung']
+    if gat in genres:
+        return("genre")
+    return(None)
 
 class RecordVD17(Record):
     def __init__(self, node):

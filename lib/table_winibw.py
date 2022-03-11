@@ -9,7 +9,6 @@ from lib import csvt
 # Verarbeitung von CSV-Tabellen, die in der WinIBW generiert und unter path abgelegt wurden
 class Table():
     def __init__(self, path):
-        file = open(path, "r", encoding="cp1252")
         try:
             file = open(path, "r", encoding="cp1252")
         except:
@@ -17,7 +16,8 @@ class Table():
             return(None)
         reader = csv.DictReader(file, delimiter=";")
         self.content = [row for row in reader]
-        fieldDict = self.content.pop(0)
+        #fieldDict = self.content.pop(0)
+        fieldDict = self.content[0]
         self.fields = [tup for tup in fieldDict if tup != ""]
     def __iter__(self):
         self.a = 0

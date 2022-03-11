@@ -273,6 +273,29 @@ class Record:
                     self.vdn = self.data["006M"]["01"]["0"].pop(0)
                 except:
                     pass
+    def toDict(self):
+        res = { 
+            "ppn" : self.ppn,
+            "vdn" : self.vdn,
+            "recType" : self.bbg,
+            "catRule" : self.catRule,
+            "date" : self.date,
+            "lang" : ";".join(self.lang),
+            "title" : self.title,
+            "resp" : self.resp,
+            "format" : self.format,
+            "pages" : self.pages,
+            "normPages" : str(self.normPages),
+            }
+        if self.langOrig != []:
+            res["langOrig"] = ";".join(self.langOrig)
+        if self.digi != []:
+            res["digi"] = ";".join(self.digi)
+        if self.gatt != []:
+            res["gat"] = ";".join(self.gatt)
+        if self.subjects != []:
+            res["subjects"] = ";".join(self.subjects)
+        return(res)
     def toLibreto(self, prov = None):
         itn = et.Element("item")
         et.SubElement(itn, "id").text = "lid" + self.ppn

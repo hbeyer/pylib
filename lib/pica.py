@@ -273,8 +273,8 @@ class Record:
                     self.vdn = self.data["006M"]["01"]["0"].pop(0)
                 except:
                     pass
-    def toDict(self):
-        res = { 
+    def to_dict(self):
+        res = {
             "ppn" : self.ppn,
             "vdn" : self.vdn,
             "recType" : self.bbg,
@@ -295,6 +295,14 @@ class Record:
             res["gat"] = ";".join(self.gatt)
         if self.subjects != []:
             res["subjects"] = ";".join(self.subjects)
+        if self.persons != []:
+            res["persons"] = [pers.to_dict() for pers in self.persons]
+        if self.publishers != []:
+            res["publishers"] = [pers.to_dict() for pers in self.publishers]
+        if self.places != []:
+            res["places"] = [pl.to_dict() for pl in self.places]
+        if self.copies != []:
+            res["copies"] = [cp.to_dict() for cp in self.copies]
         return(res)
     def toLibreto(self, prov = None):
         itn = et.Element("item")
@@ -482,6 +490,15 @@ class Person:
         except:
             pass
         return(ret)
+    def to_dict(self):
+        res = { "persName" : self.persName, "role" : self.role }
+        if self.gnd:
+            res["gnd"] = self.gnd
+        if self.dateBirth:
+            res["dateBirth"] = self.dateBirth
+        if self.dateDeath:
+            res["dateDeath"] = self.dateDeath
+        return(res)
     def importStructData(self, row):
         try:
             self.forename = row["d"].pop(0)
@@ -535,6 +552,21 @@ class Copy:
         if self.epn != None:
             ret += ", EPN: " + self.epn
         return(ret)
+    def to_dict(self):
+        ret = {}
+        if self.place != "":
+            ret["place"] = self.place
+        if self.bib != "":
+            ret["bib"] = self.bib
+        if self.isil != "":
+            ret["isil"] = self.isil
+        if self.sm != "":
+            ret["shelfmark"] = self.sm
+        if self.epn != None:
+            ret["epn"] = self.epn
+        if self.provenances != []:
+            ret["provenances"] = ";".join(self.provenances)
+        return(ret)
 
 class Place:
     def __init__(self, placeName, rel = None):
@@ -543,3 +575,14 @@ class Place:
         self.geoNames = None
         self.gnd = None
         self.rel = rel
+    def to_dict(self):
+        res = { "placeName" : self.placeName }
+        if self.getty != None:
+            res["getty"] = self.getty
+        if self.geoNames != None:
+            res["geoNames"] = self.geoNames
+        if self.gnd != None:
+            res["gnd"] = self.gnd
+        if self.rel != None:
+            res["relation"] = self.rel
+        return(res)

@@ -16,8 +16,8 @@ class RecordList():
             self.content = content
     def to_json(self, file_name):
         with open(file_name + ".json", "w") as fp:
-            json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=0, separators=[',', ':'], default=convert_record, sort_keys=False)
+            json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=1, separators=[',', ':'], default=convert_record, sort_keys=False)
 
 def convert_record(record):
-    return(record.toDict())
+    return(record.to_dict())
 

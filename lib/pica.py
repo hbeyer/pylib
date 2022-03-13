@@ -17,7 +17,7 @@ class Record:
         self.places = []
         self.publishers = []
         self.vdn = ""
-        self.getData()
+        self.get_data()
         try:
             self.ppn = self.data["003@"]["01"]["0"].pop(0)
         except:
@@ -96,7 +96,7 @@ class Record:
             self.pages = ""
         self.normPages = 0
         if self.pages != "":
-            self.getNormP()
+            self.get_norm_p()
         try:
             self.format = self.data["034I"]["01"]["a"].pop(0)
         except:
@@ -125,15 +125,15 @@ class Record:
                 self.digi = self.data["209R"]["01"]["u"].pop(0)
             except:
                 pass
-        self.loadPersons()
-        self.loadCopies()
-        self.loadPlaces()
-        self.loadPublishers()
-        self.getVD()        
+        self.load_persons()
+        self.load_copies()
+        self.load_places()
+        self.load_publishers()
+        self.get_vd()        
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", Jahr: " + self.date
         return(ret)
-    def getData(self):
+    def get_data(self):
         fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
         occDict = {}
         for fn in fields:
@@ -161,7 +161,7 @@ class Record:
                                 self.data[tag] = { occ: { code: [ch.text] } }
                             except:
                                 pass
-    def loadPersons(self):
+    def load_persons(self):
         try:
             creatorList = self.data["028A"]
         except:
@@ -170,7 +170,7 @@ class Record:
             for occ in creatorList:
                 per = Person()
                 per.role = "creator"
-                per.importStructData(creatorList[occ])
+                per.import_structdata(creatorList[occ])
                 self.persons.append(per)
         try:
             creatorList2 = self.data["028B"]
@@ -180,7 +180,7 @@ class Record:
             for occ in creatorList2:
                 per = Person()
                 per.role = "creator"
-                per.importStructData(creatorList2[occ])
+                per.import_structdata(creatorList2[occ])
                 self.persons.append(per)
         try:
             contributorList = self.data["028C"]
@@ -190,9 +190,9 @@ class Record:
             for occ in contributorList:
                 per = Person()
                 per.role = "contributor"
-                per.importStructData(contributorList[occ])
+                per.import_structdata(contributorList[occ])
                 self.persons.append(per)            
-    def loadCopies(self):
+    def load_copies(self):
         try:
             sigRow = self.data["209A"]
         except:
@@ -216,7 +216,7 @@ class Record:
                     except:
                         pass
                     self.copies.append(cp)
-    def loadPlaces(self):
+    def load_places(self):
         try:
             placeList = self.data["033D"]
         except:
@@ -232,7 +232,7 @@ class Record:
                 placeRel = ""
             placeName = re.sub("\!.+\!", "", placeName)
             self.places.append(Place(placeName, placeRel))
-    def loadPublishers(self):
+    def load_publishers(self):
         try:
             pubRow = self.data["033J"]
         except:
@@ -240,9 +240,9 @@ class Record:
         for occ in pubRow:
             pub = Person()
             pub.role = "publisher"
-            pub.importStructData(pubRow[occ])
+            pub.import_structdata(pubRow[occ])
             self.publishers.append(pub)
-    def getNormP(self):
+    def get_norm_p(self):
         if self.catRule == "rda":
             extract = re.findall(r"(\d+) (ungezählte )?Seiten", self.pages)
             for group in extract:
@@ -262,7 +262,7 @@ class Record:
             for group in extract:
                 self.normPages += int(group)*2
         return(True)
-    def getVD(self):
+    def get_vd(self):
         try:
             self.vdn = self.data["006V"]["01"]["0"].pop(0)
         except:
@@ -281,7 +281,7 @@ class Record:
             "catRule" : self.catRule,
             "date" : self.date,
             "lang" : ";".join(self.lang),
-            "title" : self.title,
+            "title" : self.title.replace("@", ""),
             "resp" : self.resp,
             "format" : self.format,
             "pages" : self.pages,
@@ -304,7 +304,7 @@ class Record:
         if self.copies != []:
             res["copies"] = [cp.to_dict() for cp in self.copies]
         return(res)
-    def toLibreto(self, prov = None):
+    def to_libreto(self, prov = None):
         itn = et.Element("item")
         et.SubElement(itn, "id").text = "lid" + self.ppn
         et.SubElement(itn, "titleCat").text = self.title
@@ -341,14 +341,14 @@ class Record:
                 et.SubElement(langl, "language").text = code
             itn.append(langl)
         letter = self.bbg[0]
-        mediaType = assignMediaType(letter)
+        mediaType = assign_mediatype(letter)
         et.SubElement(itn, "mediaType").text = mediaType
         genrel = et.Element("genres")
         subjl = et.Element("subjects")
         numSubj = 0
         numGenres = 0
         for gat in self.gatt:
-            if recognizeGenre(gat) == "genre":
+            if recognize_genre(gat) == "genre":
                 et.SubElement(genrel, "genre").text = gat
                 numGenres += 1
             else:
@@ -397,7 +397,7 @@ class Record:
                     break                    
         return(itn)
         
-def assignMediaType(letter):
+def assign_mediatype(letter):
     conc = { 
         "A" : "Druck",
         "H" : "Handschrift",
@@ -409,7 +409,7 @@ def assignMediaType(letter):
     except:
         return("unbekannt")
 
-def recognizeGenre(gat):
+def recognize_genre(gat):
     genres = ['Adressbuch', 'Agende', 'Akademieschrift', 'Almanach', 'Amtsdruckschrift', 'Anleitung', 'Anstandsliteratur', 'Anthologie', 'Antiquariatskatalog', 'Anzeige', 'Aphorismus', 'Ars moriendi', 'Arzneibuch', 'Atlas', 'Auktionskatalog', 'Autobiographie', 'Ballade', 'Beichtspiegel', 'Bericht', 'Bibel', 'Bibliographie', 'Bibliothekskatalog', 'Biographie', 'Brevier', 'Brief', 'Briefsammlung', 'Briefsteller', 'Buchbinderanweisung', 'Buchhandelskatalog', 'Bücheranzeige', 'Chronik', 'Dissertation', 'Dissertation:theol.', 'Dissertation:phil.', 'Dissertation:med.', 'Dissertation:jur.', 'Dissertationensammlung', 'Drama', 'Edikt', 'Einblattdruck', 'Einführung', 'Elegie', 'Emblembuch', 'Entscheidungssammlung', 'Enzyklopädie', 'Epigramm', 'Epik', 'Epikedeion', 'Epos', 'Erbauungsliteratur', 'Erlebnisbericht', 'ErotischeLiteratur', 'Erzählung', 'Fabel', 'Fallsammlung', 'Fastnachtsspiel', 'Fibel', 'Festbeschreibung', 'Figurengedicht', 'Flugschrift', 'Formularsammlung', 'Frauenliteratur', 'Freimaurerliteratur', 'Führer', 'Fürstenspiegel', 'Gebet', 'Gebetbuch', 'Gelegenheitsschrift', 'Gelegenheitsschrift:Abschied', 'Gelegenheitsschrift:Amtsantritt', 'Gelegenheitsschrift:Begrüßung', 'Gelegenheitsschrift:Einladung', 'Gelegenheitsschrift:Einweihung', 'Gelegenheitsschrift:Fest', 'Gelegenheitsschrift:Friedensschluß', 'Gelegenheitsschrift:Geburt', 'Gelegenheitsschrift:Geburtstag', 'Gelegenheitsschrift:Gedenken', 'Gelegenheitsschrift:Hochzeit', 'Gelegenheitsschrift:Jubiläum', 'Gelegenheitsschrift:Konversion', 'Gelegenheitsschrift:Krönung', 'Gelegenheitsschrift:Namenstag', 'Gelegenheitsschrift:Neujahr', 'Gelegenheitsschrift:Promotion', 'Gelegenheitsschrift:Sieg', 'Gelegenheitsschrift:Taufe', 'Gelegenheitsschrift:Tod', 'Gelegenheitsschrift:Visitation', 'Gesangbuch', 'Gesellschaftsschrift', 'Gesetz', 'Gesetzessammlung', 'Grammatik', 'Handbuch', 'Hausväterliteratur', 'Heiligenvita', 'Hochschulschrift', 'Itinerar', 'Jagdliteratur', 'Jesuitendrama', 'Judaicum', 'Jugendbuch', 'Jugendsachbuch', 'Kalender', 'Kapitulation', 'Karte', 'Katalog', 'Katechismus', 'Kirchenlied', 'Kochbuch', 'Kolportageliteratur', 'Kommentar', 'Kommentar:jur.', 'Kommentar:lit.', 'Kommentar:theol.', 'Kommentar:hist.', 'Kommentar:polit.', 'Komödie', 'Konkordanz', 'Konsiliensammlung', 'Konsilium', 'Legende', 'Leichenpredigt', 'Leichenpredigtsammlung', 'Lesebuch', 'Lexikon', 'Libretto', 'Lied', 'Liedersammlung', 'Lyrik', 'Märchen', 'Märtyrerdrama', 'Mandat', 'Matrikel', 'Meßkatalog', 'Meßrelation', 'Missale', 'Mitgliederverzeichnis', 'Moralische Wochenschrift', 'Musikbuch', 'Musiknoten', 'Musterbuch', 'Novelle', 'Ordensliteratur', 'Ordensliteratur:Augustiner', 'Ordensliteratur:Augustiner-Barfüßer', 'Ordensliteratur:Augustiner-Chorherren', 'Ordensliteratur:Augustiner-Eremiten', 'Ordensliteratur:Barnabiten', 'Ordensliteratur:Benediktiner', 'Ordensliteratur:Chorherren', 'Ordensliteratur:Dominikaner', 'Ordensliteratur:Franziskaner', 'Ordensliteratur:Jesuiten', 'Ordensliteratur:Kapuziner', 'Ordensliteratur:Karmeliter', 'Ordensliteratur:Kartäuser', 'Ordensliteratur:Minimen', 'Ordensliteratur:Minoriten', 'Ordensliteratur:Oratorianer', 'Ordensliteratur:Prämonstratenser', 'Ordensliteratur:Terziaren', 'Ordensliteratur:Theatiner', 'Ordensliteratur:Unbeschuhte Karmeliter', 'Ordensliteratur:Zisterzienser', 'Ornamentstich', 'Ortsverzeichnis', 'Panegyrikos', 'Perioche', 'Pflanzenbuch', 'Pharmakopöe', 'Plan', 'Porträtwerk', 'Praktik', 'Predigt', 'Predigtsammlung', 'Preisschrift', 'Privileg', 'Psalter', 'Ratgeber', 'Rechenbuch', 'Rede', 'Regelsammlung', 'Regesten', 'Reisebericht', 'Reiseführer', 'Rezension', 'Rezensionszeitschrift', 'Richtlinie', 'Rituale', 'Roman', 'Sage', 'Satire', 'Satzung', 'Schäferdichtung', 'Schauspiel', 'Schreibmeisterbuch', 'Schulbuch', 'Schulprogramm', 'Schwank', 'Seuchenschrift', 'Spiel', 'Sprachführer', 'Sprichwortsammlung', 'Streitschrift', 'Streitschrift:polit.', 'Streitschrift:jur.', 'Streitschrift:theol.', 'Subskribentenliste', 'Subskriptionsanzeige', 'Tabelle', 'Tagebuch', 'Theaterzettel', 'Tierbuch', 'Tiermedizin', 'Topographie', 'Totentanz', 'Tragödie', 'Traktat', 'Trivialliteratur', 'Universitätsprogramm', 'Urkundenbuch', 'Verkaufskatalog', 'Verordnung', 'Verserzählung', 'Vertrag', 'Volksbuch', 'Volksschrifttum', 'Vorlesung', 'Vorlesungsverzeichnis', 'Wappenbuch', 'Wörterbuch', 'Zeitschrift', 'Zeitung', 'Zitatensammlung']
     if gat in genres:
         return("genre")
@@ -473,7 +473,7 @@ class Person:
         self.gnd = ""
         self.dateBirth = None
         self.dateDeath = None
-    def makePersName(self):
+    def make_persname(self):
         if self.forename and self.surname:
             self.persName = self.surname + ", " + self.forename
         elif self.namePart1 and self.namePart2:
@@ -499,7 +499,7 @@ class Person:
         if self.dateDeath:
             res["dateDeath"] = self.dateDeath
         return(res)
-    def importStructData(self, row):
+    def import_structdata(self, row):
         try:
             self.forename = row["d"].pop(0)
         except:
@@ -532,7 +532,7 @@ class Person:
             self.dateDeath = row["m"].pop(0)
         except:
             pass
-        self.makePersName()
+        self.make_persname()
         return(True)
 
 class Copy:

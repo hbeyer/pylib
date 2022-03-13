@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from lib import pica
+from lib import xmlserializer as xs
 import json
 
 class RecordList():
@@ -17,7 +18,14 @@ class RecordList():
     def to_json(self, file_name):
         with open(file_name + ".json", "w") as fp:
             json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=1, separators=[',', ':'], default=convert_record, sort_keys=False)
-
+    def to_libreto(self, file_name, metadata, prov = ""):
+        ser = xs.Serializer(file_name, "collection")
+        ser.add_nested("metadata", metadata)
+        for count, rec in enumerate(self.content):
+            itemNode = rec.to_libreto(prov)
+            ser.add_node(itemNode)
+        ser.save()
+    
 def convert_record(record):
     return(record.to_dict())
 

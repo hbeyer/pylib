@@ -16,7 +16,7 @@ class RecordList():
                     raise TypeError("Recordlist darf nur Objekte vom Typ pica.Record enthalten")
             self.content = content
     def to_json(self, file_name):
-        with open(file_name + ".json", "w") as fp:
+        with open(file_name + ".json", "w", encoding="utf-8") as fp:
             json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=1, separators=[',', ':'], default=convert_record, sort_keys=False)
     def to_libreto(self, file_name, metadata, prov = ""):
         ser = xs.Serializer(file_name, "collection")
@@ -28,4 +28,3 @@ class RecordList():
     
 def convert_record(record):
     return(record.to_dict())
-

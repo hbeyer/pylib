@@ -2,29 +2,49 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from lib import xmlserializer as xs
-from lib import xmlreader as xr
-from lib import pica
+import re
+#from lib import xmlserializer as xs
+#from lib import xmlreader as xr
+#from lib import pica
 logging.basicConfig(level=logging.INFO)
 
-reader = xr.downloadReader("downloads/esm", "record", "info:srw/schema/5/picaXML-v1.0")
+"""
+def get_norm_p(pages, rule):
+    normPages = 0
+    if rule == "rda":
+        extract = re.findall(r"(\d+) (ungezählte )?Seiten", pages)
+        for group in extract:
+            normPages += int(group[0])
+        extract = re.findall(r"(\d+) (ungezählte |ungezähltes )?Bl[äa]tt", pages)
+        for group in extract:
+            normPages += int(group[0])*2
+        extract = re.findall(r"(\d+) B[oö]gen", pages)
+        for group in extract:
+            normPages += int(group)*2                
+        return(True)
+    else:
+        extract = re.findall(r"(\d+) S\.?", pages)
+        for group in extract:
+            normPages += int(group)
+        extract = re.findall(r"\[?(\d+)\]? Bl\.?", pages)
+        for group in extract:
+            normPages += int(group)*2
+    return(normPages)
+"""
 
-ser = xs.Serializer("testSer", "collection")
-ser.add_nested("metadata", {
-    "heading" : "Provenienz Elisabeth Marie Sophie",
-    "description" : "Titel aus dem Vorbesitz der Herzogin Elisabeth Sophie Marie im OPAC der HAB",
-    "owner" : "Elisabeth Marie Sophie",
-    "ownerGND" : "104277122",
-    "year" : "1767",
-    "creatorReconstruction" : "Hartmut Beyer",
-    "yearReconstruction" : "2022",
-    "fileName" : "esm-opac"    
-    })
-for count, node in enumerate(reader):
-    rec = pica.Record(node)
-    logging.info(rec.vdn)
-    itemNode = rec.toLibreto("Elisabeth")
-    ser.add_node(itemNode)
-    if count > 100:
-        break
-ser.save()
+def get_norm_p(pages, rule = "rak"):
+    normp = 0
+    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S))", pages)
+    for ch in chunks:
+        _wh, numbl, _bl, nums, _s = ch
+        if numbl != "":
+            extrbl = re.findall(r"\d+", numbl)
+            for num in extrbl:
+                normp += int(num)*2
+        elif nums != "":
+            extrs = re.findall(r"\d+", nums)
+            for num in extrs:
+                normp += int(num)
+    return(normp)
+test = get_norm_p("40 ungezählte Blätter, 50, 60 Seiten")
+print(test)

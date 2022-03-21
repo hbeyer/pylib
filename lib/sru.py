@@ -21,17 +21,17 @@ class Request_SRU:
         self.query_pica_enc = self.query_pica.replace(", ", ",")
         #self.query_pica_enc = self.query_pica_enc.replace(",", "%2C")
         self.query_pica_enc = up.quote(self.query_pica_enc)
-        self.url = self.make_URL()
+        self.url = self.make_url()
         fileobject = ur.urlopen(self.url, None, 10)
         tree = et.parse(fileobject)
         root = tree.getroot()
         nbs = root.findall('.//{http://docs.oasis-open.org/ns/search-ws/sruResponse}numberOfRecords')
         for ele in nbs:
             self.numFound = int(ele.text)
-            self.url = self.make_URL(500)
+            self.url = self.make_url(500)
             break
         return(self.numFound)
-    def make_URL(self, maxRecords = 1, start = 1):
+    def make_url(self, maxRecords = 1, start = 1):
         url = self.base + "?version=" + self.version + "&operation=searchRetrieve&query=" + self.query_pica_enc + "&maximumRecords=" + str(maxRecords) + "&startRecord=" + str(start) + "&recordSchema=" + self.format
         return(url)
     def download(self, folder = "", fileName = False):
@@ -42,7 +42,7 @@ class Request_SRU:
         countFiles = 1
         while count <= self.numFound:
             path = self.folder + "/" + self.fileName + "-" + str(countFiles) + ".xml"
-            url = self.make_URL(500, count)
+            url = self.make_url(500, count)
             if op.exists(path) == False:
                 ur.urlretrieve(url, path)
             if op.exists(path):

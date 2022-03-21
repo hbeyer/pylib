@@ -1,10 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from lib import geo
-
 class Isil:
-    bibList = {
+    bib_list = {
         "DE-01" : { "bib" : "Staatsbibliothek zu Berlin - Preußischer Kulturbesitz", "place" : "Berlin", "gettyPlace" : "7003712", "long" : "13.391458121223913", "lat" : "52.51842556249303" },
         "DE-3" : { "bib" : "Universitäts- und Landesbibliothek Sachsen-Anhalt", "place" : "Halle (Saale)", "gettyPlace" : "", "long" : "", "lat" : ""  },
         "DE-7" : { "bib" : "Niedersächsische Staats- und Universitätsbibliothek Göttingen", "place" : "Göttingen", "gettyPlace" : "", "long" : "", "lat" : ""  },
@@ -57,12 +55,13 @@ class Isil:
         "5119" : { "bib" : "Spezialbibliothek der Bundeswehr", "place" : "Verschiedene", "gettyPlace" : "", "long" : "", "lat" : ""  },        
         "5120" : { "bib" : "Geistliches Ministerium Greifswald", "place" : "Greifswald", "gettyPlace" : "", "long" : "", "lat" : ""  }        
     }
-    corrVD17 = {
+    corr_vd17 = {
         "0001" : "DE-1",
         "0056" : "DE-56",
         "0824" : "DE-824",
         "0028" : "DE-28",
         "0017" : "DE-17",
+        "40005" : "DE-17",
         "0014" : "DE-14",
         "5002" : "DE-MUS-621612",
         "3703" : "DE-Em2",
@@ -120,13 +119,13 @@ class Isil:
         "HDUB" : "DE-16", 
         "0211" : "DE-211" 
     }    
-def getBib(code, vd17 = True):
+def get_bib(code, vd17 = True):
     if vd17 == True:
         try:
-            Isil.code = corrVD17(code)
+            code = Isil.corr_vd17[code]
         except:
             pass
     try:
-        return(Isil.bibList[code])
+        return(Isil.bib_list[code])
     except:
         return(False)

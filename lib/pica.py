@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import glob
+import json
+import logging
+import re
 import urllib.request as ul
 import xml.etree.ElementTree as et
-import re
-import logging
 from lib import isil
-#from lib import xmlserializer as xs
+from lib import xmlserializer as xs
 
 class Record:
     def __init__(self, node):
@@ -464,6 +465,30 @@ class RecordInc(Record):
                         self.gw = link
                     elif link.find("istc") != -1:
                         self.istc = link
+
+class RecordList():
+    def __init__(self, content = None):
+        self.content = []
+        if content != None:
+            for obj in content:
+                if isinstance(obj, Record):
+                    pass
+                else:
+                    raise TypeError("Recordlist darf nur Objekte vom Typ Record enthalten")
+            self.content = content
+    def to_json(self, file_name):
+        with open(file_name + ".json", "w", encoding="utf-8") as fp:
+            json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=1, separators=[',', ':'], default=convert_record, sort_keys=False)
+    def to_libreto(self, file_name, metadata, prov = ""):
+        ser = xs.Serializer(file_name, "collection")
+        ser.add_nested("metadata", metadata)
+        for count, rec in enumerate(self.content):
+            itemNode = rec.to_libreto(prov)
+            ser.add_node(itemNode)
+        ser.save()
+    
+def convert_record(record):
+    return(record.to_dict())
 
 class Person:
     def __init__(self):

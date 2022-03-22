@@ -68,15 +68,19 @@ Parameter:
 - str query_pica_enc: Suchbefehl in aufbereiteter Form für die Schnittstelle
 
 Klasse **Request_K10plus**
+
 Abgeleitete Klasse zur Nutzung der SRU-Schnittstelle des K10plus-Verbundkatalogs. Der Parameter "base" entfällt bei der Initialisierung, Methoden s. o.
 
 Klasse **Request_VD17**
+
 Abgeleitete Klasse zur Nutzung der SRU-Schnittstelle des VD17, Funktionsweise s. o.
 
 Klasse **Request_VD18**
+
 Abgeleitete Klasse zur Nutzung der SRU-Schnittstelle des VD18, Funktionsweise s. o.
 
 Klasse **Request_HAB**
+
 Abgeleitete Klasse zur Nutzung der SRU-Schnittstelle des lokalen OPAC der HAB, Funktionsweise s. o.
 
 Beispiel: Herunterladen aller Katalogaufnahmen mit der Provenienz "Helmstedt" aus dem OPAC der HAB
@@ -118,15 +122,19 @@ for node in reader:
 ```
 
 Klasse **WebReader**
+
 Reader zum Lesen von XML-Daten aus einer Webquelle. Wird initialisiert wie DownloadReader, statt eines Ordners wird aber eine Webadresse angegeben.
 
 Klasse **OAIDownloadReader**
+
 Abgeleitete Klasse von DownloadReader, voreingestellt für Downloads von einer OAI 2.0-Schnittstelle
 
 Klasse **SRUDownloadReader**
+
 Abgeleitete Klasse von DownloadReader, voreingestellt für Downloads von einer SRU-Schnittstelle
 
 Klasse **UnAPIReader**
+
 Reader zum Auslesen von Downloads aus einer unAPI
 
 ### Modul xmlserializer

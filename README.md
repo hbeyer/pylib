@@ -7,7 +7,7 @@ from lib import {modul} as {namespace}
 ```
 {modul} ist dabei der Name einer im Ordner "lib" liegenden Python-Datei ohne Endung. {namespace} ist ein frei wählbares Kürzel, die Verwendung ist optional.
 ## Beschreibung der Module
-Unvollständige oder obsolete Module werden ausgelassen.
+Unvollständige oder obsolete Module werden ausgelassen. Methoden oder Eigenschaften werden nur angegeben, wenn sie für die Benutzung relevant sind.
 
 ### Modul bookwheel
 Beschreibung folgt
@@ -40,7 +40,42 @@ Beschreibung folgt
 ### Modul opac
 Beschreibung folgt
 ### Modul pica
-Beschreibung folgt
+Auslesen von bibliographischen Daten in PICA-XML. Jeder Datensatz wird in eine objektförmige Struktur mit sprechenden Feldnamen und intuitiven hierarchischen Beziehungen umgewandelt. Die Daten können in JSON oder XML abgespeichert werden.
+
+Klasse **Record**
+Objekt zur Repräsentation eines bibliographischen Datensatzes. Zur gemeinsamen Benutzung mit xmlreader.DownloadReader
+
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | node (xml.etree.ElementTree.Element) | Objekt vom Typ Record | - |
+| \_\_str\_\_ | - | Repräsentation des Datensatzes als String (enthält PPN und Jahr) | - |
+
+Beispiel:
+
+```python
+from lib import xmlreader as xr
+from lib import pica
+
+folder = "downloads/helmstedt"
+reader = xr.DownloadReader(folder, "record", "info:srw/schema/5/picaXML-v1.0")
+for node in reader:
+	rec = pica.Record(node)
+	print(rec)
+```
+
+Klasse **RecordVD16**
+Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 16
+
+Klasse **RecordVD17**
+Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 17
+
+Klasse **RecordVD18**
+Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 18
+
+Klasse **RecordInc**
+Abgeleitete Klasse zur Verarbeitung von Inkunabeln
+
 ### Modul portapp
 Beschreibung folgt
 ### Modul shelfmark
@@ -98,10 +133,6 @@ Beschreibung folgt
 Beschreibung folgt
 ### Modul xmlreader
 Extraktion wiederkehrender Knoten aus XML-Dokumenten. Die Knoten werden als Objekte vom Typ xml.etree.ElementTree.Element (s. [Dokumentation](https://docs.python.org/3/library/xml.etree.elementtree.html#element-objects)) ausgegeben. Beim Auslesen eines Ordners werden alle darin enthaltenen XML-Dokumente berücksichtigt, beim Auslesen einer URL der darin enthaltene XML-Code.
-
-Klasse **Reader**
-
-Übergeordnete Klasse, nicht direkt zu verwenden
 
 Klasse **DownloadReader**
 

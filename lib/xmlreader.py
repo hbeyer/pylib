@@ -14,7 +14,7 @@ class Reader:
             self.namespace = "{" + self.namespace + "}"        
         self.path = path
         self.recs = []
-    def getRecs(self, file):
+    def get_recs(self, file):
         tree = et.parse(file)
         root = tree.getroot()
         recs = root.findall(".//" + self.namespace + self.tag)
@@ -23,12 +23,12 @@ class Reader:
         print("Keine Datensätze")
         return([])
 
-class downloadReader(Reader):
+class DownloadReader(Reader):
     def __init__(self, path, tag = "", namespace = ""):
         super().__init__(path, tag, namespace)        
         self.files = glob.glob(self.path + "/*.xml")
         self.unread = self.files
-    def readFile(self):
+    def read_file(self):
         while self.unread:
             path = self.unread.pop(0)
             try:
@@ -36,16 +36,16 @@ class downloadReader(Reader):
             except:
                 pass
             else:
-                return(self.getRecs(file))
+                return(self.get_recs(file))
         return(None)
     def __iter__(self):
-        self.recs = self.readFile()
+        self.recs = self.read_file()
         return(self)
     def __next__(self):
         try:
             rec = self.recs.pop(0)
         except:
-            self.recs = self.readFile()
+            self.recs = self.read_file()
             try:
                 rec = self.recs.pop(0)
             except:
@@ -55,15 +55,7 @@ class downloadReader(Reader):
         else:
             return(rec)
 
-class OAIDownloadReader(downloadReader):
-    def __init__(self, path):
-        super().__init__(path, "record", "http://www.openarchives.org/OAI/2.0/")
-
-class SRUDownloadReader(downloadReader):
-    def __init__(self, path):
-        super().__init__(path, "record", "http://docs.oasis-open.org/ns/search-ws/sruResponse")
-
-class webReader(Reader):
+class WebReader(Reader):
     def __init__(self, path, tag = "", namespace = ""):
         super().__init__(path, tag, namespace)
         try:
@@ -71,7 +63,7 @@ class webReader(Reader):
         except:
             print(self.path + " ist keine funktionierende URL")
         else:
-            self.recs = self.getRecs(file)
+            self.recs = self.get_recs(file)
     def __iter__(self):
         return(self)
     def __next__(self):
@@ -81,7 +73,15 @@ class webReader(Reader):
             raise StopIteration
         return(rec)
 
-class unAPIReader(Reader):
+class OAIDownloadReader(DownloadReader):
+    def __init__(self, path):
+        super().__init__(path, "record", "http://www.openarchives.org/OAI/2.0/")
+
+class SRUDownloadReader(DownloadReader):
+    def __init__(self, path):
+        super().__init__(path, "record", "http://docs.oasis-open.org/ns/search-ws/sruResponse")
+
+class UnAPIReader(Reader):
     def __init__(self, path, tag = "", namespace = ""):
         super().__init__(path, tag, namespace)
         file = open(path, "r")

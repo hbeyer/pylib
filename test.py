@@ -6,8 +6,7 @@ from lib import geo
 
 logging.basicConfig(level=logging.INFO)
 
-from lib import geo
-
-db = geo.DB()
-test = db.get_by_name("Neustadt an der Aisch")
-print(test)
+from lib import bookwheel as bw
+cat = bw.Catalogue
+sec = cat.get_section(2589)
+print(sec)

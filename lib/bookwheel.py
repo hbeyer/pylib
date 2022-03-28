@@ -124,20 +124,20 @@ class Catalogue:
     ]
     def __init__(self):
         pass
-    def getSection(self, page):
+    def get_section(self, page):
         for sect in self.struct:
             if sect["start"] <= page and sect["end"] >= page:
                 return(sect)
         return(None)
-    def getYear(self, page):
-        sect = Catalogue.getSection(page)
+    def get_year(self, page):
+        sect = Catalogue.get_section(page)
         try:
             ret = sect["year"]
         except:
             return(None)
         return(ret)
-Catalogue.getSection = classmethod(Catalogue.getSection)
-Catalogue.getYear = classmethod(Catalogue.getYear)
+Catalogue.get_section = classmethod(Catalogue.get_section)
+Catalogue.get_year = classmethod(Catalogue.get_year)
 
 # Das Folgende generiert eine Auswertung im CSV-Format zu einer Liste mit Seitenzahlen aus dem Bücherradkatalog
 # Die Seitenzahlen werden getrennt durch Zeilenumbruch in einer Datei unter path abgespeichert
@@ -149,10 +149,10 @@ class Evaluation:
         self.pageData = []
         self.fields = []
         self.result = []
-    def getPageData(self):
+    def get_page_data(self):
         for num in self.counter:
-            sect = Catalogue.getSection(num)
-            self.pageData.append([str(num), str(self.counter[num]), sect["group"], sect["dateBegin"], str(sect["year"]), sect["writer"]])        
+            sect = Catalogue.get_section(num)
+            self.pageData.append([str(num), str(self.counter[num]), sect["group"], sect["dateBegin"], str(sect["year"]), sect["writer"]])  
     def save(self, fileName):
         table = csvt.Table(self.fields, self.result)
         table.save(fileName)
@@ -163,7 +163,7 @@ class EvaluationPage(Evaluation):
     def __init__(self, path):
         super().__init__(path)
         self.fields = ["Seite", "Frequenz", "Klasse", "Datum_ab", "Jahr", "Schreiber"]
-        self.getPageData()
+        self.get_page_data()
         self.result = self.pageData
 
 # Summarische Auflistung nach Jahren
@@ -171,7 +171,7 @@ class EvaluationYear(Evaluation):
     def __init__(self, path):
         super().__init__(path)
         self.fields = ["Jahr", "Seiten", "Einträge", "Klasse", "Datum_ab", "Schreiber"]
-        self.getPageData()
+        self.get_page_data()
         groups = {}
         for row in self.pageData:
             try:

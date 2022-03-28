@@ -10,7 +10,30 @@ from lib import {modul} as {namespace}
 Unvollständige oder obsolete Module werden ausgelassen. Methoden oder Eigenschaften werden nur angegeben, wenn sie für die Benutzung relevant sind.
 
 ### Modul bookwheel
-Beschreibung folgt
+
+Recherche von Erwerbungsdaten anhand von Seitenzahlen im Bücherradkatalogs von August dem Jüngeren (1579–1666).  Zugrunde gelegt werden die Angaben bei Maria von Katte, Herzog August und die Kataloge seiner Bibliothek, in: Wolfenbütteler Beiträge 1 (1972), S. 168–199, hier S. 177–182
+
+Klasse **Catalogue**:
+
+Repräsentation des Bücherradkatalogs.
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| get_section | page | Dictionary (Daten zur Katalogsektion), None bei Misserfolg | - |
+| get_year | page (Seitenzahl als Integer) | Erwerbungsjahr, normalisiert (Integer), None bei Misserfolg | - |
+
+Beispiel: Suche nach den Daten zur Katalogseite 2589:
+
+```python
+from lib import bookwheel as bw
+cat = bw.Catalogue
+sec = cat.get_section(2589)
+print(sec)
+```
+Ausgabe: 
+
+`{'start': 2511, 'end': 2738, 'group': 'Libri Varii', 'dateBegin': '1634', 'year': 1634, 'writer': 'Herzog August'}`
+
 ### Modul csvt
 Beschreibung folgt
 ### Modul dataset
@@ -138,7 +161,7 @@ Methoden:
 |download| folder (Pfad zum Downloadordner), fileName (optionaler Dateiname, Standard "downloadSRU") | kein Rückgabewert | Herunterladen der XML-Daten in Paketen zu 500 Treffern in den Download-Ordner |
 | make_url | maxRecords (optional, Standard 1), startRecord (optional, Standard1) | URL für den Download einer einzelnen Datei | - |
 
-Parameter:
+Eigenschaften:
 
 - str filename: Dateiname für den Download
 - str base: URL der abgefragten SRU-Schnittstelle ohne schließendes "/"

@@ -12,8 +12,8 @@ class DB:
         self.table = csvt.Table([], [])
         self.table.load(self.path.replace(".csv", ""))
         self.index = {}
-        self.makeIndex()
-    def makeIndex(self):
+        self.make_index()
+    def make_index(self):
         count = 0
         for row in self.table.content:
             try:
@@ -23,8 +23,8 @@ class DB:
             else:
                 print("Dublette: " + row[0])
             count += 1        
-    def getByName(self, name):
-        name = normalizePlaceName(name)
+    def get_by_name(self, name):
+        name = normalize_placename(name)
         try:
             row = self.table.content[self.index[name][0]]
         except:
@@ -34,8 +34,8 @@ class DB:
     def save(self):
         self.table.content.sort(key=lambda row: row[0])
         self.table.save(self.path.replace(".csv", ""))
-    def addPlace(self, placeName, getty = "", gnd = "", long = "", lat = "", comment = ""):
-        placeName = normalizePlaceName(placeName)
+    def add_place(self, placeName, getty = "", gnd = "", long = "", lat = "", comment = ""):
+        placeName = normalize_placename(placeName)
         for row in self.table.content:
             if placeName == row[0]:
                 return(False)
@@ -45,16 +45,16 @@ class DB:
                 return(False)
         new = [placeName, getty, gnd, long, lat, comment]
         self.table.content.append(new)
-        self.makeIndex()
+        self.make_index()
         return(True)
-    def getGeoData(self):
+    def get_geodata(self):
         for row in self.table.content:
             gd = False
             if row[3] == "":
                 if row[1] != "":
-                    gd = getGeoDataGetty(row[1])
+                    gd = get_geodata_getty(row[1])
                 elif row[2] != "":
-                    gd = getGeoDataGND(row[2])
+                    gd = get_geodata_gnd(row[2])
                 if gd != False:
                     row[3] = gd[0]
                     row[4] = gd[1]
@@ -64,7 +64,8 @@ class DB:
                     print(row[0] + " - http://d-nb.info/gnd/4494563-2" + row[2])
                 else:
                     print("Leer: " + row[0])
-def normalizePlaceName(placeName):
+        return(True)
+def normalize_placename(placeName):
     try:
         placeName = re.find(r"!.+!([^;]+) ; ID: gnd", str(placeName)).group(1)
     except:
@@ -334,8 +335,8 @@ def normalizePlaceName(placeName):
     except:
         pass
     return(placeName)
-def getGeoDataGetty(id):
-    root = getGettyTree(id)
+def get_geodata_getty(id):
+    root = get_getty_tree(id)
     latNode = root.find('.//{http://textgrid.info/namespaces/vocabularies/tgn}Latitude/{http://textgrid.info/namespaces/vocabularies/tgn}Decimal')
     longNode = root.find('.//{http://textgrid.info/namespaces/vocabularies/tgn}Longitude/{http://textgrid.info/namespaces/vocabularies/tgn}Decimal')
     try:
@@ -349,21 +350,21 @@ def getGeoDataGetty(id):
             return(False)
         else:
             return([longitude, latitude])
-def getGettyTree(id):
+def get_getty_tree(id):
     url = "https://ref.de.dariah.eu/tgnsearch/tgnquery.xql?id=" + id
     fileobject = ul.urlopen(url, None, 10)
     tree = et.parse(fileobject)
     root = tree.getroot()
     return(root)
-def getGettyLabel(id):
-    root = getGettyTree(id)
+def get_getty_label(id):
+    root = get_getty_tree(id)
     labelNode = root.find('.//{http://textgrid.info/namespaces/vocabularies/tgn}Preferred_Term/{http://textgrid.info/namespaces/vocabularies/tgn}Term_Text')
     try:
         label = labelNode.text.strip()
     except:
         return(None)
     return(label)
-def getGeoDataGND(id):
+def get_geodata_gnd(id):
     url = "http://d-nb.info/gnd/" + id + "/about/lds"
     fileobject = ul.urlopen(url, None, 10)
     text = fileobject.read()

@@ -16,7 +16,52 @@ Beschreibung folgt
 ### Modul dataset
 Beschreibung folgt
 ### Modul geo
-Beschreibung folgt
+
+Modul zum Laden, Speichern und Auffinden von Geodaten. Als Datenbank dient die Datei `placeData.csv` im Wurzelverzeichnis.
+
+Klasse **DB**:
+
+Datenbank, die die Daten aus der CSV-Tabelle lädt und performant vorhält.
+
+ Methoden der Klasse DB:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | path (Dateiname der CSV-Datei ohne Endung, Standardwert ist "placeData") | - | Einlesen der unter path angegebenen CSV-Datei |
+| get_by_name | name (Ortsname) | Liste mit den Ortsdaten, False wenn nicht gefunden | - |
+| add_place | placeName (Ortsname), getty (Getty-ID, optional), gnd (GND-Nummer, optional), long (geographische Länge, optional), lat (geographische Breite, optional), comment (Kommentar zum Ort, optional) | True | Einfügen eines neuen Datensatzes in die Tabelle |
+| get_geodata | - | True | Laden aller fehlenden Geodaten, für die ein Identifier vorliegt, aus dem Getty Thesaurus oder der GND |
+| save | - | - | Abspeichern der aktualisierten CSV-Tabelle |
+
+
+Funktionen des Moduls:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| normalize_placename | placeName (Ortsname) | String (normalisierte Form des Ortsnamens, z. B. "Frankfurt am Main" für "Frankfurt/M.") | - |
+| get_geodata_getty | id (des Ortes im Getty Thesaurus) | Liste mit den Werten für Länge und Breite | - |
+| get_geodata_gnd | id (GND-Nummer des Normdatensatzes) | Liste mit den Werten für Länge und Breite | - |
+
+Beispiel: Laden der Datenbank, Hinzufügen eines Ortseintrags mit GND-Nummer, Laden der Geodaten, Abspeichern der aktualisierten Tabelle
+
+```python
+from lib import geo
+db = geo.DB()
+db.add_place("Haselünne", "", "4104376-5", "", "", "Landkreis Emsland")
+db.get_geodata()
+db.save()
+```
+Beispiel 2: Laden der Datenbank, Suche nach einem Ortseintrag, Ausgeben des Datensatzes als Liste
+```python
+from lib import geo
+db = geo.DB()
+test = db.get_by_name("Neustadt an der Aisch")
+print(test)
+```
+Ausgabe: 
+
+``` ['Neustadt an der Aisch', '1040479', '', '10.6333', '49.5833', '']```
+
+
+
 ### Modul gnd
 Beschreibung folgt
 ### Modul html

@@ -35,6 +35,7 @@ Ausgabe:
 
 `{'start': 2511, 'end': 2738, 'group': 'Libri Varii', 'dateBegin': '1634', 'year': 1634, 'writer': 'Herzog August'}`
 
+---
 ### Modul csvt
 
 Abspeichern von Daten in einer CSV-Tabelle, Auslesen vorhandener CSV-Tabellen.
@@ -63,6 +64,7 @@ table = csvt.Table(fields, data)
 table.save("VD16")
 ```
 
+---
 ### Modul dataset
 
 Speichern und Verarbeiten von einfachen Metadensätzen wie Dublin Core. 
@@ -74,8 +76,8 @@ Die Klasse ist nicht für die direkte Instanziierung vorgesehen, s. stattdessen 
 
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-| \_\_init\_\_ | - | Objekt vom Typ Dataset |  |
-| add_entry | field (Feldname), entry (Objekt vom Typ Entry) |||
+| \_\_init\_\_ | - | Instanz von Dataset |  |
+| add_entry | field (Feldname), entry (Instanz von Entry) |||
 | get_entries | field (Feldname) | Liste mit den unter dem Feldnamen gespeicherten Entries | - |
 | to_dict | - | Dictionary mit den Feldnamen als Schlüssel und einer Repräsentation der Entries als String, getrennt mit ";" | - |
 | to_list | - | Liste mit Dictionaries, die jeden einzelnen Eintrag als Schlüssel-Wert-Paare repräsentieren | - |
@@ -88,7 +90,7 @@ Ein einzelner Eintrag des Datensatzes. Er beinhaltet neben dem Wert auch optiona
 
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-| \_\_init\_\_ | value, lang (Sprachangabe nach ISO 639-2), auth_sys (System der Normdatenverknüpfung, z. B. "GND"), auth_id (Identifier im Normdatensystem, z. B. GND-Nummer) | Objekt vom Typ Entry | - |
+| \_\_init\_\_ | value, lang (Sprachangabe nach ISO 639-2), auth_sys (System der Normdatenverknüpfung, z. B. "GND"), auth_id (Identifier im Normdatensystem, z. B. GND-Nummer) | Instanz von Entry | - |
 | \_\_str\_\_ | - | String-Repräsentation des Eintrags mit angehängter Sprachangabe und Normdatenverknüpfung insoweit vorhanden | - |
 
 Beispiel:
@@ -110,6 +112,7 @@ Ausgabe:
 
 `{'dc.identifier': 'VD16 D 340', 'dc.identifier.urn': '', 'dc.format': '', 'dc.type': '', 'dc.language': '', 'dc.title': 'Poematum || HENRICI || DECIMATORIS || GIFFHORNENSIS.|| Libri IIII.||@lat', 'dc.subject': '', 'dc.coverage': '', 'dc.description': '', 'dc.creator': 'Decimator, Heinrich#GND_124613934', 'dc.contributor': '', 'dc.publisher': '', 'dc.rights': '', 'dc.rights.uri': '', 'dcterms.rightsHolder': '', 'dc.source': '', 'dc.relation': '', 'dc.date': '1586', 'dc.date.embargo': '', 'dcterms.extent': '', 'dcterms.isPartOf': ''}`
 
+---
 ### Modul geo
 
 Modul zum Laden, Speichern und Auffinden von Geodaten. Als Datenbank dient die Datei `placeData.csv` im Wurzelverzeichnis.
@@ -156,29 +159,51 @@ Ausgabe:
 ``` ['Neustadt an der Aisch', '1040479', '', '10.6333', '49.5833', '']```
 
 
-
+---
 ### Modul gnd
 Beschreibung folgt
+
+---
 ### Modul html
 Beschreibung folgt
+
+---
 ### Modul incunabula
 Beschreibung folgt
+
+---
 ### Modul isil
 Beschreibung folgt
+
+---
 ### Modul language
 Beschreibung folgt
+
+---
 ### Modul lido
 Beschreibung folgt
+
+---
 ### Modul localsql
 Beschreibung folgt
+
+---
 ### Modul maps
 Beschreibung folgt
+
+---
 ### Modul mets
 Beschreibung folgt
+
+---
 ### Modul oai
 Beschreibung folgt
+
+---
 ### Modul opac
 Beschreibung folgt
+
+---
 ### Modul pica
 Auslesen von bibliographischen Daten in PICA-XML. Jeder Datensatz wird in eine objektförmige Struktur mit sprechenden Feldnamen und intuitiven hierarchischen Beziehungen umgewandelt. Die Daten können in JSON oder XML abgespeichert werden.
 
@@ -188,7 +213,7 @@ Objekt zur Repräsentation eines bibliographischen Datensatzes. Zur gemeinsamen 
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-| \_\_init\_\_ | node (xml.etree.ElementTree.Element) | Objekt vom Typ Record | - |
+| \_\_init\_\_ | node (xml.etree.ElementTree.Element) | Instanz von Record | - |
 | \_\_str\_\_ | - | Repräsentation des Datensatzes als String (enthält PPN und Jahr) | - |
 
 Beispiel:
@@ -216,10 +241,113 @@ Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 18
 Klasse **RecordInc**
 Abgeleitete Klasse zur Verarbeitung von Inkunabeln
 
+---
 ### Modul portapp
-Beschreibung folgt
+
+Abstraktionsschicht für die Porträtdatenbank der HAB, veröffentlicht unter http://portraits.hab.de.
+
+Klasse **ArtCollection**
+
+...
+
+Klasse **Serializer**
+
+...
+
+Abgeleitete Klasse **SerializerXML(Serializer)**
+
+...
+
+Abgeleitete Klasse **SerializerCSV(Serializer)**
+
+...
+
+Abgeleitete Klasse **SerializerSel(SerializerCSV)**
+
+...
+
+Klasse **Artwork**
+
+Enthält die zu einem Porträt gehörigen Daten. 
+| Property | Datentyp | Erklärung |
+|--|--|--|
+| id | String | Interne ID |
+| anumber | String | A-Nummer aus Mortzfeld A |
+| url | String | URL des Datensatzes in der Online-Fassung |
+| urlImage | String | URL der Bilddatei auf dem Server der HAB |
+| invNo | String | Inventarnummer |
+| artists | Liste | Enthält Instanzen von Artist |
+| publishers | Liste | Enthält Instanzen von Publisher |
+| sheetsize | String |  |
+| sheetsizeSep | Dictionary | Indices "height" und "width" |
+| platesize | String |  |
+| platesizeSep | Dictionary | Indices "height" und "width" |
+| imagesize | String |  |
+| imagesizeSep | Dictionary | Indices "height" und "width" |
+| technique | String |  |
+| notes | String |  |
+| description | String |  |
+| descriptionClean | String |  |
+| quotation | String |  |
+| catalogs | String |  |
+| condition | String |  |
+| source | String |String |
+| shelfmarkSource | String |  |
+| instime | String | Datum der Anlage des Datensatzes als Unix-Timestamp  |
+| modtime | String | Datum der letzten Änderung als Unix-Timestamp  |
+| yearNormalized | String | Jahr als vierstellige Zahl |
+| sourceYear | Code zur Ermittlung von yearNormalized |  |
+| keywords_technique | String  |  |
+| transcription | String  |  |
+| portraitType | String  |  |
+| orientation | String  |  |
+| personsRepr | Liste | Instanzen von Person |
+| attributes | Liste | Instanzen von Attribute |
+
+
+Klasse **Person**
+
+...
+
+Abgeleitete Klasse **Artist(Person)**
+
+...
+
+Abgeleitete Klasse **Publisher(Person)**
+
+...
+
+Klasse **Attribute**
+
+...
+
+Klasse **XMLReader**
+
+...
+
+Beispiel: Laden von 100 Datensätzen aus der Datenbank in eine Instanz von ArtCollection. Die Iteration über die ArtCollection ergibt Instanzen von Artwork:
+
+```python
+import mysql.connector
+from lib import portapp as pa
+
+db = mysql.connector.connect(
+  host="{server}",
+  user="{user}",
+  password="{password}",
+  database="portraits"
+)
+col = pa.ArtCollection(db)
+col.loadBySQL("SELECT * FROM artwork LIMIT 100 OFFSET 0")
+for aw in co:
+	print(aw)
+```
+
+---
 ### Modul shelfmark
 Beschreibung folgt
+
+---
 ### Modul sru
 Das Modul ermöglicht den Zugriff auf SRU-Schnittstellen zum Download bibliographischer Daten
 
@@ -228,7 +356,7 @@ Klasse **Request_SRU**
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-| \_\_init\_\_ | base (URL SRU-Schnittstelle), version (optional, Standard ist "2.0") | Objekt vom Typ SRU_Request | - |
+| \_\_init\_\_ | base (URL SRU-Schnittstelle), version (optional, Standard ist "2.0") | Instanz von SRU_Request | - |
 |prepare|query_pica (Suchbefehl in PICA-Kommandozeilensprache), format (optional, Standard "picaxml")|Anzahl der gefundenen Treffer|  Ermittlung der Treffermenge, Speichern einer initialen Such-URL |
 |download| folder (Pfad zum Downloadordner), fileName (optionaler Dateiname, Standard "downloadSRU") | kein Rückgabewert | Herunterladen der XML-Daten in Paketen zu 500 Treffern in den Download-Ordner |
 | make_url | maxRecords (optional, Standard 1), startRecord (optional, Standard1) | URL für den Download einer einzelnen Datei | - |
@@ -267,12 +395,18 @@ req.prepare("pica.prn=Helmstedt and pica.bbg=A[af]*")
 print(f"Datensätze: {req.numFound}")
 req.download(folder)
 ```
+
+---
 ### Modul table_winibw
 Beschreibung folgt
+
+---
 ### Modul unapi
 Beschreibung folgt
+
+---
 ### Modul xmlreader
-Extraktion wiederkehrender Knoten aus XML-Dokumenten. Die Knoten werden als Objekte vom Typ xml.etree.ElementTree.Element (s. [Dokumentation](https://docs.python.org/3/library/xml.etree.elementtree.html#element-objects)) ausgegeben. Beim Auslesen eines Ordners werden alle darin enthaltenen XML-Dokumente berücksichtigt, beim Auslesen einer URL der darin enthaltene XML-Code.
+Extraktion wiederkehrender Knoten aus XML-Dokumenten. Die Knoten werden als Instanzen von xml.etree.ElementTree.Element (s. [Dokumentation](https://docs.python.org/3/library/xml.etree.elementtree.html#element-objects)) ausgegeben. Beim Auslesen eines Ordners werden alle darin enthaltenen XML-Dokumente berücksichtigt, beim Auslesen einer URL der darin enthaltene XML-Code.
 
 Klasse **DownloadReader**
 
@@ -280,9 +414,9 @@ Reader zum Auslesen der XML-Dokumente in einem Ordner.
 
 | Methode  | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-| \_\_init\_\_ | path (Pfad des Ordners), tag (Elementname des auszugebenden Knotens), namespace (Namespace des auszugebenden Knotens) | Objekt vom Typ DownloadReader | - |
+| \_\_init\_\_ | path (Pfad des Ordners), tag (Elementname des auszugebenden Knotens), namespace (Namespace des auszugebenden Knotens) | Instanz von DownloadReader | - |
 
-Objekte dieser Klasse sind iterierbar und geben Knoten als Objekte vom Typ xml.etree.ElementTree.Element aus.
+Objekte dieser Klasse sind iterierbar und geben Knoten als Instanzen von xml.etree.ElementTree.Element aus.
 
 Beispiel: Auslesen der XML-Dokumente im Verzeichnis "downloads/helmstedt". Gesucht wird nach Elementen mit dem namen "record" und dem Namespace "info:srw/schema/5/picaXML-v1.0":
 ```python
@@ -308,6 +442,8 @@ Klasse **UnAPIReader**
 
 Reader zum Auslesen von Downloads aus einer unAPI
 
+
+---
 ### Modul xmlserializer
 Beschreibung folgt
 

@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from lib import geo
+from lib import dataset as ds
 
-logging.basicConfig(level=logging.INFO)
+example = ds.DatasetDC()
+example.add_entry("dc.identifier", ds.Entry("VD16 D 340"))
+example.add_entry("dc.title", ds.Entry("Poematum || HENRICI || DECIMATORIS || GIFFHORNENSIS.|| Libri IIII.||", "lat"))
+example.add_entry("dc.creator", ds.Entry("Decimator, Heinrich", "", "GND", "124613934"))
+example.add_entry("dc.date", ds.Entry("1586"))
 
-from lib import bookwheel as bw
-cat = bw.Catalogue
-sec = cat.get_section(2589)
-print(sec)
+print(example.to_dict())

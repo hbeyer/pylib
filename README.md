@@ -6,6 +6,7 @@ Herunterladen des Repositoriums in ein beliebiges Verzeichnis. Im Wurzelverzeich
 from lib import {modul} as {namespace}
 ```
 {modul} ist dabei der Name einer im Ordner "lib" liegenden Python-Datei ohne Endung. {namespace} ist ein frei wählbares Kürzel, die Verwendung ist optional.
+
 ## Beschreibung der Module
 Unvollständige oder obsolete Module werden ausgelassen. Methoden oder Eigenschaften werden nur angegeben, wenn sie für die Benutzung relevant sind.
 
@@ -35,9 +36,80 @@ Ausgabe:
 `{'start': 2511, 'end': 2738, 'group': 'Libri Varii', 'dateBegin': '1634', 'year': 1634, 'writer': 'Herzog August'}`
 
 ### Modul csvt
-Beschreibung folgt
+
+Abspeichern von Daten in einer CSV-Tabelle, Auslesen vorhandener CSV-Tabellen.
+
+Klasse **Table**:
+
+Abstraktionsschicht für die Arbeit mit einer CSV-Tabelle
+
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | fields (Liste mit Feldnamen, Standard leer), content (Liste mit Listen, die Werte enthalten, Standard leer) | Objekt der Klasse Table | - |
+| save | path (Pfad zum Speichern ohne Namenserweiterung), encoding (Zeichencodierung, Standard ist "utf-8") | True | Abspeichern einer CSV-Tabelle mit Zeichencodierung utf-8 und Delimiter ";" unter dem angegebenen Namen oder Pfad |
+| load | path (Pfad zu der zu ladenden CSV-Datei ohne Namenserweiterung), encoding (Zeichencodierung des Dokuments, Standard ist utf-8) | True bei Erfolg, sonst False | Laden der Feldnamen in Table.fields und der Daten in Table.content |
+
+Beispiel:
+```python
+from lib import csvt
+fields = ["VD16-Nummer", "Jahr", "Signatur"]
+data = [
+	["VD16 D 2342", "1589", "Rd 2 37 (1)"],
+	["VD16 D 2633", "1549", "1003.6 Theol. (5)"],	
+	["VD16 D 340", "1586", "QuN 741 (1)"]
+	]
+table = csvt.Table(fields, data)
+table.save("VD16")
+```
+
 ### Modul dataset
-Beschreibung folgt
+
+Speichern und Verarbeiten von einfachen Metadensätzen wie Dublin Core. 
+
+Klasse **Dataset**
+Container für Einträge, diese werden in der Eigenschaft Dataset.fields gespeichert, standardmäßig ein leeres Dictionary.
+Daten werden mit dem Feldnamen (z. B. "title") als Index darin gespeichert. Der zugehörige Wert ist eine Liste, die eine beliebige Anzahl an Objekten der Klasse Entry enthält.
+Die Klasse ist nicht für die direkte Instanziierung vorgesehen, s. stattdessen Dataset DC
+
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | - | Objekt vom Typ Dataset |  |
+| add_entry | field (Feldname), entry (Objekt vom Typ Entry) |||
+| get_entries | field (Feldname) | Liste mit den unter dem Feldnamen gespeicherten Entries | - |
+| to_dict | - | Dictionary mit den Feldnamen als Schlüssel und einer Repräsentation der Entries als String, getrennt mit ";" | - |
+| to_list | - | Liste mit Dictionaries, die jeden einzelnen Eintrag als Schlüssel-Wert-Paare repräsentieren | - |
+
+Abgeleitete Klasse **DatasetDC**
+Dataset mit vordefinierten Feldern für das Datenmodell Dublin Core.
+
+Klasse **Entry**
+Ein einzelner Eintrag des Datensatzes. Er beinhaltet neben dem Wert auch optional eine Sprachangabe und eine Normdatenverknüpfung.
+
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | value, lang (Sprachangabe nach ISO 639-2), auth_sys (System der Normdatenverknüpfung, z. B. "GND"), auth_id (Identifier im Normdatensystem, z. B. GND-Nummer) | Objekt vom Typ Entry | - |
+| \_\_str\_\_ | - | String-Repräsentation des Eintrags mit angehängter Sprachangabe und Normdatenverknüpfung insoweit vorhanden | - |
+
+Beispiel:
+
+```python
+import logging
+from lib import dataset as ds
+
+example = ds.DatasetDC()
+example.add_entry("dc.identifier", ds.Entry("VD16 D 340"))
+example.add_entry("dc.title", ds.Entry("Poematum || HENRICI || DECIMATORIS || GIFFHORNENSIS.|| Libri IIII.||", "lat"))
+example.add_entry("dc.creator", ds.Entry("Decimator, Heinrich", "", "GND", "124613934"))
+example.add_entry("dc.date", ds.Entry("1586"))
+
+print(example.to_dict())
+```
+
+Ausgabe:
+
+`{'dc.identifier': 'VD16 D 340', 'dc.identifier.urn': '', 'dc.format': '', 'dc.type': '', 'dc.language': '', 'dc.title': 'Poematum || HENRICI || DECIMATORIS || GIFFHORNENSIS.|| Libri IIII.||@lat', 'dc.subject': '', 'dc.coverage': '', 'dc.description': '', 'dc.creator': 'Decimator, Heinrich#GND_124613934', 'dc.contributor': '', 'dc.publisher': '', 'dc.rights': '', 'dc.rights.uri': '', 'dcterms.rightsHolder': '', 'dc.source': '', 'dc.relation': '', 'dc.date': '1586', 'dc.date.embargo': '', 'dcterms.extent': '', 'dcterms.isPartOf': ''}`
+
 ### Modul geo
 
 Modul zum Laden, Speichern und Auffinden von Geodaten. Als Datenbank dient die Datei `placeData.csv` im Wurzelverzeichnis.

@@ -161,7 +161,26 @@ Ausgabe:
 
 ---
 ### Modul gnd
-Beschreibung folgt
+
+Validieren einer GND-Nummer und Harvesten von Informationen dazu.
+
+Klasse **ID**
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | gnd (GND-Nummer) | Instanz der Klasse | Validieren der GND-Nummer, Ergebnis unter ID.valid |
+| \_\_str\_\_ | - | String-Repräsentation der GND. Bei gescheiterter Validierung wird "(ungültig)" mit ausgegeben | - |
+| get_info | - | Dictionary mit Informationen zur beschriebenn Entität (preferredName, dateOfBirth, dateOfDeath, biographicalOrHistoricalInformation, placeOfBirth, placeOfDeath, gender). None bei Misserfolg | - |
+
+Beispiel:
+```python
+from lib import gnd
+test = gnd.ID("141678615")
+res = test.get_info()
+print(res)
+```
+Ausgabe:
+
+`{'preferredName': 'Antoinette Amalie, Braunschweig-Lüneburg, Herzogin', 'dateOfBirth': '22. April 1696', 'dateOfDeath': '6. März 1762', 'biographicalOrHistoricalInformation': 'Frau von Herzog Ferdinand Albrecht II. von Braunschweig-Bevern (1680-1735); jüngste Tochter von Herzog Ludwig Rudolf von Braunschweig-Lüneburg (1671-1735) und Prinzessin Christine Luise von Oettingen-Oettingen', 'placeOfBirth': 'Wolfenbüttel', 'placeOfDeath': 'Braunschweig', 'gender': 'Frau'}`
 
 ---
 ### Modul html

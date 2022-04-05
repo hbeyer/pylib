@@ -168,8 +168,8 @@ Klasse **ID**
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | gnd (GND-Nummer) | Instanz der Klasse | Validieren der GND-Nummer, Ergebnis unter ID.valid |
-| \_\_str\_\_ | - | String-Repräsentation der GND. Bei gescheiterter Validierung wird "(ungültig)" mit ausgegeben | - |
-| get_info | - | Dictionary mit Informationen zur beschriebenn Entität (preferredName, dateOfBirth, dateOfDeath, biographicalOrHistoricalInformation, placeOfBirth, placeOfDeath, gender). None bei Misserfolg | - |
+| \_\_str\_\_ | - | String-Repräsentation der GND-Nummer. Bei gescheiterter Validierung wird "(ungültig)" mit ausgegeben | - |
+| get_info | - | Dictionary mit Informationen zur beschriebenen Entität (preferredName, dateOfBirth, dateOfDeath, biographicalOrHistoricalInformation, placeOfBirth, placeOfDeath, gender). None bei Misserfolg | - |
 
 Beispiel:
 ```python
@@ -358,7 +358,7 @@ db = mysql.connector.connect(
 )
 col = pa.ArtCollection(db)
 col.loadBySQL("SELECT * FROM artwork LIMIT 100 OFFSET 0")
-for aw in co:
+for aw in col:
 	print(aw)
 ```
 

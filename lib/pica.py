@@ -5,11 +5,11 @@ import glob
 import json
 import logging
 import re
-import roman
 import urllib.request as ul
 import xml.etree.ElementTree as et
 from lib import isil as il
 from lib import xmlserializer as xs
+from lib import romnumbers as rn
 
 class Record:
     def __init__(self, node):
@@ -35,7 +35,7 @@ class Record:
         except:
             pass
         else:
-            self.isilRec = bud.split(":").pop(0)
+            self.elnRec = bud.split(":").pop(0)
             try:
                 self.dateRec = bud.split(":").pop(1)
             except:
@@ -209,11 +209,12 @@ class Record:
                 else:
                     cp = Copy(sm)
                     try:
-                        isil = self.data["202D"][occ]["a"].pop(0)
+                        eln = self.data["202D"][occ]["a"].pop(0)
                     except:
                         pass
                     else:
-                        cp.isil = isil
+                        cp.eln = eln
+                        cp.get_bib()
                     try:
                         cp.provenances = self.data["244Z"][occ]["a"]
                     except:
@@ -395,6 +396,7 @@ class RecordVD17(Record):
             "ppn" : self.ppn,
             "vdn" : f"VD17 {self.vdn}",
             "permalink" : f"https://kxp.k10plus.de/DB=1.28/CMD?ACT=SRCHA&IKT=8079&TRM=%27{self.vdn}%27",
+            "bbg" : self.bbg,
             "recType" : self.get_rec_type(),
             "catRule" : self.catRule,
             "date" : self.date,
@@ -568,27 +570,28 @@ class Copy:
         self.place = ""
         self.bib = ""
         self.isil = ""
+        self.eln = ""
         self.sm = sm
         self.provenances = provenances
         self.epn = epn
     def __str__(self):
         ret = "Signatur: " + self.sm
-        if self.isil != "":
-            ret = "ISIL: " + self.isil + " " + ret
+        if self.eln != "":
+            ret = "ELN: " + self.eln + " " + ret
         if self.provenances != []:
             ret += ", Provenienz: " + ";".join(self.provenances)
         if self.epn != None:
             ret += ", EPN: " + self.epn
         return(ret)
     def get_bib(self):
-        bibd = il.get_bib(self.isil)
+        bibd = il.get_bib(self.eln)
         if bibd == False:
             return(False)
+        self.isil = il.get_isil(self.eln)
         self.bib = bibd["bib"]
         self.place = bibd["place"]
         return(True)
     def to_dict(self):
-        self.get_bib()
         ret = {}
         if self.place != "":
             ret["place"] = self.place
@@ -596,6 +599,8 @@ class Copy:
             ret["bib"] = self.bib
         if self.isil != "":
             ret["isil"] = self.isil
+        if self.eln != "":
+            ret["eln"] = self.eln
         if self.sm != "":
             ret["shelfmark"] = self.sm
         if self.epn != None:
@@ -635,23 +640,6 @@ def assign_mediatype(letter):
     except:
         return("unbekannt")
 
-"""
-def get_norm_p(pages):
-    normp = 0
-    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S))", pages)
-    for ch in chunks:
-        _wh, numbl, _bl, nums, _s = ch
-        if numbl != "":
-            extrbl = re.findall(r"\d+", numbl)
-            for num in extrbl:
-                normp += int(num)*2
-        elif nums != "":
-            extrs = re.findall(r"\d+", nums)
-            for num in extrs:
-                normp += int(num)
-    return(normp)
-"""
-
 def get_norm_p(pages):
     normp = 0
     chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S))", pages)
@@ -662,21 +650,8 @@ def get_norm_p(pages):
         elif nums != "":
             normp += get_number(nums)
     return(normp)
-    
+
 def get_number(page_string, mult=1):
-    # Die folgenden Sonderfälle aus dem VD17 werden vom Modul roman nicht geparst
-    corr = {
-        "IIII" : 49,
-        "IL" : 49,
-        "XXXXXXXX" : 80,
-        "VIIII" : 9,
-        "IIX" : 8,
-        "VV" : 10,
-        "XXXXIIII" : 44,
-        "CCCCXXI" : 421,
-        "XXXVIIII" : 39,
-        "CCCCLVII" : 457    
-        }
     res = 0
     clean = re.sub(r"[\divxdclmIVXDCLM]+,? \[?(das heißt|i. ?e.)", "", page_string)
     spans = re.findall("((\d+) ?- ?(\d+))", clean)
@@ -687,18 +662,14 @@ def get_number(page_string, mult=1):
     extract = re.findall(r"\d+", clean)
     for num in extract:
         res += int(num)
-    extract = re.findall(r"([IVXDCLM]+) ", clean.upper())
+    extract = re.findall(r"([ivxdclm]+) ", clean.lower())
     for num in extract:
-        if corr != None:
-            try:
-                num = corr[num]
-            except:
-                try:
-                    res += roman.fromRoman(num.strip())
-                except:
-                    logging.error(f"Nicht zu parsen: {num}")
+        arab = rn.to_arabic(num)
+        if arab == None:
+            logging.error(f"Nicht zu parsen: {num}")
+        else:
+            res += arab
     return(res * mult)
-    
 
 def recognize_genre(gat):
     genres = ['Adressbuch', 'Agende', 'Akademieschrift', 'Almanach', 'Amtsdruckschrift', 'Anleitung', 'Anstandsliteratur', 'Anthologie', 'Antiquariatskatalog', 'Anzeige', 'Aphorismus', 'Ars moriendi', 'Arzneibuch', 'Atlas', 'Auktionskatalog', 'Autobiographie', 'Ballade', 'Beichtspiegel', 'Bericht', 'Bibel', 'Bibliographie', 'Bibliothekskatalog', 'Biographie', 'Brevier', 'Brief', 'Briefsammlung', 'Briefsteller', 'Buchbinderanweisung', 'Buchhandelskatalog', 'Bücheranzeige', 'Chronik', 'Dissertation', 'Dissertation:theol.', 'Dissertation:phil.', 'Dissertation:med.', 'Dissertation:jur.', 'Dissertationensammlung', 'Drama', 'Edikt', 'Einblattdruck', 'Einführung', 'Elegie', 'Emblembuch', 'Entscheidungssammlung', 'Enzyklopädie', 'Epigramm', 'Epik', 'Epikedeion', 'Epos', 'Erbauungsliteratur', 'Erlebnisbericht', 'ErotischeLiteratur', 'Erzählung', 'Fabel', 'Fallsammlung', 'Fastnachtsspiel', 'Fibel', 'Festbeschreibung', 'Figurengedicht', 'Flugschrift', 'Formularsammlung', 'Frauenliteratur', 'Freimaurerliteratur', 'Führer', 'Fürstenspiegel', 'Gebet', 'Gebetbuch', 'Gelegenheitsschrift', 'Gelegenheitsschrift:Abschied', 'Gelegenheitsschrift:Amtsantritt', 'Gelegenheitsschrift:Begrüßung', 'Gelegenheitsschrift:Einladung', 'Gelegenheitsschrift:Einweihung', 'Gelegenheitsschrift:Fest', 'Gelegenheitsschrift:Friedensschluß', 'Gelegenheitsschrift:Geburt', 'Gelegenheitsschrift:Geburtstag', 'Gelegenheitsschrift:Gedenken', 'Gelegenheitsschrift:Hochzeit', 'Gelegenheitsschrift:Jubiläum', 'Gelegenheitsschrift:Konversion', 'Gelegenheitsschrift:Krönung', 'Gelegenheitsschrift:Namenstag', 'Gelegenheitsschrift:Neujahr', 'Gelegenheitsschrift:Promotion', 'Gelegenheitsschrift:Sieg', 'Gelegenheitsschrift:Taufe', 'Gelegenheitsschrift:Tod', 'Gelegenheitsschrift:Visitation', 'Gesangbuch', 'Gesellschaftsschrift', 'Gesetz', 'Gesetzessammlung', 'Grammatik', 'Handbuch', 'Hausväterliteratur', 'Heiligenvita', 'Hochschulschrift', 'Itinerar', 'Jagdliteratur', 'Jesuitendrama', 'Judaicum', 'Jugendbuch', 'Jugendsachbuch', 'Kalender', 'Kapitulation', 'Karte', 'Katalog', 'Katechismus', 'Kirchenlied', 'Kochbuch', 'Kolportageliteratur', 'Kommentar', 'Kommentar:jur.', 'Kommentar:lit.', 'Kommentar:theol.', 'Kommentar:hist.', 'Kommentar:polit.', 'Komödie', 'Konkordanz', 'Konsiliensammlung', 'Konsilium', 'Legende', 'Leichenpredigt', 'Leichenpredigtsammlung', 'Lesebuch', 'Lexikon', 'Libretto', 'Lied', 'Liedersammlung', 'Lyrik', 'Märchen', 'Märtyrerdrama', 'Mandat', 'Matrikel', 'Meßkatalog', 'Meßrelation', 'Missale', 'Mitgliederverzeichnis', 'Moralische Wochenschrift', 'Musikbuch', 'Musiknoten', 'Musterbuch', 'Novelle', 'Ordensliteratur', 'Ordensliteratur:Augustiner', 'Ordensliteratur:Augustiner-Barfüßer', 'Ordensliteratur:Augustiner-Chorherren', 'Ordensliteratur:Augustiner-Eremiten', 'Ordensliteratur:Barnabiten', 'Ordensliteratur:Benediktiner', 'Ordensliteratur:Chorherren', 'Ordensliteratur:Dominikaner', 'Ordensliteratur:Franziskaner', 'Ordensliteratur:Jesuiten', 'Ordensliteratur:Kapuziner', 'Ordensliteratur:Karmeliter', 'Ordensliteratur:Kartäuser', 'Ordensliteratur:Minimen', 'Ordensliteratur:Minoriten', 'Ordensliteratur:Oratorianer', 'Ordensliteratur:Prämonstratenser', 'Ordensliteratur:Terziaren', 'Ordensliteratur:Theatiner', 'Ordensliteratur:Unbeschuhte Karmeliter', 'Ordensliteratur:Zisterzienser', 'Ornamentstich', 'Ortsverzeichnis', 'Panegyrikos', 'Perioche', 'Pflanzenbuch', 'Pharmakopöe', 'Plan', 'Porträtwerk', 'Praktik', 'Predigt', 'Predigtsammlung', 'Preisschrift', 'Privileg', 'Psalter', 'Ratgeber', 'Rechenbuch', 'Rede', 'Regelsammlung', 'Regesten', 'Reisebericht', 'Reiseführer', 'Rezension', 'Rezensionszeitschrift', 'Richtlinie', 'Rituale', 'Roman', 'Sage', 'Satire', 'Satzung', 'Schäferdichtung', 'Schauspiel', 'Schreibmeisterbuch', 'Schulbuch', 'Schulprogramm', 'Schwank', 'Seuchenschrift', 'Spiel', 'Sprachführer', 'Sprichwortsammlung', 'Streitschrift', 'Streitschrift:polit.', 'Streitschrift:jur.', 'Streitschrift:theol.', 'Subskribentenliste', 'Subskriptionsanzeige', 'Tabelle', 'Tagebuch', 'Theaterzettel', 'Tierbuch', 'Tiermedizin', 'Topographie', 'Totentanz', 'Tragödie', 'Traktat', 'Trivialliteratur', 'Universitätsprogramm', 'Urkundenbuch', 'Verkaufskatalog', 'Verordnung', 'Verserzählung', 'Vertrag', 'Volksbuch', 'Volksschrifttum', 'Vorlesung', 'Vorlesungsverzeichnis', 'Wappenbuch', 'Wörterbuch', 'Zeitschrift', 'Zeitung', 'Zitatensammlung']

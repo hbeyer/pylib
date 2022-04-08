@@ -1,3 +1,4 @@
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -192,7 +193,13 @@ Beschreibung folgt
 
 ---
 ### Modul isil
-Beschreibung folgt
+
+Umrechnung der kataloginternen Bibliothekskennung ELN in eine ISIL gemäß der Berliner [ISIL- und Sigeldatei](https://sigel.staatsbibliothek-berlin.de/suche/). Berücksichtigt werden alle Biblitoheken im VD17. Bereitstellung zusätzlicher Informationen zur Bibliothek und zum Ort.
+
+| Funktion | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| get_isil | ELN (String) | ISIL der Bibliothek, Ausgangswert falls unbekannt | - |
+| get_bib | ELN oder ISIL (String) | Dictionary mit den Feldern "bib" (Bibliotheksname), "place" (Ortsname), "gettyPlace" (ID des Ortes im Getty Thesaurus of Geographic Names), "long" (geographische Länge), "lat" (geographische Breite) | - |
 
 ---
 ### Modul language
@@ -361,6 +368,16 @@ col.loadBySQL("SELECT * FROM artwork LIMIT 100 OFFSET 0")
 for aw in col:
 	print(aw)
 ```
+
+---
+### Modul romnumbers
+
+Parsen und Erzeugen römischer Zahlen. Anders als mit dem Modul roman (https://pypi.org/project/roman/)  können auch additive Zahlen (IIII statt IV) gelesen werden. Punkte und Leerzeichen werden automatisch entfernt.
+
+| Funktion | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| to_arabic | lett (String) | Wert der römischen Zahl als Integer, None bei Validierungsfehler | - |
+| to_roman | num (Integer) | Zahl in klein geschriebenen römischen Ziffern, None falls kein Integer übergeben wurde | - 
 
 ---
 ### Modul shelfmark

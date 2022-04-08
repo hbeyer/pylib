@@ -62,7 +62,7 @@ class Isil:
         "5120" : { "bib" : "Geistliches Ministerium Greifswald", "place" : "Greifswald", "gettyPlace" : "", "long" : "", "lat" : ""  },
         "THURKB" : { "bib" : "Thüringische Kirchenbibliotheken", "place" : "Thüringen", "gettyPlace" : "7003689", "long" : "11.012385", "lat" : "50.931662" }
     }
-    corr_vd17 = {
+    eln_isil = {
         "0000" : "Redaktion",
         "0001" : "DE-01",
         "0003" : "DE-3",
@@ -141,9 +141,15 @@ class Isil:
         "TUUB" : "DE-21"
     }    
 def get_bib(code, vd17 = True):
-    if code in Isil.corr_vd17:
-        code = Isil.corr_vd17[code]
+    if code in Isil.eln_isil:
+        code = Isil.eln_isil[code]
     try:
         return(Isil.bib_list[code])
     except:
         return(False)
+        
+def get_isil(eln):
+    try:
+        return(Isil.eln_isil[eln])
+    except:
+        return(eln)

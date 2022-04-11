@@ -114,6 +114,37 @@ Ausgabe:
 `{'dc.identifier': 'VD16 D 340', 'dc.identifier.urn': '', 'dc.format': '', 'dc.type': '', 'dc.language': '', 'dc.title': 'Poematum || HENRICI || DECIMATORIS || GIFFHORNENSIS.|| Libri IIII.||@lat', 'dc.subject': '', 'dc.coverage': '', 'dc.description': '', 'dc.creator': 'Decimator, Heinrich#GND_124613934', 'dc.contributor': '', 'dc.publisher': '', 'dc.rights': '', 'dc.rights.uri': '', 'dcterms.rightsHolder': '', 'dc.source': '', 'dc.relation': '', 'dc.date': '1586', 'dc.date.embargo': '', 'dcterms.extent': '', 'dcterms.isPartOf': ''}`
 
 ---
+### Modul evalpdf
+Durchsuchen von PDF-Dateien nach einer Liste von Suchbegriffen oder mit regulären Ausdrücken. Erfordert Installation des Moduls [pdfplumber](https://pypi.org/project/pdfplumber/0.1.2/)
+
+Klasse **Evaluation**:
+
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| __init\_\_ | path (Pfad zu einer lokalen PDF-Datei), sww (Liste mit Suchbegriffen in Kleinbuchstaben), rexx (Set mit Tupeln, in denen jeweils ein Indexbegriff einem regulären Ausdruck zugeordnet wird) | Instanz von Evaluation | - |
+| eval | - | True bei Erfolg, None bei Fehler | Durchführen der Suche, Speichern der Ergebnisse unter Evaluation::index |
+| \_\_str\_\_ | - | Auflistung der Treffer | - |
+
+Abgeleitete Klasse **EvaluationSDD**:
+Evaluation mit vordefinierten Suchwörtern für SDD-relevante Titel der HAB und 
+
+Beispiel: Auswertung von [Auktion 208](ev%20=%20ep.EvaluationSDD%28%22source/kataloge/Reiss-208.pdf%22%29%20ev.eval%28%29%20print%28ev%29) bei Reiss & Sohn
+
+```python
+ev = ep.EvaluationSDD("Reiss-208.pdf")
+ev.eval()
+print(ev)
+```
+
+Ausgabe:
+```
+SDD-Evaluation für source/kataloge/Reiss-208.pdf
+17. Jh.: 5, 6, 13, 19, 20, 21, 22, 30, 34, 52, 54, 70, 76, 77, 78, 79, 80, 81, 82, 86, 87, 88, 97, 98, 99, 100, 115, 116, 118, 119, 129
+emblem: 19, 38, 79, 116
+lüneburg: 65
+alchem: 79
+```
+---
 ### Modul geo
 
 Modul zum Laden, Speichern und Auffinden von Geodaten. Als Datenbank dient die Datei `placeData.csv` im Wurzelverzeichnis.

@@ -1,43 +1,24 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+
+from lib import evalpdf as ep
+
+#ev = ep.Evaluation("source/kataloge/Reiss-208.pdf", ["processionarium", "künrath"], [("Inkunabeln", "14\d\d")])
+ev = ep.EvaluationSDD("source/kataloge/Reiss-208.pdf")
+ev.eval()
+print(ev)
+
+"""
+import pdfplumber
+import PyPDF2
 import logging
-import roman
-import zipfile
-import os
-from lib import sru
-from lib import isil
-from lib import recordlist as rl
-from lib import xmlreader as xr
-from lib import pica
-from lib import csvt
-from lib import romnumbers as rn
 logging.basicConfig(level=logging.INFO)
 
-"""
-test = "M. C. LVIII"
-print(test)
-num = rn.to_arabic(test)
-print(num)
-rom = rn.to_roman(num)
-print(rom)
+with pdfplumber.open("source/kataloge/Reiss-209.pdf") as pdf:
+    first_page = pdf.pages[23]
+    print(first_page.extract_text())
 """
 
-source_folder = f"downloads/helmstedt"
+# Dokumentation: https://github.com/jsvine/pdfplumber
 
-"""
-req = sru.Request_VD17()
-num = req.prepare("pica.bbg=(Aa* or Af* or Av*)")
-print(req.url)
-print(req.numFound)
-req.download("source_folder")
-"""
-
-reader = xr.DownloadReader(source_folder, "record", "info:srw/schema/5/picaXML-v1.0")
-
-for count, node in enumerate(reader):
-    rec = pica.Record(node)
-    for cp in rec.copies:
-        print(cp.isil)
-    if count >= 50:
-            break

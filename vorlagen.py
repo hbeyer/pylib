@@ -284,7 +284,9 @@ import logging
 
 # Das Folgende sorgt dafür, dass ab diesem Level Meldungen angezeigt werden
 # Sollte da stehen, wo der Code ausgeführt wird (u. U. main() nutzen)
-logging.basicConfig(level=logging.DEBUG)
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 logging.debug("Die Checksumme beträgt 45678")
 logging.info("Es wurden alle Dateien geladen")

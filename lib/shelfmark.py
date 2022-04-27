@@ -103,6 +103,12 @@ class Shelfmark:
                 self.group = extract.group(1)
             except:
                 return(None)
+        else:
+            extract = re.search(r"([A-Z][a-z])\s", self.whole)
+            try:
+                self.group = extract.group(1)
+            except:
+                return(None)            
         return(self.group)
     def getForm(self):
         extract = re.search(r"Sammelb|Mischb|Kapsel|Sammelma", self.whole)
@@ -145,6 +151,12 @@ class Shelfmark:
             extract = re.search(r"drucke\s([0-9]+)", self.whole)
             try:
                 self.number = extract.group(1)
+            except:
+                return(None)
+        elif self.collection == "NE":
+            extract = re.search(r"[A-Z][a-z]( 2°|4°|8°|12°)? (\d+)", self.whole)
+            try:
+                self.number = extract.group(2)
             except:
                 return(None)
         else:

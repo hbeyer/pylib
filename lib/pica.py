@@ -63,6 +63,10 @@ class Record:
         except:
             self.resp = ""
         try:
+            self.edition = self.data["032@"]["01"]["a"].pop(0)
+        except:
+            self.edition = ""            
+        try:
             self.lang = self.data["010@"]["01"]["a"]
         except:
             self.lang = []
@@ -141,6 +145,9 @@ class Record:
         occDict = {}
         for fn in fields:
             tag = fn.get("tag")
+            # Das Folgende schließt die Exemplardaten aus, die separat eingelesen werden
+            if tag == "101@":
+                break
             occ = fn.get("occurrence")
             if occ == None:
                 try:
@@ -164,6 +171,48 @@ class Record:
                                 self.data[tag] = { occ: { code: [ch.text] } }
                             except:
                                 pass
+    def load_copies(self):
+        cp = None
+        iln = None
+        eln = None
+        fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
+        for fi in fields:
+            tag = fi.get("tag")
+            if tag == "101@":
+                try:
+                    iln = get_subfield(fi, "a")
+                except:
+                    logging.error(f"Fehlende ILN bei PPN {self.ppn}")
+            if tag == "202D":
+                try:
+                    eln = get_subfield(fi, "a")
+                except:
+                    logging.error(f"Fehlende ELN bei PPN {self.ppn}")
+            if tag == "203@":
+                if cp != None:
+                    self.copies.append(cp)
+                cp = Copy()
+                try:
+                    cp.epn = get_subfield(fi, "0")
+                except:
+                    logging.error(f"Fehlende EPN bei PPN {self.ppn}")
+                else:
+                    cp.iln = str(iln)
+                    cp.eln = str(eln)
+                    cp.get_bib()
+            if tag == "209A":
+                sm = get_subfield(fi, "a")
+                if sm != None:
+                    cp.sm = sm
+                else:
+                    logging.error(f"Fehlende Signatur bei PPN {self.ppn}")
+            if tag == "244Z":
+                try:
+                    cp.prov.append(get_subfield(fi, "a"))
+                except:
+                    pass                    
+        if cp != None:
+            self.copies.append(cp)
     def load_persons(self):
         try:
             creatorList = self.data["028A"]
@@ -195,31 +244,6 @@ class Record:
                 per.role = "contributor"
                 per.import_structdata(contributorList[occ])
                 self.persons.append(per)            
-    def load_copies(self):
-        try:
-            sigRow = self.data["209A"]
-        except:
-            pass
-        else:
-            for occ in sigRow:
-                try:
-                    sm = sigRow[occ]["a"].pop(0)
-                except:
-                    sm = None
-                else:
-                    cp = Copy(sm)
-                    try:
-                        eln = self.data["202D"][occ]["a"].pop(0)
-                    except:
-                        pass
-                    else:
-                        cp.eln = eln
-                        cp.get_bib()
-                    try:
-                        cp.provenances = self.data["244Z"][occ]["a"]
-                    except:
-                        pass
-                    self.copies.append(cp)
     def load_places(self):
         try:
             placeList = self.data["033D"]
@@ -271,6 +295,8 @@ class Record:
             "pages" : self.pages,
             "normPages" : str(self.normPages),
             }
+        if self.edition != "":
+            res["edition"] = self.edition       
         if self.langOrig != []:
             res["langOrig"] = ";".join(self.langOrig)
         if self.digi != []:
@@ -389,7 +415,7 @@ class RecordVD17(Record):
         except:
             self.vd17 = []
     def __str__(self):
-        ret = "record: PPN " + self.ppn + ", VD17: " + "|".join(self.vd17) + ", Jahr: " + self.date
+        ret = "record: PPN " + self.ppn + ", VD17: " + self.vdn + ", Jahr: " + self.date
         return(ret)
     def to_dict(self):
         res = {
@@ -566,20 +592,25 @@ class Person:
         return(True)
 
 class Copy:
-    def __init__(self, sm, provenances = [], epn = None):
+    def __init__(self):
         self.place = ""
         self.bib = ""
         self.isil = ""
         self.eln = ""
-        self.sm = sm
-        self.provenances = provenances
-        self.epn = epn
+        self.iln = ""
+        self.epn = ""
+        self.sm = ""
+        self.prov = []
     def __str__(self):
         ret = "Signatur: " + self.sm
+        if self.isil != "":
+            ret = "ISIL: " + self.isil + " " + ret
         if self.eln != "":
             ret = "ELN: " + self.eln + " " + ret
-        if self.provenances != []:
-            ret += ", Provenienz: " + ";".join(self.provenances)
+        if self.iln != "":
+            ret = "ILN: " + self.iln + " " + ret
+        if self.prov != []:
+            ret += ", Provenienz: " + ";".join(self.prov)
         if self.epn != None:
             ret += ", EPN: " + self.epn
         return(ret)
@@ -601,12 +632,14 @@ class Copy:
             ret["isil"] = self.isil
         if self.eln != "":
             ret["eln"] = self.eln
+        if self.eln != "":
+            ret["iln"] = self.iln            
         if self.sm != "":
             ret["shelfmark"] = self.sm
         if self.epn != None:
             ret["epn"] = self.epn
-        if self.provenances != []:
-            ret["provenances"] = ";".join(self.provenances)
+        if self.prov != []:
+            ret["provenances"] = ";".join(self.prov)
         return(ret)
 
 class Place:
@@ -689,3 +722,12 @@ def get_place_relator(code):
         return(conc[code])
     except:
         return(code)
+
+def get_subfield(node, code):
+    code = code.lower()
+    children = node.findall("*")
+    for ch in children:
+        retcode = ch.get("code").lower()
+        if code == retcode:
+            return(ch.text)
+    return(None)

@@ -202,9 +202,9 @@ class Record:
                     cp.get_bib()
             if tag == "209A":
                 sm = get_subfield(fi, "a")
-                if sm != None:
+                if sm != None and cp.sm == "":
                     cp.sm = sm
-                else:
+                elif sm == None:
                     logging.error(f"Fehlende Signatur bei PPN {self.ppn}")
             if tag == "244Z":
                 try:
@@ -459,11 +459,15 @@ class RecordVD17(Record):
             return(self.bbg)
 class RecordVD16(Record):
     def __init__(self, node):
-        super().__init__(node)    
+        super().__init__(node)
         try:
             self.vd16 = self.data["006V"]["01"]["0"]
         except:
-            self.vd16 = []
+            try:
+                self.vd16 = self.data["007S"]["01"]["0"]
+            except:
+               self.vd16 = []
+        self.vdn = ";".join(self.vd16)
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", VD16: " + "|".join(self.vd16) + ", Jahr: " + self.date
         return(ret)
@@ -675,13 +679,15 @@ def assign_mediatype(letter):
 
 def get_norm_p(pages):
     normp = 0
-    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S))", pages)
+    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S|Bo)|S\. (\[?\d+\]? ?- ?\[?\d+\]?))", pages)
     for ch in chunks:
-        _wh, numbl, _bl, nums, _s = ch
+        _wh, numbl, _bl, nums, _s, numsub = ch
         if numbl != "":
             normp += get_number(numbl, 2)
         elif nums != "":
             normp += get_number(nums)
+        elif numsub != "":
+            normp += get_number(numsub)
     return(normp)
 
 def get_number(page_string, mult=1):
@@ -731,3 +737,14 @@ def get_subfield(node, code):
         if code == retcode:
             return(ch.text)
     return(None)
+    
+def make_id(name):
+    name = name.lower()
+    name = name.replace(" ", "_").replace(",", "").replace(".", "")
+    name = name.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss").replace("ç", "c").replace("ë", "e")
+    return(name)
+
+def get_role(term):
+    if pers.role in ["VerfasserIn", "creator", "Verfasser", "Autor"]:
+        return("creator")
+    return("contributor")

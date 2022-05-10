@@ -63,10 +63,12 @@ class Table():
                     parallels.append(rowSub[fieldEx])
             row["Parallelexemplare"] = ";".join(parallels)
         self.fields.append("Parallelexemplare")
+        return(True)
     def save(self, fileName = "myTable"):
         body = [[row[key] for key in row] for row in self.content]
         table = csvt.Table(self.fields, body)
         table.save(fileName)
+        return(True)
     def toSQLite(self, fileName = "exportTable"):
         db = ls.Database(self.fields, [[row[field] for field in self.fields] for row in self.content], fileName)
-        return(True)        
+        return(True)      

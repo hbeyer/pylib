@@ -3,22 +3,37 @@
 
 
 import logging
-from lib import duennhaupt as dh
-from lib import evalpdf as ep
+import re
 from lib import table_winibw as tw
-from lib import shelfmark as sm
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-"""
-sigg = ["Wa 2° 75:1", "Xb 2385", "Wa 6897", "Xb 10462"]
-for sig in sigg:
-    ssig = sm.StructuredShelfmark(sig)
-    sort = ssig.sortable
-    print(f"{sig} - {ssig} - {sort}")
-"""
+expr_umf = r"\(?\d+\)? (Bll\.|S\.)"
+expr_form = r"([248]|12)°"
 
-tb = tw.Table("source/portraitsammelwerke_digi.csv")
-tb.addSortable()
-tb.save("Checkliste_Porträtsammelwerke")
+nost = tw.Table("source/Angebotsliste-Nostitz.csv")
+
+for count, row in enumerate(nost):
+    umf = ""
+    for tup, val in row.items():
+        extr = re.search(expr_umf, val)
+        if extr != None:
+            umf = extr.group(0)
+            break
+    form = ""
+    for tup, val in row.items():
+        extr = re.search(expr_form, val)
+        if extr != None:
+            form = extr.group(0)
+            break
+    if umf != "" and form != "":
+        koll = f"{umf}, {form}"
+    elif umf != "":
+        koll = umf
+    elif form != "":
+        koll = form
+    else:
+        koll = ""
+    print(koll)
+    

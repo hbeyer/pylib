@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import logging
 
 class Shelfmark:
     def __init__(self, whole):
@@ -16,28 +17,35 @@ class Shelfmark:
         self.format = ""
         self.volume = ""        
         self.valid = False        
-        extract = re.search(r"(A:|H:|M:|Bibel-S\.|Ältere Einblattdrucke|aeltere einblattdrucke|Alv\.|Cod\. Guelf\.|Xylogr|Druckfragm|Wa |Xb |Wt |We |Schulenb|Xd )", self.whole)
-        conc = { 
-            "A:":"A", 
-            "H:":"H", 
-            "M:":"M", 
-            "Bibel-S.":"BS", 
-            "aeltere einblattdrucke":"AEB", 
-            "Ältere Einblattdrucke":"AEB", 
-            "Alv.":"ALV", 
-            "Xylogr":"XYL", 
-            "Druckfragm":"FGM", 
-            "Wa ":"NE", 
-            "Xb ":"NE", 
-            "Wt ":"NE", 
-            "We ": "BR", 
-            "Schulenb":"SLB", 
-            "Xd ":"DUB"
-        }
-        try:
-            self.collection = conc[extract.group(1)]
-        except:
-            return(None)
+        rexx = {
+            "A:" : "A",
+            "Quod" : "A",
+            "Theol|Jur|Hist|Bell|Pol|Oec|Eth|Med|Geog|Astr|Phys|Geom|Arit|Poet|Log|Rhet|Gram|Quod" : "A",
+            "Helmst" : "H",
+            "M:" : "M",
+            "([ABCDEFGHJKLMNOPRSTUVZ][a-z]|QuN) " : "M",
+            "Bibel-S\." : "BS",
+            "(ae|Ä)ltere [Ee]inblattdrucke" : "AEB",
+            "Alv\." : "ALV",
+            "Xylogr" : "XYL",
+            "Druckfragm" : "FGM",
+            "[WX][a-z] " : "NE",
+            "Schulenb" : "YSL",
+            "Eyssen" : "YEY",
+            "Kranz" : "YKR",
+            "Kreuder" : "YKD",
+            "Ars libr" : "YMA",
+            "Maler" : "YMM",
+            "Stolb" : "YST",
+            "Textb" : "YTM",
+            "Töpfer" : "YTO",
+            "Zapf" : "YHZ",
+            "G[123]" : "YGG"
+            }
+        for rex, val in rexx.items():
+            if re.search(rex, self.whole) != None:
+                self.collection = val
+                break
         if "Slg. Hardt" in self.whole:
             self.root = "M: Li 5530"
             self.bareRoot = "Li 5530"
@@ -45,7 +53,7 @@ class Shelfmark:
             try:
                 self.part = extract.group(1)
             except:
-                print("Problem bei " + self.whole)
+                logging.error("Problem bei " + self.whole)
         else:
             extract = re.search(r"(.+)\s\(([0-9a-d]{1,2})\)$", self.whole)
             try:
@@ -101,6 +109,16 @@ class Shelfmark:
             extract = re.search(r"\s([A-Z]|QuH|Y[a-z])\s", self.whole)
             try:
                 self.group = extract.group(1)
+            except:
+                return(None)
+        elif self.collection == "YGG":
+            extract = re.search(r"([123]):([A-Z])(\d+)", self.whole)
+            try:
+                self.group = extract.group(1) + extract.group(2)
+            except:
+                return(None)
+            try:
+                self.number = extract.group(3)
             except:
                 return(None)
         else:
@@ -430,4 +448,4 @@ def insertPoint(sm):
 def searchable(sm):
     sm = sm.replace("(", "\(")
     sm = sm.replace(")", "\)")
-    return(sm)        
+    return(sm)

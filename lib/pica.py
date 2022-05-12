@@ -205,7 +205,8 @@ class Record:
                 if sm != None and cp.sm == "":
                     cp.sm = sm
                 elif sm == None:
-                    logging.error(f"Fehlende Signatur bei PPN {self.ppn}")
+                    pass
+                    #logging.error(f"Fehlende Signatur bei PPN {self.ppn}")
             if tag == "244Z":
                 try:
                     cp.prov.append(get_subfield(fi, "a"))

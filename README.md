@@ -1,5 +1,3 @@
-
-cp1252
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -65,6 +63,10 @@ data = [
 table = csvt.Table(fields, data)
 table.save("VD16")
 ```
+
+Klasse **TableGeoBrowser**:
+
+Erzeugt eine CSV-Tabelle zum Import in den DARIAH GeoBrowser.
 
 ---
 ### Modul dataset

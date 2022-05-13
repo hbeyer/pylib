@@ -36,7 +36,7 @@ class TableWin(Table):
 class TableGeoBrowser(Table):
     def __init__(self, content = None):
         super().__init__(content)
-        self.fields = ["Name", "Address", "Description", "Longitude", "Latitude", "TimeStamp", "TimeSpan:begin", "TimeSpan:end", "GettyID", "Weight"]
+        self.fields = ["Name", "Address", "Description", "Longitude", "Latitude", "TimeStamp", "TimeSpan:begin", "TimeSpan:end", "GettyID", "weight"]
         if content != None:
             for row in content:
                 self.import_row(row)

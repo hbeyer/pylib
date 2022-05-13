@@ -31,6 +31,13 @@ class DB:
             return(False)
         else:
             return(row)
+    def get_coord(self, name):
+        name = normalize_placename(name)
+        try:
+            row = self.table.content[self.index[name][0]]
+        except:
+            return(["", ""])
+        return([row[3], row[4]])
     def save(self):
         self.table.content.sort(key=lambda row: row[0])
         self.table.save(self.path.replace(".csv", ""))
@@ -275,7 +282,7 @@ def normalize_placename(placeName):
         "Oberursel (Taunus)" : "Oberursel",
         "Oettingen i. Bay." : "Oettingen in Bayern",
         "Oettingen" : "Oettingen in Bayern",
-        "Öttingen" : "Oettingen",
+        "Öttingen" : "Oettingen in Bayern",
         "Offenbach am Main" : "Offenbach",
         "Osterode" : "Osterode am Harz",
         "Philadelphia" : "fingiert",

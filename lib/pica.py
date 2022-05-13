@@ -746,6 +746,6 @@ def make_id(name):
     return(name)
 
 def get_role(term):
-    if pers.role in ["VerfasserIn", "creator", "Verfasser", "Autor"]:
+    if term in ["VerfasserIn", "creator", "Verfasser", "Autor"]:
         return("creator")
     return("contributor")

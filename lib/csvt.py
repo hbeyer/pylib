@@ -3,6 +3,7 @@
 
 import csv
 import logging
+import re
 
 class Table:
     encoding = "utf-8"
@@ -59,7 +60,11 @@ class TableGeoBrowser(Table):
         for row in self.content:
             if row[3] == "" or row[4] == "":
                 row[3], row[4] = gdb.get_coord(row[0])
-        return(True)            
+        self.remove_void()
+        return(True)
+    def remove_void(self):
+        new_content = [row for row in self.content if row[3] != ""]
+        self.content = new_content
     def save(self, path):
         with open(path + ".csv", 'w', encoding=self.encoding, newline="") as csvfile:
             writer = csv.writer(csvfile, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -83,9 +88,11 @@ class GeoDataRow:
         self.timeStamp = ""
         if timeStamp != None:
             self.timeStamp = timeStamp
+            if re.match(r"1\d\d\d$", self.timeStamp):
+                self.timeStamp = self.timeStamp + "-01-01"
         self.getty = ""
         self.weight = 1
         if weight != None:
             self.weight = weight
     def to_list(self):
-        return([self.name, self.address, self.description, self.long, self.lat, self.timeStamp, "", "", self.getty, self.weight])
+        return([self.name, self.address, self.description, self.long, self.lat, self.timeStamp, "", "", self.getty, str(self.weight)])

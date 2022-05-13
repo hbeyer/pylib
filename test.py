@@ -4,36 +4,19 @@
 
 import logging
 import re
-from lib import table_winibw as tw
+from lib import csvt
+from lib import geo
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-expr_umf = r"\(?\d+\)? (Bll\.|S\.)"
-expr_form = r"([248]|12)°"
+gdb = geo.DB()
 
-nost = tw.Table("source/Angebotsliste-Nostitz.csv")
-
-for count, row in enumerate(nost):
-    umf = ""
-    for tup, val in row.items():
-        extr = re.search(expr_umf, val)
-        if extr != None:
-            umf = extr.group(0)
-            break
-    form = ""
-    for tup, val in row.items():
-        extr = re.search(expr_form, val)
-        if extr != None:
-            form = extr.group(0)
-            break
-    if umf != "" and form != "":
-        koll = f"{umf}, {form}"
-    elif umf != "":
-        koll = umf
-    elif form != "":
-        koll = form
-    else:
-        koll = ""
-    print(koll)
-    
+testRow = csvt.GeoDataRow("Leipzig", "12.4167", "51.3333", "1650", 7)
+testRow2 = csvt.GeoDataRow("Dresden", "13.7500", "51.0500", "1670", 5)
+testRow3 = csvt.GeoDataRow("Leipzig", "12.4167", "51.3333", "1650", 20)
+testRow4 = csvt.GeoDataRow("Pirna", "", "", "1700", 3)
+gt = csvt.TableGeoBrowser([testRow, testRow2, testRow3, testRow4])
+gt.simplify_content()
+gt.fill_geo_data(gdb)
+gt.save("testGeo")

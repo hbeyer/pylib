@@ -680,21 +680,25 @@ def assign_mediatype(letter):
 
 def get_norm_p(pages):
     normp = 0
-    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S|Bo)|S\. (\[?\d+\]? ?- ?\[?\d+\]?))", pages)
+    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S|Bo))", pages)
     for ch in chunks:
-        _wh, numbl, _bl, nums, _s, numsub = ch
+        wh, numbl, _bl, nums, _sbo = ch
+        if "-" in wh:
+            continue
         if numbl != "":
             normp += get_number(numbl, 2)
         elif nums != "":
             normp += get_number(nums)
         elif numsub != "":
             normp += get_number(numsub)
+    chunks2 = re.findall(r"S\.? \d+ ?- ?\d+", pages)
+    for ch2 in chunks2:
+        normp += get_number(ch2)
     return(normp)
-
 def get_number(page_string, mult=1):
     res = 0
     clean = re.sub(r"[\divxdclmIVXDCLM]+,? \[?(das heißt|i. ?e.)", "", page_string)
-    spans = re.findall("((\d+) ?- ?(\d+))", clean)
+    spans = re.findall("(\[?(\d+)\]? ?- ?\[?(\d+)\]?)", clean)
     for span in spans:
         whole, start, end = span
         diff = int(end) - int(start)

@@ -5,6 +5,7 @@ import pdfplumber
 import re
 import os.path
 import logging
+from lib import duennhaupt as dh
 logging.basicConfig()
 
 
@@ -59,17 +60,11 @@ class EvaluationSDD(Evaluation):
         self.path = path
         # Liste zu ergänzen
         self.sww = [ "dünnhaupt", "alchem", "emblem", "wolfenbüttel", "braunschweig", "lüneburg",
-            "helmstedt", "conring",
-            "lilienberg", "sancta clara", "abschatz", "heinrich albert", "gidius albertinus", "albini", 
-            "valentin andre", "anton ulrich", "gottfried arnold", "august augsburger",
-            "avancini", "jakob balde", "aspar von barth", "beccau", "joachim becher",
-            "joseph beck", "johann beer", "bernegger", "von besser", "joachim betke",
-            "bidermann", "von birken", "jacob böhme", "martin böhme", "august bohse",
-            "daniel speer", "aspar stieler", "von stökken", "von stubenberg",
-            "friedrich taubmann", "peter titz", "hilf treuer", "christian trömer",
-            "tscherning", "onrad vetter", "weckherlin", "christian weise", "von dem werder",
-            "wernicke", "von zesen", "kliphausen", "jacob zimmermann", "zincgref"
-            ]
-        self.rexx = [("17. Jh.", r"16\d\d")]        
+            "helmstedt", "conring"]
+        duenn = dh.get_query_words()
+        self.sww.extend(duenn)
+        self.rexx = [("17. Jh.", r"16\d\d")]
+
+
 
 # Dokumentation: https://github.com/jsvine/pdfplumber

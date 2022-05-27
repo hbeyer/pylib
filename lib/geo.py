@@ -342,6 +342,9 @@ def normalize_placename(placeName):
     except:
         pass
     return(placeName)
+    """ Weiterer Korrekturbedarf:
+    {'[fingiert]', '|bema|*ad*Digitalisierung UB Leipzig$2014-2016', 'helmstedt', 'fingiert [?]', 'Stargard in Pommern', 'fingiert?', 'fingiert', '[S.l.]', 'Freystadt', 'Text lat.', 'Mülheim', 'Etzelbach', 'Philadelphia?', 'Cölln', 'Lingen', '[Fingiert]', 'Magdebvrg', 'Fingiert', 'Elbingen', 'Nürnbeg', 'fingiert ?', '?', 'Freiburg in Schlesien', 'Bad Buchau', 'Nehrling', 'Tournon-sur-Rhône', 'Piemont', 'Lindau, Bodensee', '1', '[s.l.]'}
+    """
 def get_geodata_getty(id):
     root = get_getty_tree(id)
     latNode = root.find('.//{http://textgrid.info/namespaces/vocabularies/tgn}Latitude/{http://textgrid.info/namespaces/vocabularies/tgn}Decimal')

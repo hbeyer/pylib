@@ -1,3 +1,4 @@
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -125,8 +126,9 @@ Klasse **Evaluation**:
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | __init\_\_ | path (Pfad zu einer lokalen PDF-Datei), sww (Liste mit Suchbegriffen in Kleinbuchstaben), rexx (Set mit Tupeln, in denen jeweils ein Indexbegriff einem regulären Ausdruck zugeordnet wird) | Instanz von Evaluation | - |
-| eval | - | True bei Erfolg, None bei Fehler | Durchführen der Suche, Speichern der Ergebnisse unter Evaluation::index |
-| \_\_str\_\_ | - | Auflistung der Treffer | - |
+| eval | - | True bei Erfolg, None bei Fehler | Durchführen der Suche, Speichern der Treffer enthaltenden Seiten unter Evaluation::index |
+| eval_context | - | True bei Erfolg, None bei Fehler | Durchführen der Suche, Speichern der gefundenen Zeilen unter Evaluation::contexts |
+| \_\_str\_\_ | - | Auflistung der Ergebnisse unabhängig von der Art der Suche | - |
 
 Abgeleitete Klasse **EvaluationSDD**:
 Evaluation mit vordefinierten Suchwörtern für SDD-relevante Titel der HAB und 

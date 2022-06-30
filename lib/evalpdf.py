@@ -6,11 +6,14 @@ import re
 import os.path
 import logging
 from lib import duennhaupt as dh
+from pdfminer.layout import LTTextLineHorizontal
+from pdfminer.layout import LTTextBoxHorizontal
 logging.basicConfig()
 
 
 class Evaluation:
     index = {}
+    contexts = {}
     path = ""
     sww = []
     rexx = []
@@ -21,19 +24,16 @@ class Evaluation:
             self.sww = sww
         if rexx != None:
             self.rexx = rexx
-    def eval(self):
         if os.path.exists(self.path) == False:
             logging.error(f"Ungültiger Pfad: {self.path}")
-            return(None)
         if self.sww == [] and self.rexx == []:
             logging.error("Keine Suchwörter übergeben")
-            return(None)
+    def eval(self):
         with pdfplumber.open(self.path) as pdf:
             for page in pdf.pages:
                 text = page.extract_text()
+                text = prepare_text(text)
                 pn = str(page.page_number)
-                text = text.replace("\n", " ")
-                text = text.replace("- ", "")
                 for sw in self.sww:
                     if sw in text.lower():
                         try:
@@ -48,10 +48,44 @@ class Evaluation:
                         except:
                             self.index[name] = [pn]
             return(True)
+    def eval_context(self):
+        with pdfplumber.open(self.path, laparams={}) as pdf:
+            for page in pdf.pages:
+                layout = page.layout
+                line = ""
+                for element in layout: 
+                    if isinstance(element, LTTextBoxHorizontal):
+                        for el in element:
+                            line = el.get_text()
+                            self.eval_line(line)
+                    elif isinstance(element, LTTextLineHorizontal):
+                        line = element.get_text()
+                        self.eval_line(line)
+            return(True)
+    def eval_line(self, line):
+        line = prepare_text(line)
+        for sw in self.sww:
+            if sw in line:
+                try:
+                    self.contexts[sw].append(line)
+                except:
+                    self.contexts[sw] = [line]
+        for name, rex in self.rexx:
+            test = re.search(rex, line)
+            if test != None:
+                try:
+                    self.contexts[name].append(line)
+                except:
+                    self.contexts[name] = [line]
     def __str__(self):
-        ret = f"SDD-Evaluation für {self.path}"
+        ret = f"Evaluation für {self.path}"
         for label, pages in self.index.items():
             ret = ret + f"\n{label}: {', '.join(pages)}"
+        for label, lines in self.contexts.items():
+            ret = ret + f"\n{label}: {len(lines)} Treffer:"
+            for line in lines:
+                ret = ret + f"\n\t{line}"
+            ret = ret + "\n"
         return(ret)
 
 class EvaluationSDD(Evaluation):
@@ -65,6 +99,10 @@ class EvaluationSDD(Evaluation):
         self.sww.extend(duenn)
         self.rexx = [("17. Jh.", r"16\d\d")]
 
+def prepare_text(text):
+    text = text.replace("\n", " ")
+    text = text.replace("- ", "")
+    return(text)
 
 
 # Dokumentation: https://github.com/jsvine/pdfplumber

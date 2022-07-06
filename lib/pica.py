@@ -620,10 +620,12 @@ class Copy:
             ret += ", EPN: " + self.epn
         return(ret)
     def get_bib(self):
-        bibd = il.get_bib(self.eln)
-        if bibd == False:
-            return(False)
-        self.isil = il.get_isil(self.eln)
+        self.isil = il.get_isil(self.iln, "iln")
+        if self.isil == None:
+            self.isil = il.get_isil(self.eln, "eln")
+        bibd = il.get_bib(self.isil, "isil")
+        if bibd == None:
+            return(None)
         self.bib = bibd["bib"]
         self.place = bibd["place"]
         return(True)
@@ -680,7 +682,7 @@ def assign_mediatype(letter):
 
 def get_norm_p(pages):
     normp = 0
-    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S|Bo)[^p]|([^BS]+) Sp)", pages)
+    chunks = re.findall(r"(([^BS]+) (Bl)|([^BS]+) (S$|S[^p]|Bo)|([^BS]+) Sp)", pages)
     for ch in chunks:
         wh, numbl, _bl, nums, _sbo, numsp = ch
         if "-" in wh:

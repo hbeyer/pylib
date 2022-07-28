@@ -31,6 +31,17 @@ class DB:
             return(False)
         else:
             return(row)
+    def get_dict(self, name):
+        row = self.get_by_name(name)
+        if row == False:
+            return(False)
+        return({"placeName" : row[0], "getty" : row[1], "gnd" : row[2], "long" : row[3], "lat" : row[4], "comment" : row[5]})
+    def normalize_name(self, name):
+        name = name.strip()
+        row = self.get_by_name(name)
+        if row == False:
+            return(name)
+        return(row[0])
     def get_coord(self, name):
         name = normalize_placename(name)
         try:

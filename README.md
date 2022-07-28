@@ -118,6 +118,42 @@ Ausgabe:
 `{'dc.identifier': 'VD16 D 340', 'dc.identifier.urn': '', 'dc.format': '', 'dc.type': '', 'dc.language': '', 'dc.title': 'Poematum || HENRICI || DECIMATORIS || GIFFHORNENSIS.|| Libri IIII.||@lat', 'dc.subject': '', 'dc.coverage': '', 'dc.description': '', 'dc.creator': 'Decimator, Heinrich#GND_124613934', 'dc.contributor': '', 'dc.publisher': '', 'dc.rights': '', 'dc.rights.uri': '', 'dcterms.rightsHolder': '', 'dc.source': '', 'dc.relation': '', 'dc.date': '1586', 'dc.date.embargo': '', 'dcterms.extent': '', 'dcterms.isPartOf': ''}`
 
 ---
+### Modul duennhaupt
+
+Arbeiten mit den Autor*innen in den Personalbibliographien zu den Drucken des Barock von Gerhard Dünnhaupt (Stuttgart 1990-1993).
+
+#### Funktionen
+
+get_persons(): Gibt eine Liste mit Person-Objekten aus
+
+get_query_words(): Gibt eine Liste mit den Suchwörtern für alle Personen aus, die z. B. zum Durchsuchen eines Textes genutzt werden können.
+
+#### Klassen
+
+Klasse **PersonList**
+Enthält in der Property content eine Liste mit Personendaten
+
+Klasse **Person**:
+Enthält die Daten zu einer einzelnen Person in folgenden Propertys:
+ - name
+ - gnd GND
+ - vol (Band der Druckausgabe)
+ - nameGND (GND-Ansetzungsform)
+ - query (einfaches Suchwort)
+ - regex (regulärer Ausdruck zum Auffinden unterschiedlicher Schreibweisen)
+ - dateBirth
+ - yearBirth
+ - placeBirth
+ - dateDeath
+ - yearDeath
+ - placeDeath
+ - gender ("Mann" oder "Frau")
+ - bio (Biographische Kurzbeschreibung)
+
+Die magische Methode \_\_str\_\_ gibt den Namen mit Geburts- und Sterbejahr sowie GND-Nummer aus.
+
+
+---
 ### Modul evalpdf
 Durchsuchen von PDF-Dateien nach einer Liste von Suchbegriffen oder mit regulären Ausdrücken. Erfordert Installation des Moduls [pdfplumber](https://pypi.org/project/pdfplumber/0.1.2/)
 

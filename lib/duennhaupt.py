@@ -2974,7 +2974,7 @@ class Person:
         self.placeBirth = row[8]
         self.dateDeath = row[9]
         self.yearDeath = row[10]
-        self.placeDeatj = row[11]
+        self.placeDeath = row[11]
         self.gender = row[12]
         self.bio = row[13]
     def __str__(self):

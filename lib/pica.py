@@ -29,6 +29,10 @@ class Record:
             self.bbg = self.data["002@"]["01"]["0"].pop(0)
         except:
             self.bbg = ""
+        try:
+            self.ppn_sup = self.data["036D"]["01"]["9"].pop(0)
+        except:
+            self.ppn_sup = ""
         bud = None
         try:
             bud = self.data["001A"]["01"]["0"].pop(0)

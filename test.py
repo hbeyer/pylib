@@ -18,10 +18,16 @@ with open('gattungen-ac','rb') as file:
     gatt_ac = pickle.load(file)
 
 reader = xr.SRUDownloadReader("../../Temporäres/2022-05-03_VD17-komplett")
-limit = 350000
-tbl = csvt.Table(["VD17", "Titel", "Ort", "Jahr", "Seiten", "Normseiten", "Gattung", "Exemplare"])
+limit = 1000
 
+for count, node in enumerate(reader):
+        rec = pica.RecordVD17(node)
+        if rec.ppn_sup != "":
+            print(f"{rec.ppn_sup}, {rec.title_sup}, {rec.vol}")
 
+#tbl = csvt.Table(["VD17", "Titel", "Ort", "Jahr", "Seiten", "Normseiten", "Gattung", "Exemplare"])
+
+"""
 for count, node in enumerate(reader):
         rec = pica.RecordVD17(node)
         if rec.get_rec_type() in ["Teilband", "Teilband mit eigenem Titel"]:
@@ -36,3 +42,4 @@ for count, node in enumerate(reader):
         if count > limit:
                 break
 tbl.save("VD17-Zeitung_513-1024")
+"""

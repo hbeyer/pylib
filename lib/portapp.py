@@ -207,48 +207,7 @@ class SerializerSel(SerializerCSV):
         super().__init__(collection)
         controllCollection = ArtCollection(self.collection.db)
         for item in self.collection:
-            item.keywords_technique = item.extractTechnique()
-            item.sourceYear = None
-            item.yearNormalized = item.getNormalizedYear()
-            if item.yearNormalized != None:
-                item.sourceYear = "publisher"
-            else:
-                item.yearNormalized = extractYearPrecisely(item.technique)
-                if item.yearNormalized != None:
-                    item.sourceYear = "technique"
-                else:
-                    item.yearNormalized = extractYearPrecisely(item.source)
-                    if item.yearNormalized != None:
-                        item.sourceYear = "source"
-            item.portraitType = item.getPortraitType()
-            item.orientation = item.getOrientation()
-            item.likeA = item.getLikeA()
-            if item.likeA != None:
-                controllCollection.content = []
-                controllCollection.loadByANumber(item.likeA)
-                try:
-                    model = controllCollection.content[0]
-                except:
-                    pass
-                else:
-                    if item.keywords_technique == "" or item.keywords_technique == None:
-                        item.keywords_technique = model.extractTechnique()
-                    if item.yearNormalized == "" or item.yearNormalized == None:
-                        item.yearNormalized = model.getNormalizedYear()
-                        if item.yearNormalized != None:
-                            item.sourceYear = "publisherA"
-                        else:
-                            item.yearNormalized = extractYearPrecisely(model.technique)
-                            if item.yearNormalized != None:
-                                item.sourceYear = "techniqueA"
-                            else:
-                                item.yearNormalized = extractYearPrecisely(model.source)
-                                if item.yearNormalized != None:
-                                    item.sourceYear = "sourceA"
-                    if item.portraitType == "" or item.portraitType == None:
-                        item.portraitType = model.getPortraitType()
-                    if item.orientation == "" or item.orientation == None:
-                        item.orientation = model.getOrientation()                    
+            item.fillDerivatedFields(controllCollection)
         self.artworkFields = ['id', 'anumber', 'keywords_technique', 'yearNormalized', 'sourceYear', 'portraitType', 'orientation', 'likeA', 'descriptionClean', 'technique', 'source', 'transcription']
         self.numberPersons = 0
         self.numberArtists = 0
@@ -446,6 +405,69 @@ class Artwork:
             return(match.group(1))
         except:
             return(None)
+    def fillDerivatedFields(self, controllCollection):
+        self.keywords_technique = self.extractTechnique()
+        self.sourceYear = None
+        self.yearNormalized = self.getNormalizedYear()
+        if self.yearNormalized != None:
+            self.sourceYear = "publisher"
+        else:
+            self.yearNormalized = extractYearPrecisely(self.technique)
+            if self.yearNormalized != None:
+                self.sourceYear = "technique"
+            else:
+                self.yearNormalized = extractYearPrecisely(self.source)
+                if self.yearNormalized != None:
+                    self.sourceYear = "source"
+        self.portraitType = self.getPortraitType()
+        self.orientation = self.getOrientation()
+        self.likeA = self.getLikeA()
+        if self.likeA != None:
+            controllCollection.content = []
+            controllCollection.loadByANumber(self.likeA)
+            try:
+                model = controllCollection.content[0]
+            except:
+                pass
+            else:
+                if self.keywords_technique == "" or self.keywords_technique == None:
+                    self.keywords_technique = model.extractTechnique()
+                if self.yearNormalized == "" or self.yearNormalized == None:
+                    self.yearNormalized = model.getNormalizedYear()
+                    if self.yearNormalized != None:
+                        self.sourceYear = "publisherA"
+                    else:
+                        self.yearNormalized = extractYearPrecisely(model.technique)
+                        if self.yearNormalized != None:
+                            self.sourceYear = "techniqueA"
+                        else:
+                            self.yearNormalized = extractYearPrecisely(model.source)
+                            if self.yearNormalized != None:
+                                self.sourceYear = "sourceA"
+                if self.portraitType == "" or self.portraitType == None:
+                    self.portraitType = model.getPortraitType()
+                if self.orientation == "" or self.orientation == None:
+                    self.orientation = model.getOrientation()    
+    def insertIntoDB(self, db):
+        if self.anumber == "":
+            logging.error("Keine A- oder B-Nummer übergeben")
+            return(False)
+        contrColl = ArtCollection(db)
+        contrColl.loadByANumber(self.anumber)
+        if len(contrColl.content) > 0:
+            logging.error(f"ID {self.anumber} bereits vorhanden")
+            return(False)
+        cursor = db.cursor()
+        sql = "INSERT INTO `artwork`(`anumber`, `sort`, `inventorynumber`, `artists`, `publishers`, `sheetsize`, `platesize`, `imagesize`, `technique`, `notes`, `description`, `catalogs`, `condition`, `source`, `instime`, `modtime`, `likeA`, `yearNormalized`, `sourceYear`, `keywords_technique`, `descriptionClean`, `transcription`, `portraitType`, `orientation`) VALUES (%i, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %i, %i, %s, %s, %s, %s, %s, %s, %s, %s)"
+        val = [self.anumber, self.sort, self.inventorynumber, self.artists, self.publishers, self.sheetsize, self.platesize, self.imagesize, self.technique, self.notes, self.description, self.catalogs, self.condition, self.source, int(time.time()), int(time.time()), self.likeA, self.yearNormalized, self.sourceYear, self.keywords_technique, self.descriptionClean, self.transcription, self.portraitType, self.orientation]
+        cursor.execute(sql, val)
+        db.commit()
+        logging.info(f"{cursor.rowcount} Zeilen geschrieben. Letzte ID: {cursor.lastrowid}")
+        return(True)
+    def updateInDB(self, db):
+        pass
+    def deleteFromDB(self, db):
+        pass
 
 class Person:
     def __init__(self, name = ""):

@@ -33,6 +33,14 @@ class Record:
             self.ppn_sup = self.data["036D"]["01"]["9"].pop(0)
         except:
             self.ppn_sup = ""
+        try:
+            self.title_sup = self.data["036D"]["01"]["a"].pop(0)
+        except:
+            self.title_sup = ""
+        try:
+            self.vol = self.data["036D"]["01"]["x"].pop(0)
+        except:
+            self.vol = ""            
         bud = None
         try:
             bud = self.data["001A"]["01"]["0"].pop(0)
@@ -300,6 +308,10 @@ class Record:
             "pages" : self.pages,
             "normPages" : str(self.normPages),
             }
+        if self.ppn_sup != "":
+            res["ppn_sup"] = self.ppn_sup
+            res["title_sup"] = self.title_sup
+            res["vol"] = self.vol
         if self.edition != "":
             res["edition"] = self.edition       
         if self.langOrig != []:
@@ -438,6 +450,10 @@ class RecordVD17(Record):
             "pages" : self.pages,
             "normPages" : str(self.normPages),
             }
+        if self.ppn_sup != "":
+            res["ppn_sup"] = self.ppn_sup
+            res["title_sup"] = self.title_sup
+            res["vol"] = self.vol
         if self.langOrig != []:
             res["langOrig"] = ";".join(self.langOrig)
         if self.digi != []:

@@ -2,44 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import pickle
-from lib import pica
-from lib import xmlreader as xr
-from lib import csvt
-from lib import geo
-from lib import isil
-from lib import language as lang
-from lib import duennhaupt as dh
+import mysql.connector as mc
+from lib import portapp as pa
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-with open('gattungen-ac','rb') as file:
-    gatt_ac = pickle.load(file)
+new = pa.Artwork()
+new.anumber = "B 1"
+new.inventorynumber = "13-geom-00001"
 
-reader = xr.SRUDownloadReader("../../Temporäres/2022-05-03_VD17-komplett")
-limit = 1000
+db = mc.connect(user="root", password="allpaka", host="mysql", database="portraitdb")
 
-for count, node in enumerate(reader):
-        rec = pica.RecordVD17(node)
-        if rec.ppn_sup != "":
-            print(f"{rec.ppn_sup}, {rec.title_sup}, {rec.vol}")
-
-#tbl = csvt.Table(["VD17", "Titel", "Ort", "Jahr", "Seiten", "Normseiten", "Gattung", "Exemplare"])
-
-"""
-for count, node in enumerate(reader):
-        rec = pica.RecordVD17(node)
-        if rec.get_rec_type() in ["Teilband", "Teilband mit eigenem Titel"]:
-            try:
-                rec.gatt = gatt_ac[rec.ppn_sup]
-            except:
-                logging.info(f"Ohne Gattungsbegriff: {rec.ppn}")         
-        if rec.normPages > 1024 or rec.normPages < 513:
-                continue
-        if "Zeitung" in rec.gatt:
-            tbl.content.append([rec.vdn, rec.title, ", ".join([pl.placeName for pl in rec.places]), rec.date, rec.pages, rec.normPages, ";".join(rec.gatt), str(len(rec.copies))])
-        if count > limit:
-                break
-tbl.save("VD17-Zeitung_513-1024")
-"""
+new.insertIntoDB(db)

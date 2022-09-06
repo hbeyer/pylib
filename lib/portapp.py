@@ -4,6 +4,8 @@
 import re
 import xml.etree.ElementTree as et
 import csv
+import logging
+import time
 
 class ArtCollection:
     def __init__(self, db):
@@ -63,10 +65,13 @@ class ArtCollection:
         sql = "SELECT * FROM artwork LIMIT " + str(limit) + " OFFSET " + str(offset)
         self.loadBySQL(sql)
         return(1)
-    def loadByANumber(self, anumber):
+    def loadByANumber(self, anumber, omitLetter = True):
         anumber = str(anumber)
         number = re.search('[0-9]+', anumber).group(0)
-        sql = "SELECT * FROM artwork WHERE artwork.anumber = \"A " + number + "\""
+        if omitLetter == True:
+            sql = f"SELECT * FROM artwork WHERE artwork.anumber = \"A {number}\""
+        else:
+            sql = f"SELECT * FROM artwork WHERE artwork.anumber =\"{anumber}\""
         self.loadBySQL(sql)
 
 class Serializer:
@@ -243,6 +248,13 @@ class Artwork:
         self.modtime = None
         self.personsRepr = []
         self.attributes = []
+        self.likeA = None
+        self.yearNormalized = None
+        self.sourceYear = None
+        self.keywords_technique = None
+        self.transcription = None
+        self.portraitType = None
+        self.orientation = None
     def __str__(self):
         ret = "Artwork Nr. " + str(self.id) + ", A " + str(self.anumber) + ", URL: " + self.url + ", Image: " + self.urlImage
         if len(self.attributes) == 1:
@@ -356,6 +368,10 @@ class Artwork:
     def makeAttributeString(self, sep="/"):
         attr = [attr.value for attr in self.attributes]
         return(sep.join(attr))
+    def getArtistsXML(self):
+        return("");
+    def getPublishersXML(self):
+        return("");
     def getNormalizedYear(self):
         for pub in self.publishers:
             if pub.getYear() != None:
@@ -448,18 +464,24 @@ class Artwork:
                     self.portraitType = model.getPortraitType()
                 if self.orientation == "" or self.orientation == None:
                     self.orientation = model.getOrientation()    
+    def makeTuple(self):       
+        val = (self.anumber, make_sortable(self.anumber), prepare_string(self.inventorynumber), self.getArtistsXML(), self.getPublishersXML(), prepare_string(self.sheetsize), prepare_string(self.platesize), prepare_string(self.imagesize), prepare_string(self.technique), prepare_string(self.notes), prepare_string(self.description), prepare_string(self.catalogs), prepare_string(self.condition), prepare_string(self.source), int(time.time()), int(time.time()), prepare_string(self.likeA), prepare_string(self.yearNormalized), prepare_string(self.sourceYear), prepare_string(self.keywords_technique), prepare_string(self.descriptionClean), prepare_string(self.transcription), prepare_string(self.portraitType), prepare_string(self.orientation))
+        return(val)
     def insertIntoDB(self, db):
         if self.anumber == "":
             logging.error("Keine A- oder B-Nummer übergeben")
             return(False)
         contrColl = ArtCollection(db)
-        contrColl.loadByANumber(self.anumber)
+        contrColl.loadByANumber(self.anumber, False)
         if len(contrColl.content) > 0:
             logging.error(f"ID {self.anumber} bereits vorhanden")
             return(False)
         cursor = db.cursor()
-        sql = "INSERT INTO `artwork`(`anumber`, `sort`, `inventorynumber`, `artists`, `publishers`, `sheetsize`, `platesize`, `imagesize`, `technique`, `notes`, `description`, `catalogs`, `condition`, `source`, `instime`, `modtime`, `likeA`, `yearNormalized`, `sourceYear`, `keywords_technique`, `descriptionClean`, `transcription`, `portraitType`, `orientation`) VALUES (%i, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %i, %i, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val = [self.anumber, self.sort, self.inventorynumber, self.artists, self.publishers, self.sheetsize, self.platesize, self.imagesize, self.technique, self.notes, self.description, self.catalogs, self.condition, self.source, int(time.time()), int(time.time()), self.likeA, self.yearNormalized, self.sourceYear, self.keywords_technique, self.descriptionClean, self.transcription, self.portraitType, self.orientation]
+        sql = "INSERT INTO `artwork`(`anumber`, `sort`, `inventorynumber`, `artists`, `publishers`, `sheetsize`, `platesize`, `imagesize`, `technique`, `notes`, `description`, `catalogs`, `condition`, `source`, `instime`, `modtime`, `likeA`, `yearNormalized`, `sourceYear`, `keywords_technique`, `descriptionClean`, `transcription`, `portraitType`, `orientation`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        timestamp = int(time.time())
+        sortable = make_sortable(self.anumber)
+        val = self.makeTuple()
+        print(val)
         cursor.execute(sql, val)
         db.commit()
         logging.info(f"{cursor.rowcount} Zeilen geschrieben. Letzte ID: {cursor.lastrowid}")
@@ -516,7 +538,26 @@ class Person:
         if self.dateDeath != "":
             return(extractYear(str(self.dateDeath)))
         return(None)
-
+    def makeTuple(self):       
+        val = (self.gnd, prepare_string(self.name), prepare_string(self.name), prepare_string(self.aliases), prepare_string(self.nationality), self.yearStart, self.yearEnd, "", prepare_string(self.biography), prepare_string(self.literature), "", prepare_string(self.notes), int(time.time()), int(time.time()))
+        return(val)
+    def insertIntoDB(self, db):
+        cursor = db.cursor()
+        if self.gnd != None:
+            cursor.execute(f"SELECT id FROM person WHERE gnd LIKE \"{self.gnd}\"")
+            result = cursor.fetch_all()
+            print(result)
+        """
+        sql = "INSERT INTO `person`(`gndid`, `name`, `sort`, `aliases`, `nationality`, `startyear`, `endyear`, `lifetime`, `biography`, `literature`, `deprecated`, `notes`, `instime`, `modtime`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        val = self.makeTuple()
+        print(val)
+        cursor.execute(sql, val)
+        db.commit()
+        logging.info(f"{cursor.rowcount} Zeilen geschrieben. Letzte ID: {cursor.lastrowid}")
+        return(cursor.lastrowid)
+        """
+        # Zurücksetzen von Auto_increment: ALTER TABLE artwork AUTO_INCREMENT = 29000
+        
 class Artist(Person):
     def __init__(self):
         super().__init__()
@@ -708,3 +749,14 @@ def extractYearFromSpan(string)        :
             return(year)
         except:
             return(None)
+
+def make_sortable(string):
+    if string[0] == "A":
+        return(string[2:].zfill(6))
+    if string [0] == "B":
+        return("b" + string[2:].zfill(6))
+        
+def prepare_string(val):
+    if isinstance(val, str):
+        return(val)
+    return("")

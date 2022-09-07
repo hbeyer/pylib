@@ -65,15 +65,12 @@ class ArtCollection:
         sql = "SELECT * FROM artwork LIMIT " + str(limit) + " OFFSET " + str(offset)
         self.loadBySQL(sql)
         return(1)
-    def loadByANumber(self, anumber, omitLetter = True):
-        anumber = str(anumber)
-        number = re.search('[0-9]+', anumber).group(0)
-        if omitLetter == True:
-            sql = f"SELECT * FROM artwork WHERE artwork.anumber = \"A {number}\""
-        else:
-            sql = f"SELECT * FROM artwork WHERE artwork.anumber =\"{anumber}\""
-        self.loadBySQL(sql)
-
+    def loadByANumber(self, anumber, omitLetter = False):
+        if omitLetter == False:
+            self.loadBySQL(f"SELECT * FROM artwork WHERE anumber LIKE \"{anumber}\"")
+            return(True)
+        self.loadBySQL(f"SELECT * FROM artwork WHERE anumber LIKE \"A {anumber}\"")
+        return(True)
 class Serializer:
     def __init__(self, collection):
         self.collection = collection
@@ -226,37 +223,37 @@ class Artwork:
         self.anumber = None
         self.url = ""
         self.urlImage = ""
-        self.invNo = None
+        self.invNo = ""
         self.artists = []
         self.publishers = []
-        self.sheetsize = None
-        self.sheetsizeSep = None
-        self.platesize = None
-        self.platesizeSep = None
-        self.imagesize = None
-        self.imagesizeSep = None
-        self.technique = None
-        self.notes = None
-        self.description = None
-        self.descriptionClean = None
-        self.quotation = None
-        self.catalogs = None
-        self.condition = None
-        self.source = None
-        self.shelfmarkSource = None
+        self.sheetsize = ""
+        self.sheetsizeSep = ""
+        self.platesize = ""
+        self.platesizeSep = ""
+        self.imagesize = ""
+        self.imagesizeSep = ""
+        self.technique = ""
+        self.notes = ""
+        self.description = ""
+        self.descriptionClean = ""
+        self.quotation = ""
+        self.catalogs = ""
+        self.condition = ""
+        self.source = ""
+        self.shelfmarkSource = ""
         self.instime = None
         self.modtime = None
         self.personsRepr = []
         self.attributes = []
-        self.likeA = None
-        self.yearNormalized = None
-        self.sourceYear = None
-        self.keywords_technique = None
-        self.transcription = None
-        self.portraitType = None
-        self.orientation = None
+        self.likeA = ""
+        self.yearNormalized = ""
+        self.sourceYear = ""
+        self.keywords_technique = ""
+        self.transcription = ""
+        self.portraitType = ""
+        self.orientation = ""
     def __str__(self):
-        ret = "Artwork Nr. " + str(self.id) + ", A " + str(self.anumber) + ", URL: " + self.url + ", Image: " + self.urlImage
+        ret = "Artwork Nr. " + str(self.id) + ", " + str(self.anumber) + ", URL: " + self.url + ", Image: " + self.urlImage
         if len(self.attributes) == 1:
             ret = ret + ", 1 Attribut"
         elif len(self.attributes) > 1:
@@ -274,7 +271,8 @@ class Artwork:
             return({field : getattr(self, field)})            
     def importRow(self, row):
         self.id = row["id"]
-        self.anumber = row["anumber"][2:]
+        self.anumber = row["anumber"]
+        #self.anumber = row["anumber"][2:]
         self.invNo = row["inventorynumber"]
         self.sheetsize = removeLinebreaks(row["sheetsize"])
         self.sheetsizeSep = separateSize(self.sheetsize)
@@ -468,6 +466,7 @@ class Artwork:
         val = (self.anumber, make_sortable(self.anumber), prepare_string(self.inventorynumber), self.getArtistsXML(), self.getPublishersXML(), prepare_string(self.sheetsize), prepare_string(self.platesize), prepare_string(self.imagesize), prepare_string(self.technique), prepare_string(self.notes), prepare_string(self.description), prepare_string(self.catalogs), prepare_string(self.condition), prepare_string(self.source), int(time.time()), int(time.time()), prepare_string(self.likeA), prepare_string(self.yearNormalized), prepare_string(self.sourceYear), prepare_string(self.keywords_technique), prepare_string(self.descriptionClean), prepare_string(self.transcription), prepare_string(self.portraitType), prepare_string(self.orientation))
         return(val)
     def insertIntoDB(self, db):
+        self.fillDerivatedFields(ArtCollection(db))
         if self.anumber == "":
             logging.error("Keine A- oder B-Nummer übergeben")
             return(False)
@@ -481,16 +480,43 @@ class Artwork:
         timestamp = int(time.time())
         sortable = make_sortable(self.anumber)
         val = self.makeTuple()
-        print(val)
         cursor.execute(sql, val)
         db.commit()
-        logging.info(f"{cursor.rowcount} Zeilen geschrieben. Letzte ID: {cursor.lastrowid}")
-        return(True)
+        if cursor.rowcount != 1:
+            logging.error(f"Fehler: {cursor.rowcount} Zeilen in Tabelle artwork geschrieben")
+            return(False)
+        logging.info(f"{cursor.rowcount} Zeilen in Tabelle artwork geschrieben. Letzte ID: {cursor.lastrowid}")
+        id_artwork = cursor.lastrowid
+        for pers in self.personsRepr:
+            id_person = pers.insertIfNew(db)
+            sql_rel = "INSERT INTO `artwork_person` (`artwork`, `person`) VALUES (%s, %s)"
+            val = (id_artwork, id_person)
+            cursor.execute(sql_rel, val)
+            db.commit()
+            logging.info(f"{cursor.rowcount} Zeilen in Tabelle artwork_person geschrieben. Letzte ID: {cursor.lastrowid}")
+        return(id_artwork)
     def updateInDB(self, db):
         pass
     def deleteFromDB(self, db):
-        pass
-
+        cursor = db.cursor()
+        cursor.execute(f"DELETE FROM artwork_person WHERE artwork LIKE {self.id}")
+        db.commit()
+        logging.info(f"{cursor.rowcount} Zeilen aus Tabelle artwork_person gelöscht")
+        cursor.execute(f"DELETE FROM artwork_attribute WHERE artwork LIKE {self.id}")
+        db.commit()
+        if cursor.rowcount > 0:
+            logging.info(f"{cursor.rowcount} Zeilen aus Tabelle artwork_attribute gelöscht")        
+        for pers in self.personsRepr:
+            cursor.execute(f"SELECT * FROM artwork_person WHERE person LIKE {pers.id}")
+            result = cursor.fetch_all()
+            if len(result) == 0:
+                cursor.execute(f"UPDATE person SET deprecated=1 WHERE id LIKE {pers.id}")
+                db.commit()       
+                logging.info(f"{cursor.rowcount} Personen als deprecated markiert")
+        cursor.execute(f"DELETE FROM artwork WHERE id LIKE {self.id}")
+        db.commit()
+        logging.info(f"{cursor.rowcount} Zeilen aus Tabelle artwork gelöscht")
+        return(True)
 class Person:
     def __init__(self, name = ""):
         self.flatFields = ['id', 'gnd', 'name', 'aliases', 'nationality', 'yearStart', 'yearEnd', 'biography', 'literature', 'instime', 'modtime', 'dateBirth', 'dateDeath', 'placeBirth', 'placeDeath']
@@ -503,6 +529,8 @@ class Person:
         self.yearEnd = None
         self.biography = ""
         self.literature = ""
+        self.deprecated = 0
+        self.notes = ""
         self.instime = None
         self.modtime = None
         self.dateBirth = ""
@@ -538,24 +566,23 @@ class Person:
         if self.dateDeath != "":
             return(extractYear(str(self.dateDeath)))
         return(None)
-    def makeTuple(self):       
-        val = (self.gnd, prepare_string(self.name), prepare_string(self.name), prepare_string(self.aliases), prepare_string(self.nationality), self.yearStart, self.yearEnd, "", prepare_string(self.biography), prepare_string(self.literature), "", prepare_string(self.notes), int(time.time()), int(time.time()))
-        return(val)
-    def insertIntoDB(self, db):
+    def insertIfNew(self, db):
         cursor = db.cursor()
         if self.gnd != None:
-            cursor.execute(f"SELECT id FROM person WHERE gnd LIKE \"{self.gnd}\"")
-            result = cursor.fetch_all()
-            print(result)
-        """
+            cursor.execute(f"SELECT id FROM person WHERE gndid LIKE \"{self.gnd}\"")
+            result = cursor.fetchone()
+            try:
+                return(result[0])
+            except:
+                return(self.insertIntoDB(db))
+    def insertIntoDB(self, db):
         sql = "INSERT INTO `person`(`gndid`, `name`, `sort`, `aliases`, `nationality`, `startyear`, `endyear`, `lifetime`, `biography`, `literature`, `deprecated`, `notes`, `instime`, `modtime`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val = self.makeTuple()
-        print(val)
+        val = (self.gnd, prepare_string(self.name), prepare_string(self.name), prepare_string(self.aliases), prepare_string(self.nationality), self.yearStart, self.yearEnd, "", prepare_string(self.biography), prepare_string(self.literature), self.deprecated, prepare_string(self.notes), int(time.time()), int(time.time()))
+        cursor = db.cursor()
         cursor.execute(sql, val)
         db.commit()
-        logging.info(f"{cursor.rowcount} Zeilen geschrieben. Letzte ID: {cursor.lastrowid}")
+        logging.info(f"{cursor.rowcount} Zeilen in Tabelle person geschrieben. Letzte ID: {cursor.lastrowid}")
         return(cursor.lastrowid)
-        """
         # Zurücksetzen von Auto_increment: ALTER TABLE artwork AUTO_INCREMENT = 29000
         
 class Artist(Person):

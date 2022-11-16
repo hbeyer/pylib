@@ -5,6 +5,7 @@ import glob
 import urllib.request as ul
 import xml.etree.ElementTree as et
 import re
+import logging
 
 class Reader:
     def __init__(self, path, tag = "record", namespace = ""):

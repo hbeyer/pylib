@@ -294,6 +294,13 @@ class Record:
                     self.vdn = self.data["006M"]["01"]["0"].pop(0)
                 except:
                     pass
+    def get_rec_type(self):
+        code = self.bbg[0:2]
+        conc = { "Aa":"Monographie", "Af":"Teilband", "AF":"Teilband mit eigenem Titel" }
+        try:
+            return(conc[code])
+        except:
+            return(self.bbg)    
     def to_dict(self):
         res = {
             "ppn" : self.ppn,
@@ -471,13 +478,7 @@ class RecordVD17(Record):
         if self.copies != []:
             res["copies"] = [cp.to_dict() for cp in self.copies]
         return(res)
-    def get_rec_type(self):
-        code = self.bbg[0:2]
-        conc = { "Aa":"Monographie", "Af":"Teilband", "AF":"Teilband mit eigenem Titel" }
-        try:
-            return(conc[code])
-        except:
-            return(self.bbg)
+
 class RecordVD16(Record):
     def __init__(self, node):
         super().__init__(node)
@@ -492,6 +493,18 @@ class RecordVD16(Record):
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", VD16: " + "|".join(self.vd16) + ", Jahr: " + self.date
         return(ret)
+    def load_places(self):
+        try:
+            placeList = self.data["029F"]
+        except:
+            return(None)
+        for occ in placeList:
+            try:
+                placeName = placeList[occ]["a"].pop(0)
+            except:
+                continue
+            placeName = re.sub("\!.+\!", "", placeName)
+            self.places.append(Place(placeName, "Druck- oder Erscheinungsort"))
 class RecordVD18(Record):
     def __init__(self, node):
         super().__init__(node)    

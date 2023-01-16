@@ -5,6 +5,7 @@ import csv
 from lib import localsql as ls
 from lib import shelfmark as sm
 from lib import csvt
+from lib import pica
 
 # Verarbeitung von CSV-Tabellen, die in der WinIBW generiert und unter path abgelegt wurden
 class Table():
@@ -49,6 +50,14 @@ class Table():
             sig = sm.StructuredShelfmark(row[field])
             row["Sortierform"] = sig.sortable
         return(True)
+    def addNormPages(self, field = "Umfang"):
+        if field not in self.fields:
+            print("Keine Spalte " + field + " gefunden.")
+            return(False)
+        self.fields.append("Umfang_normiert")
+        for row in self.content:
+            row["Umfang_normiert"] = pica.get_norm_p(row[field])
+        return(True)        
     def addParallels(self, fieldMan = "PPN", fieldEx = "Signatur"):
         if fieldMan not in self.fields:
             print("Keine Spalte " + fieldMan + " gefunden.")

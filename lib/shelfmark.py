@@ -79,7 +79,7 @@ class Shelfmark:
             ret += ' (' + self.part + ')'
         return(ret)
     def getFormat(self):
-        extract = re.search(r"2°|4°|8°|12°|16°", self.whole)
+        extract = re.search(r"2°|4°|8°|12°|16°|FM", self.whole)
         try:
             self.format = extract.group(0)
         except:
@@ -172,11 +172,16 @@ class Shelfmark:
             except:
                 return(None)
         elif self.collection == "NE":
-            extract = re.search(r"[A-Z][a-z]( 2°|4°|8°|12°)? (\d+)", self.whole)
+            extract = re.search(r"[WX][a-z]( 2°|4°|8°|12°)? ([0-9\.]+)", self.whole)
             try:
                 self.number = extract.group(2)
             except:
-                return(None)
+                if "FM" in self.whole:
+                    extract = re.search(r"FM (\d+)", self.whole)
+                    try:
+                        self.number = extract.group(1)
+                    except:
+                        return(None)
         else:
             extract = re.search(r"\s([0-9\.]+[a-z]?)[^°]", self.whole)
             try:
@@ -259,7 +264,9 @@ class StructuredShelfmark(Shelfmark):
         def makeSortableRoot(self):
             sortColl = self.collection.ljust(3, "0")
             sortFormat = "99"
-            if self.format != "":
+            if self.format == "FM":
+                sortFormat = "FM"
+            elif self.format != "":
                 sortFormat = self.format.replace("°", "").zfill(2)
             sortGroup = "000000"
             if self.group:

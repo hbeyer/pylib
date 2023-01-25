@@ -294,6 +294,11 @@ class Record:
                     self.vdn = self.data["006M"]["01"]["0"].pop(0)
                 except:
                     pass
+     def get_sm(self, epn):
+        for cp in self.copies:
+            if cp.epn == epn:
+                return(cp.sm)
+        return(None)       
     def get_rec_type(self):
         code = self.bbg[0:2]
         conc = { "Aa":"Monographie", "Af":"Teilband", "AF":"Teilband mit eigenem Titel" }
@@ -430,7 +435,25 @@ class Record:
                     itn.append(oi)
                     break                    
         return(itn)
-
+    def make_citation(self):
+        authors = ", ".join([pers.persName for pers in self.persons if pers.role in ["VerfasserIn", "creator"]])
+        places = ", ".join([pl.placeName for pl in self.places])
+        publishers = ", ".join([pub.persName for pub in self.publishers])
+        ret = self.title
+        if authors != "":
+            ret = f"{authors}: {ret}"
+        try:
+            ret = f"{ret}. Teil {self.vol}"
+        except:
+            pass
+        if places != "":
+            ret = f"{ret}. {places}"
+            if publishers != "":
+                ret = f"{ret}: {publishers}"
+        if self.date != "":
+            ret = f"{ret} {self.date}"
+        return(ret)
+        
 class RecordVD17(Record):
     def __init__(self, node):
         super().__init__(node)    

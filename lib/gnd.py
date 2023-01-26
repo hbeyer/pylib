@@ -29,9 +29,13 @@ class ID:
         propp = ["preferredName", "dateOfBirth", "dateOfDeath", "biographicalOrHistoricalInformation"]
         for p in propp:
             try:
-                persData[p] = data[p]
+                persData[p] = replace_diacr(data[p])
             except:
                 logging.info(f"Kein {p} gefunden")
+        try:
+            persData["variantNames"] = "; ".join(data["variantName"])
+        except:
+            logging.info(f"Kein variantName gefunden")
         propp2 = ["placeOfBirth", "placeOfDeath"]
         for p in propp2:
             try:
@@ -52,3 +56,5 @@ class ID:
         else:
             logging.error(f"Ungültige GND-Nummer {gnd}")
             return(None)
+def replace_diacr(string):
+    return(string.replace("ö", "ö").replace("ò", "ò").replace("̈a", "ä").replace("à", "à"))

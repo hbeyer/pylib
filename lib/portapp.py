@@ -6,7 +6,10 @@ import xml.etree.ElementTree as et
 import csv
 import logging
 import time
-
+from lib import gnd
+from lib import sru
+from lib import xmlreader as xr
+from lib import pica                   
 class ArtCollection:
     def __init__(self, db):
         self.content = []
@@ -224,7 +227,9 @@ class Artwork:
         self.url = ""
         self.urlImage = ""
         self.invNo = ""
+        self.path_wdb = ""
         self.artists = []
+        self.artistsXML = ""
         self.publishers = []
         self.sheetsize = ""
         self.sheetsizeSep = ""
@@ -240,6 +245,7 @@ class Artwork:
         self.catalogs = ""
         self.condition = ""
         self.source = ""
+        self.epn = None
         self.shelfmarkSource = ""
         self.instime = None
         self.modtime = None
@@ -274,6 +280,7 @@ class Artwork:
         self.anumber = row["anumber"]
         #self.anumber = row["anumber"][2:]
         self.invNo = row["inventorynumber"]
+        self.path_wdb = row["path_wdb"]
         self.sheetsize = removeLinebreaks(row["sheetsize"])
         self.sheetsizeSep = separateSize(self.sheetsize)
         self.platesize = removeLinebreaks(row["platesize"])
@@ -367,7 +374,7 @@ class Artwork:
         attr = [attr.value for attr in self.attributes]
         return(sep.join(attr))
     def getArtistsXML(self):
-        return("");
+        return(self.artistsXML);
     def getPublishersXML(self):
         return("");
     def getNormalizedYear(self):
@@ -462,8 +469,23 @@ class Artwork:
                     self.portraitType = model.getPortraitType()
                 if self.orientation == "" or self.orientation == None:
                     self.orientation = model.getOrientation()    
+    def make_source(self):
+        if self.epn == None:
+            return(None)
+        req = sru.Request_HAB()
+        num = req.prepare(f"pica.epn={self.epn}")
+        if num != 1:
+            logging.error(f"Keine Titelaufnahme zu EPN {self.epn}")
+            return(None)
+        reader = xr.WebReader(req.url, "record", "http://docs.oasis-open.org/ns/search-ws/sruResponse")
+        for node in reader:
+            rec = pica.Record(node)
+            break
+        sm = rec.get_sm(self.epn)
+        cit = rec.make_citation()
+        self.source = f"Aus: {cit} [HAB: {sm}]"
     def makeTuple(self):       
-        val = (self.anumber, make_sortable(self.anumber), prepare_string(self.inventorynumber), self.getArtistsXML(), self.getPublishersXML(), prepare_string(self.sheetsize), prepare_string(self.platesize), prepare_string(self.imagesize), prepare_string(self.technique), prepare_string(self.notes), prepare_string(self.description), prepare_string(self.catalogs), prepare_string(self.condition), prepare_string(self.source), int(time.time()), int(time.time()), prepare_string(self.likeA), prepare_string(self.yearNormalized), prepare_string(self.sourceYear), prepare_string(self.keywords_technique), prepare_string(self.descriptionClean), prepare_string(self.transcription), prepare_string(self.portraitType), prepare_string(self.orientation))
+        val = (self.anumber, make_sortable(self.anumber), prepare_string(self.invNo), prepare_string(self.path_wdb), self.getArtistsXML(), self.getPublishersXML(), prepare_string(self.sheetsize), prepare_string(self.platesize), prepare_string(self.imagesize), prepare_string(self.technique), prepare_string(self.notes), prepare_string(self.description), prepare_string(self.catalogs), prepare_string(self.condition), prepare_string(self.source), self.epn, int(time.time()), int(time.time()), prepare_string(self.likeA), prepare_string(self.yearNormalized), prepare_string(self.sourceYear), prepare_string(self.keywords_technique), prepare_string(self.descriptionClean), prepare_string(self.transcription), prepare_string(self.portraitType), prepare_string(self.orientation))
         return(val)
     def insertIntoDB(self, db):
         self.fillDerivatedFields(ArtCollection(db))
@@ -476,7 +498,7 @@ class Artwork:
             logging.error(f"ID {self.anumber} bereits vorhanden")
             return(False)
         cursor = db.cursor()
-        sql = "INSERT INTO `artwork`(`anumber`, `sort`, `inventorynumber`, `artists`, `publishers`, `sheetsize`, `platesize`, `imagesize`, `technique`, `notes`, `description`, `catalogs`, `condition`, `source`, `instime`, `modtime`, `likeA`, `yearNormalized`, `sourceYear`, `keywords_technique`, `descriptionClean`, `transcription`, `portraitType`, `orientation`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO `artwork`(`anumber`, `sort`, `inventorynumber`, `path_wdb`, `artists`, `publishers`, `sheetsize`, `platesize`, `imagesize`, `technique`, `notes`, `description`, `catalogs`, `condition`, `source`, `epn`, `instime`, `modtime`, `likeA`, `yearNormalized`, `sourceYear`, `keywords_technique`, `descriptionClean`, `transcription`, `portraitType`, `orientation`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         timestamp = int(time.time())
         sortable = make_sortable(self.anumber)
         val = self.makeTuple()
@@ -527,6 +549,7 @@ class Person:
         self.nationality = ""
         self.yearStart = None
         self.yearEnd = None
+        self.lifetime = ""
         self.biography = ""
         self.literature = ""
         self.deprecated = 0
@@ -557,6 +580,42 @@ class Person:
             raise StopIteration
         else:            
             return({field : getattr(self, field)})
+    def harvestFromGND(self):
+        gnd_obj = gnd.ID(self.gnd)
+        if gnd_obj.valid != True:
+            return(False)
+        data = gnd_obj.get_info()
+        if self.name == "":
+            try:
+                self.name = data["preferredName"]
+            except:
+                pass
+        try:
+            self.dateBirth = data["dateOfBirth"]
+        except:
+            pass
+        self.yearEnd = extractYear(self.dateBirth)
+        try:
+            self.dateDeath = data["dateOfDeath"]
+        except:
+            pass            
+        self.yearStart = extractYear(self.dateDeath)
+        try:
+            self.biography = data["biographicalOrHistoricalInformation"]
+        except:
+            pass
+        try:
+            self.placeBirth = data["placeOfBirth"]
+        except:
+            pass
+        try:
+            self.placeDeath = data["placeOfDeath"]
+        except:
+            pass
+        try:
+            self.aliases = data["variantNames"]
+        except:
+            pass
     def makeAttributeString(self, sep="/"):
         attr = [attr.value for attr in self.attributes]
         return(sep.join(attr))

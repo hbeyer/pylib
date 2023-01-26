@@ -71,11 +71,11 @@ class Request_VD18(Request_SRU):
 class Request_HAB(Request_SRU):
     def __init__(self):
         super().__init__()
-        self.base = 'http://sru.gbv.de/opac-de-23'
+        self.base = 'http://sru.k10plus.de/opac-de-23'
         self.fileName = "SRU_HAB"
         
 class Request_HPB(Request_SRU):
     def __init__(self):
         super().__init__()
-        self.base = 'http://sru.gbv.de/hpb'
+        self.base = 'http://sru.k10plus.de/hpb'
         self.fileName = "SRU_HPB"        

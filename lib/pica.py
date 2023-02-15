@@ -10,6 +10,7 @@ import xml.etree.ElementTree as et
 from lib import isil as il
 from lib import xmlserializer as xs
 from lib import romnumbers as rn
+from lib import provenance as prv
 
 class Record:
     def __init__(self, node):
@@ -218,13 +219,19 @@ class Record:
                     cp.sm = sm
                 elif sm == None:
                     pass
-                    #logging.error(f"Fehlende Signatur bei PPN {self.ppn}")
             if tag == "244Z":
-                try:
-                    cp.prov.append(get_subfield(fi, "a"))
-                except:
-                    pass                    
+                provstr = get_subfield(fi, "a")
+                code = get_subfield(fi, "x")
+                ppn = get_subfield(fi, "9")
+                bbg = get_subfield(fi, "V")
+                # In einigen Fällen funktioniert das Folgende nicht, weil Normdatenverknüpfungen in XML nicht richtig abgebildet werden. Beispiel: http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.ppn%3D151762872&maximumRecords=500&startRecord=1&recordSchema=picaxml 
+                if bbg == None and ppn == None:
+                    prov = prv.Provenance(provstr, code)
+                    cp.prov_struct.append(prov)
+                else:
+                    cp.prov_norm.append(prv.NormLinkLocal(provstr, ppn, code))
         if cp != None:
+            cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
             self.copies.append(cp)
     def load_persons(self):
         try:
@@ -294,7 +301,7 @@ class Record:
                     self.vdn = self.data["006M"]["01"]["0"].pop(0)
                 except:
                     pass
-     def get_sm(self, epn):
+    def get_sm(self, epn):
         for cp in self.copies:
             if cp.epn == epn:
                 return(cp.sm)
@@ -662,6 +669,8 @@ class Copy:
         self.epn = ""
         self.sm = ""
         self.prov = []
+        self.prov_struct = []
+        self.prov_norm = []
     def __str__(self):
         ret = "Signatur: " + self.sm
         if self.isil != "":
@@ -685,6 +694,14 @@ class Copy:
         self.bib = bibd["bib"]
         self.place = bibd["place"]
         return(True)
+    """def load_provenances(self):
+        for pc in self.prov:
+            if "Provenienz:" in pc:
+                self.prov_struct.append(prv.Provenance(pc))
+        if self.prov_struct == []:
+            return(False)
+        return(True)"""
+        
     def to_dict(self):
         ret = {}
         if self.place != "":

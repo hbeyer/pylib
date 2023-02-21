@@ -1,4 +1,6 @@
 
+
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -440,6 +442,22 @@ col.loadBySQL("SELECT * FROM artwork LIMIT 100 OFFSET 0")
 for aw in col:
 	print(aw)
 ```
+---
+### Modul provenance
+
+Darstellung, Auswertung und Validierung von Provenienzen im OPAC der HAB, bezogen auf die Provenienzerschließung im PICA-System
+
+Klasse **Provenance**
+
+Auswertung von Provenienzketten im Feld 680X
+
+Klasse **NormLinkLocal**
+
+Auswertung von lokalen Normdatenverknüpfungen im Feld 688X
+
+Klasse **Dataset**
+
+Umfasst alle Provenienzdaten zu einem Exemplar mit der Möglichkeit der Fehlersuche
 
 ---
 ### Modul romnumbers
@@ -517,6 +535,7 @@ Repräsentiert eine Tabelle und enthält die Daten in der Property `content`, di
 | getByField | field | Liste mit allen Werten der entsprechenden Spalte | - |
 | getSelection | fields (Liste mit Feldnamen) | Liste, enthält für jede Zeile eine Liste mit den ausgewählten Feldern | - |
 | addSortable | field (Feld, in dem eine Signatur der HAB steht. Standardwert ist "Signatur") | True bei Erfolg | Hinzufügen einer Spalte mit dem Namen "Sortierform", in dem eine von der Klasse SortableShelfmark im Modul shelfmark erzeugte Sortierform eingefügt wurde. Funktioniert nur für Signaturen der HAB |
+| addNormPages | field (Feld mit der Umfangsangabe, Standardtwert ist "Umfang"), fieldEx (Feld mit dem Identifier des Exemplars, Standardwert ist "Signatur") | True bei Erfolg | Anlegen einer neuen Spalte "Umfang_normiert", in dem die Seitenzahl als Integer ausgegeben wird |
 | addParallels | fieldMan (Feld mit dem Identifier der Manifestation, Standardtwert ist "PPN"), fieldEx (Feld mit dem Identifier des Exemplars, Standardwert ist "Signatur") | True bei Erfolg | Anlegen einer neuen Spalte "Parallelexemplare", in dem die Identifier der Parallelexemplare für diese Ausgabe ausgegeben werden, mehrere getrennt durch ";" |
 | save | fileName (Dateiname ohne Endung, Standardwert ist "myTable") | True bei Erfolg | Abspeichern der Tabelle als CSV-Datei unter dem angegebenen Dateinamen |
 | toSQLite | fileName (Dateiname, Standardwert ist "exportTable") | True bei Erfolg | Gibt die Tabelle als SQLite-Datenbank mit einer einzelnen Tabelle aus, die unter fileName abgespeichert wird. |
@@ -580,4 +599,5 @@ Beschreibung folgt
 
 
 > Written with [StackEdit](https://stackedit.io/).
+
 

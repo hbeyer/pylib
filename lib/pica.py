@@ -221,17 +221,30 @@ class Record:
                     pass
             if tag == "244Z":
                 provstr = get_subfield(fi, "a")
-                code = get_subfield(fi, "x")
+                codes = get_subfield_list(fi, "x")
+                code = ""
+                for val in codes:
+                    if re.search(r"\d\d", val) != None:
+                        code = val
                 ppn = get_subfield(fi, "9")
                 bbg = get_subfield(fi, "V")
-                # In einigen Fällen funktioniert das Folgende nicht, weil Normdatenverknüpfungen in XML nicht richtig abgebildet werden. Beispiel: http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.ppn%3D151762872&maximumRecords=500&startRecord=1&recordSchema=picaxml 
-                if bbg == None and ppn == None:
+                # if provstr == None and ppn != None and code != "":
+                if provstr == None:
+                    link = prv.NormLinkLocal("Kein Name in XML", ppn, code)
+                    link.errors.append("Kein Name in XML. Konversionsfehler?")
+                    cp.prov_norm.append(link)
+                elif "!" in provstr:
+                    link = adjust_xml_244Z(provstr, code)
+                    if link != None:
+                        cp.prov_norm.append(link)
+                elif bbg == None:
                     prov = prv.Provenance(provstr, code)
                     cp.prov_struct.append(prov)
                 else:
                     cp.prov_norm.append(prv.NormLinkLocal(provstr, ppn, code))
         if cp != None:
-            cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
+            if cp.prov_struct != [] or cp.prov_norm != []:
+                cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
             self.copies.append(cp)
     def load_persons(self):
         try:
@@ -671,6 +684,7 @@ class Copy:
         self.prov = []
         self.prov_struct = []
         self.prov_norm = []
+        self.prov_dataset = None
     def __str__(self):
         ret = "Signatur: " + self.sm
         if self.isil != "":
@@ -817,6 +831,24 @@ def get_subfield(node, code):
         if code == retcode:
             return(ch.text)
     return(None)
+
+def get_subfield_list(node, code):
+    ret = []
+    code = code.lower()
+    children = node.findall("*")
+    for ch in children:
+        retcode = ch.get("code").lower()
+        if code == retcode:
+            ret.append(ch.text)
+    return(ret)
+    
+def adjust_xml_244Z(provstr, code):
+    # !345231570!|k|Kloster zur Ehre Gottes <Salzdahlum>
+    search = re.search("\!([\dX]+)\!(\|[pk]\|)?([^!]+)", provstr)
+    if search == None:
+        return(None)
+    link = prv.NormLinkLocal(search.group(3), search.group(1), code)
+    return(link)
     
 def make_id(name):
     name = name.lower()

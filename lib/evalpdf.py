@@ -90,14 +90,19 @@ class Evaluation:
 
 class EvaluationSDD(Evaluation):
     def __init__(self, path):
-        super().__init__()
-        self.path = path
+        #super().__init__()
+        if path != None:
+            self.path = path
         # Liste zu ergänzen
         self.sww = [ "dünnhaupt", "alchem", "emblem", "wolfenbüttel", "braunschweig", "lüneburg",
             "helmstedt", "conring"]
         duenn = dh.get_query_words()
         self.sww.extend(duenn)
         self.rexx = [("17. Jh.", r"16\d\d")]
+        if os.path.exists(self.path) == False:
+            logging.error(f"Ungültiger Pfad: {self.path}")
+        if self.sww == [] and self.rexx == []:
+            logging.error("Keine Suchwörter übergeben")        
 
 def prepare_text(text):
     text = text.replace("\n", " ")

@@ -2990,3 +2990,13 @@ def get_persons():
     
 def get_query_words():
     return([row[4] for row in PersonList.content])
+
+def get_gnds():
+    persons = get_persons()
+    return([pers.gnd for pers in persons])
+
+def test_gnd(gnd):
+    gnds = get_gnds()
+    if gnd in gnds:
+        return(True)
+    return(False)

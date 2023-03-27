@@ -2,31 +2,39 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import mysql.connector as mc
-from lib import portapp as pa
-
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
-
-db = mc.connect(user="root", password="allpaka", host="mysql", database="portraitdb")
-
-ac = pa.ArtCollection(db)
-ac.loadByANumber("B 2", False)
-
-try:
-    ac.content[0].deleteFromDB(db)
-except:
-    logging.info("Nichts zu löschen")
+from lib import network as nw
+from lib import gnd
+from lib import cache
+from lib import network as nw
+logging.basicConfig(level=logging.INFO)
 
 """
-new = pa.Artwork()
-new.anumber = "B 2"
-new.inventorynumber = "13-geom-00002"
-new.description = "<description><p>Kupferstich einer Porträtbüste. Aufschrift „Aeschines | (gr.:) AISCHINES | ATROMETOY | AXENAIOS | Apud magnum Etruriae Ducem in marmore.“</p></description>"
-pers = pa.Person()
-pers.gnd = "118637622"
-pers.name = "Aeschines"
-new.personsRepr.append(pers)
-
-new.insertIntoDB(db)
+node1 = nw.Node("pers1", "Hartmut Beyer", "Person")
+node2 = nw.Node("pers2", "Katrin Beyer", "Person")
+rel = nw.Relation(node1, node2, "marriedTo", {"date" : "2010-08-21"})
+graph = nw.Graph([node1, node2], [rel])
+for node in graph.nodes:
+    print(node)
+print(graph)
 """
+
+"""
+ca = cache.Cache()
+url = "http://d-nb.info/gnd/115513205/about/lds"
+gnd = "115513205"
+file = ca.get_content(url, gnd)
+print(file)
+"""
+
+"""
+ca = cache.CacheGND()
+json = ca.get_json("11852190X")
+print(json)
+"""
+
+graphgnd = nw.GraphGND()
+graphgnd.importGNDs(["116118547"])
+graphgnd.import_related()
+graphgnd.import_related()
+graphgnd.import_related()
+print(graphgnd)

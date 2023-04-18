@@ -14,6 +14,13 @@ class Table:
             self.content = content
         if fields != None:
             self.fields = fields
+    def get_row_dict(self, row):
+        ret = {}
+        for field in self.fields:
+            ret[field] = row.pop(0)
+        return(ret)
+    def to_dict(self):
+        return([self.get_row_dict(row) for row in self.content])
     def save(self, path, delimiter = ";"):
         with open(path + ".csv", 'w', encoding=self.encoding, newline="") as csvfile:
             writer = csv.writer(csvfile, delimiter=delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -28,9 +35,12 @@ class Table:
             print("Keine Datei unter " + path)
             return(False)
         reader = csv.reader(file, delimiter=";")
-        self.content = [row for row in reader]
+        self.content = [list(map(str.strip, row)) for row in reader]
         if self.fields == []:
-            self.fields = self.content.pop(0)
+            fields = self.content.pop(0)
+            fields = map(str.strip, fields)
+            fields = list(fields)
+            self.fields = fields
         return(True)
 class TableWin(Table):
     encoding = "cp1252"

@@ -4,8 +4,9 @@
 import urllib.request as ul
 import re
 
-class grabber:
+class Grabber:
     def __init__(self, url):
+        self.cache = cache
         self.url = url
         fileobject = ul.urlopen(self.url)
         self.response = ""
@@ -19,4 +20,4 @@ class grabber:
         for gr in groups:
             if mo.group(gr):
                 ret.append(mo.group(gr))
-        return(ret)        
+        return(ret)

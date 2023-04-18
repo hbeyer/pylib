@@ -14,7 +14,7 @@ class ID:
         if test != None:
             self.valid = True
         else:
-            logging.error(f"Ungültige GND-Nummer {gnd}")
+            logging.error(f"Ungültige GND-Nummer \"{gnd}\"")
     def __str__(self):
         if self.valid == True:
             return(self.gnd)
@@ -24,7 +24,7 @@ class ID:
             logging.error("Kein CacheGND übergeben")
             return(None)
         ad = cache.get_json(self.gnd)
-        if json == None:
+        if ad == None:
             return(None)
         data = json.loads(ad)
         persData = {}
@@ -62,7 +62,8 @@ class ID:
                 try:
                     persData["familialRelationship"].append({"name" : pers_fam["preferredName"], "id" : pers_fam["@id"].replace("https://d-nb.info/gnd/", ""), "type" : pers_fam["relationship"]})
                 except:
-                    logging.error(f"Unvollständige Relation: {str(pers_fam)}")
+                    #logging.error(f"Unvollständige Relation: {str(pers_fam)}")
+                    pass
         persData["relatedPerson"] = []
         try:
             pers_rel = data["relatedPerson"]
@@ -73,27 +74,36 @@ class ID:
                 try:
                     persData["relatedPerson"].append({"name" : pers_rel["preferredName"], "id" : pers_rel["@id"].replace("https://d-nb.info/gnd/", ""), "type" : pers_rel["relationship"]})
                 except:
-                    logging.error(f"Unvollständige Relation: {str(pers_rel)}")
+                    #logging.info(f"Unvollständige Relation: {str(pers_rel)}")
+                    pass
         return(persData)
 
 class Person:
     def __init__(self, id, cache):
         self.gndid = ID(id)
         if self.gndid.valid == True:
-            self.id = id
+            self.id = str(id)
         self.name = ""
         self.var_names = []
         self.gender = ""
-        self.date_birth = None
+        self.date_birth = ""
+        self.year_birth = ""
         self.place_birth = ""
-        self.date_death = None
+        self.date_death = ""
+        self.year_death = ""
         self.place_death = ""
         self.places_activity = []
         self.info = ""
         self.relations = []
         self.get_data(cache)
+        if self.date_birth != "":
+            self.year_birth = extract_year(self.date_birth)
+        if self.date_death != "":
+            self.year_death = extract_year(self.date_death)
     def get_data(self, cache):
         pers_data = self.gndid.get_info(cache)
+        if pers_data == None:
+            return(None)
         try:
             self.name = pers_data["preferredName"]
         except:
@@ -128,4 +138,11 @@ class Person:
             self.relations.append(rel)        
         
 def replace_diacr(string):
-    return(string.replace("ö", "ö").replace("ò", "ò").replace("̈a", "ä").replace("à", "à"))
+    return(string.replace("ö", "ö").replace("ò", "ò").replace("̈a", "ä").replace("à", "à")).replace("̈u", "ü")
+    
+def extract_year(string):
+    match = re.search(r"[-v]?[0-9]{3,4}", string)
+    try:
+        return(match.group(0))
+    except:
+        return("")

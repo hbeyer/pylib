@@ -4,6 +4,7 @@
 import csv
 import logging
 import re
+from lib import localsql as ls
 
 class Table:
     encoding = "utf-8"
@@ -14,6 +15,16 @@ class Table:
             self.content = content
         if fields != None:
             self.fields = fields
+    def __iter__(self):
+        self.a = 0
+        return(self)
+    def __next__(self):
+        if self.a < len(self.content):
+            ret = self.get_row_dict(self.content[self.a])
+            self.a += 1
+            return(ret)
+        else:
+            raise StopIteration     
     def get_row_dict(self, row):
         ret = {}
         for field in self.fields:
@@ -28,6 +39,10 @@ class Table:
             for row in self.content:
                 writer.writerow(row)
         return(True)
+    def add_row(self, name):
+        self.fields.append(name)
+        for row in self.content:
+            row.append("")
     def load(self, path):
         try:
             file = open(path + ".csv", "r", encoding = self.encoding)
@@ -41,6 +56,9 @@ class Table:
             fields = map(str.strip, fields)
             fields = list(fields)
             self.fields = fields
+        return(True)
+    def toSQLite(self, fileName = "exportTable"):
+        db = ls.Database(self.fields, self.content, fileName)
         return(True)
 class TableWin(Table):
     encoding = "cp1252"

@@ -74,6 +74,10 @@ class WebReader(Reader):
             raise StopIteration
         return(rec)
 
+class WebReaderSRU(WebReader):
+    def __init__(self, path):
+        super().__init__(path, "record", "http://docs.oasis-open.org/ns/search-ws/sruResponse")
+
 class OAIDownloadReader(DownloadReader):
     def __init__(self, path):
         super().__init__(path, "record", "http://www.openarchives.org/OAI/2.0/")

@@ -240,15 +240,13 @@ cursor.execute("INSERT INTO records VALUES (?, ?, ?, ?, ?, ?)", val)
 conn.commit()
 conn.close()
 
-# Abfragen der Datenbank
-conn = sqlite3.connect("database.db")
-cursor = conn.cursor()
-cursor.execute("SELECT * FROM records")
-count = 0
-while count < 5000:
-	print(cursor.fetchone())
-	count += 1
-conn.close()
+# Abfragen der Datenbank mit einem Context Manager
+with sqlite3.connect("database.db") as conn:
+    cursor = conn.cursor()
+    sql = f"SELECT * FROM main"
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    print(result)
 """
 
 """

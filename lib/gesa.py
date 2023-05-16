@@ -110,3 +110,41 @@ class SourceDB():
             tab.content.append([self.content.index(source), source])
         tab.save("DataGrab-GESA_Quellenverzeichnis")
         logging.info("Quellen gespeichert unter DataGrab-GESA_Quellenverzeichnis.csv")
+        
+def alternate_pn(name):
+    name = name.strip()
+    name = name.replace("ue", "ü").replace("ae", "ä").replace("oe", "ö").replace("Oe", "Ö").replace("ss", "ß")
+    conc = {
+        "ALtenburg" : ["Altenburg"],
+        "Caßel" : ["Kassel"],
+        "Cöthen" : ["Köthen"],
+        "Cüstrin" : ["Küstrin"],
+        "Koburg" : ["Coburg"],
+        "Colberg" : ["Kolberg"],
+        "Cölln an der Spree" : ["Berlin"],
+        "Cölln" : ["Berlin"],
+        "Düßeldorf" : ["Düsseldorf"],
+        "Frankfurt an der Oder" : ["Frankfurt, Oder", "Frankfurt, oder", "Frankfurt (Oder)"],
+        "Frankfurt am Main" : ["Frankfurt"],
+        "Groß-Glogau" : ["Glogau"],
+        "Großglogau" : ["Glogau"],
+        "Großen-Hain" : ["Großenhain"],
+        "Großen-Hayn" : ["Großenhain"],
+        "Hannoversch-Münden" : ["Münden"],
+        "Halle an der Saale" : ["Halle, Saale"],
+        "Heinrichstadt" : ["Wolfenbüttel"],
+        "Lißa" : ["Leszno"],
+        "Mülhausen" : ["Mühlhausen"],
+        "Polnisch-Lißa" : ["Lissa", "Leszno"],
+        "Rotenburg ob der Tauber" : ["Rotenburg", "Rothenburg"],
+        "Schwäbisch-Hall" : ["Schwäbisch Hall"],
+        "Stadthagen" : ["Statthagen 1616"],
+        "Steinau an der Oder" : ["Steinau"],
+        "Wolfenbüttel-Heinrichstadt" : ["Wolfenbüttel"],
+        "Heinrichstadt-Wolfenbüttel" : ["Wolfenbüttel"],
+        "Zelle" : ["Celle"]
+    }
+    try:
+        return(conc[name])
+    except:
+        return([name])

@@ -6,18 +6,19 @@ import re
 import os.path
 import logging
 from lib import duennhaupt as dh
+from lib import csvt
 from pdfminer.layout import LTTextLineHorizontal
 from pdfminer.layout import LTTextBoxHorizontal
 logging.basicConfig()
 
 
 class Evaluation:
-    index = {}
-    contexts = {}
-    path = ""
-    sww = []
-    rexx = []
     def __init__(self, path = None, sww = None, rexx = None):
+        self.index = {}
+        self.contexts = {}
+        self.path = ""
+        self.sww = []
+        self.rexx = []
         if path != None:
             self.path = path
         if sww != None:
@@ -41,7 +42,7 @@ class Evaluation:
                         except:
                             self.index[sw] = [pn]
                 for name, rex in self.rexx:
-                    test = re.search(rex, text)
+                    test = re.search(rex, text.lower())
                     if test != None:
                         try:
                             self.index[name].append(pn)
@@ -102,7 +103,56 @@ class EvaluationSDD(Evaluation):
         if os.path.exists(self.path) == False:
             logging.error(f"Ungültiger Pfad: {self.path}")
         if self.sww == [] and self.rexx == []:
-            logging.error("Keine Suchwörter übergeben")        
+            logging.error("Keine Suchwörter übergeben")
+            
+# pers_terms, place_terms und subj_terms: Dictionary mit Lemmata und regulären Ausdrücken (nur Kleinbuchstaben)
+class BookRegister:
+    def __init__(self, path, pers_terms = None, place_terms = None, subj_terms = None):
+        self.path = path
+        self.pers_terms = None
+        if pers_terms != None:
+            self.pers_terms = pers_terms
+        self.place_terms = None
+        if place_terms != None:
+            self.place_terms = place_terms
+        self.subj_terms = None
+        if subj_terms != None:
+            self.subj_terms = subj_terms
+    def build(self):
+        if self.pers_terms != None:
+            self.proceed_regex(self.pers_terms, "Personenregister")
+        if self.place_terms != None:
+            print(self.place_terms)
+            self.proceed_regex(self.place_terms, "Ortsregister")
+        if self.subj_terms != None:
+            self.proceed_regex(self.subj_terms, "Sachregister")
+        return(True)
+    def proceed_regex(self, terms, reg_name = None):
+        if reg_name == None:
+            reg_name = "Register_Regex"
+        rexx = [(name, rex) for name, rex in terms.items()]
+        reg = { value: key for key, value in terms.items() }
+        ev = Evaluation(self.path, None, rexx)
+        ev.eval()
+        tab = csvt.Table(["Lemma", "Suchbegriff", "Seiten"])
+        for label, pages in ev.index.items():
+            tab.content.append([label, terms[label], ", ".join(pages)])
+        tab.save(reg_name)
+        return(True)
+    def proceed_terms(self, terms, reg_name = None):
+        if reg_name == None:
+            reg_name = "Register_Search"
+        rexx = [(name, rex) for name, rex in terms.items()]
+        sww = [key for name, key in terms.items()]
+        lemmata = [name for name in terms]
+        reg = dict(zip(sww, lemmata))
+        ev = Evaluation(self.path, sww)
+        ev.eval()
+        tab = csvt.Table(["Lemma", "Suchbegriff", "Seiten"])
+        for label, pages in ev.index.items():
+            tab.content.append([reg[label], label, ", ".join(pages)])
+        tab.save(reg_name)
+        return(True)
 
 def prepare_text(text):
     text = text.replace("\n", " ")

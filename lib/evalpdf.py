@@ -106,7 +106,7 @@ class EvaluationSDD(Evaluation):
             logging.error("Keine Suchwörter übergeben")
             
 # pers_terms, place_terms und subj_terms: Dictionary mit Lemmata und regulären Ausdrücken (nur Kleinbuchstaben)
-class BookRegister:
+class BookIndex:
     def __init__(self, path, pers_terms = None, place_terms = None, subj_terms = None):
         self.path = path
         self.pers_terms = None
@@ -122,7 +122,6 @@ class BookRegister:
         if self.pers_terms != None:
             self.proceed_regex(self.pers_terms, "Personenregister")
         if self.place_terms != None:
-            print(self.place_terms)
             self.proceed_regex(self.place_terms, "Ortsregister")
         if self.subj_terms != None:
             self.proceed_regex(self.subj_terms, "Sachregister")
@@ -137,20 +136,6 @@ class BookRegister:
         tab = csvt.Table(["Lemma", "Suchbegriff", "Seiten"])
         for label, pages in ev.index.items():
             tab.content.append([label, terms[label], ", ".join(pages)])
-        tab.save(reg_name)
-        return(True)
-    def proceed_terms(self, terms, reg_name = None):
-        if reg_name == None:
-            reg_name = "Register_Search"
-        rexx = [(name, rex) for name, rex in terms.items()]
-        sww = [key for name, key in terms.items()]
-        lemmata = [name for name in terms]
-        reg = dict(zip(sww, lemmata))
-        ev = Evaluation(self.path, sww)
-        ev.eval()
-        tab = csvt.Table(["Lemma", "Suchbegriff", "Seiten"])
-        for label, pages in ev.index.items():
-            tab.content.append([reg[label], label, ", ".join(pages)])
         tab.save(reg_name)
         return(True)
 

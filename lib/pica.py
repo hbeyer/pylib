@@ -118,6 +118,10 @@ class Record:
         if self.pages != "":
             self.normPages = get_norm_p(self.pages)
         try:
+            self.illustrations = self.data["034M"]["01"]["a"].pop(0)
+        except:
+            self.illustrations = ""
+        try:
             self.format = self.data["034I"]["01"]["a"].pop(0)
         except:
             self.format = ""
@@ -144,7 +148,7 @@ class Record:
             try:
                 self.digi = self.data["209R"]["01"]["u"].pop(0)
             except:
-                pass
+                self.digi = ""
         self.load_persons()
         self.load_copies()
         self.load_places()
@@ -219,6 +223,12 @@ class Record:
                     cp.sm = sm
                 elif sm == None:
                     pass
+            if tag == "209R" and cp.digi == None:
+                digi = get_subfield(fi, "u")
+                try:
+                    cp.digi = digi
+                except:
+                    logging.info(str(digi))
             if tag == "244Z":
                 provstr = get_subfield(fi, "a")
                 codes = get_subfield_list(fi, "x")
@@ -685,17 +695,18 @@ class Copy:
         self.prov_struct = []
         self.prov_norm = []
         self.prov_dataset = None
+        self.digi = None
     def __str__(self):
         ret = "Signatur: " + self.sm
-        if self.isil != "":
+        if self.isil not in ["", None]:
             ret = "ISIL: " + self.isil + " " + ret
-        if self.eln != "":
+        if self.eln not in ["", None]:
             ret = "ELN: " + self.eln + " " + ret
-        if self.iln != "":
+        if self.iln not in ["", None]:
             ret = "ILN: " + self.iln + " " + ret
-        if self.prov != []:
+        if self.prov not in ["", None, []]:
             ret += ", Provenienz: " + ";".join(self.prov)
-        if self.epn != None:
+        if self.epn not in ["", None, []]:
             ret += ", EPN: " + self.epn
         return(ret)
     def get_bib(self):
@@ -828,7 +839,7 @@ def get_subfield(node, code):
     children = node.findall("*")
     for ch in children:
         retcode = ch.get("code").lower()
-        if code == retcode:
+        if code.lower == retcode:
             return(ch.text)
     return(None)
 
@@ -837,9 +848,13 @@ def get_subfield_list(node, code):
     code = code.lower()
     children = node.findall("*")
     for ch in children:
-        retcode = ch.get("code").lower()
-        if code == retcode:
-            ret.append(ch.text)
+        try:
+            retcode = ch.get("code").lower()
+        except:
+            pass
+        else:
+            if code == retcode:
+                ret.append(ch.text)
     return(ret)
     
 def adjust_xml_244Z(provstr, code):

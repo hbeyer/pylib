@@ -60,8 +60,14 @@ class NormLinkLocal:
         self.valid = self.validate()           
     def validate(self):
         ret = True
-        test1 = re.search("[89][0-9]|00", self.pos_raw) #00: Sonderfall Lessing in 6800
-        test2 = re.search("[0-9]{8,12}", self.ppn)
+        try:
+            test1 = re.search("[89][0-9]|00", self.pos_raw) #00: Sonderfall Lessing in 6800
+        except:
+            return(False)
+        try:
+            test2 = re.search("[0-9]{8,12}", self.ppn)
+        except:
+            return(False)
         if test1 == None:
             self.errors.append(f"Ungültige Positionsangabe: \"{self.pos_raw}\"")
             ret = False

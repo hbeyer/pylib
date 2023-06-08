@@ -54,3 +54,40 @@ class CacheGESA(Cache):
             return(None)
         else:
             return(response)
+            
+class CacheLobid(Cache):
+    folder = "cache/lobid"
+    def __init__(self):
+        super().__init__()
+    def get_json(self, query, start = 0, size = 10):
+        self.make_url(query, start, size)
+        try:
+            response = self.get_content(query, start, size)
+        except:
+            logging.error(f"Kein Download von {self.url} möglich")
+            return(None)
+        else:
+            return(response)        
+    def get_content(self, query, start, size):
+        path = f"{self.folder}/{query}_{size}-{start}"
+        if op.exists(path) != True:
+            ur.urlretrieve(self.url, path)
+        file = open(path, "r", encoding="utf-8")
+        content = file.read()
+        return(content)
+    def make_url(self, query, start, size):
+        self.url = f"https://lobid.org/resources/search?q={query}&format=json&from={str(start)}&size={str(size)}"
+        return(True)
+
+class CacheMarcHBZ(Cache):
+    folder = "cache/marc-hbz"
+    def __init__(self):
+        super().__init__()
+    def get_xml(self, id):
+        url = f"https://alma.lobid.org/marcxml/{id}"
+        path = self.folder + "/" + id
+        if op.exists(path) != True:
+            ur.urlretrieve(url, path)
+        file = open(path, "r", encoding="utf-8")
+        content = file.read()
+        return(content)

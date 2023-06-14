@@ -59,7 +59,7 @@ class CacheLobid(Cache):
     folder = "cache/lobid"
     def __init__(self):
         super().__init__()
-    def get_json(self, query, start = 0, size = 10):
+    def get_json(self, query, start, size):
         self.make_url(query, start, size)
         try:
             response = self.get_content(query, start, size)
@@ -69,7 +69,7 @@ class CacheLobid(Cache):
         else:
             return(response)        
     def get_content(self, query, start, size):
-        path = f"{self.folder}/{query}_{size}-{start}"
+        path = f"{self.folder}/{query}_{start}-{str(start + size)}"
         if op.exists(path) != True:
             ur.urlretrieve(self.url, path)
         file = open(path, "r", encoding="utf-8")
@@ -85,7 +85,7 @@ class CacheMarcHBZ(Cache):
         super().__init__()
     def get_xml(self, id):
         url = f"https://alma.lobid.org/marcxml/{id}"
-        path = self.folder + "/" + id
+        path = f"{self.folder}/{id}.xml"
         if op.exists(path) != True:
             ur.urlretrieve(url, path)
         file = open(path, "r", encoding="utf-8")

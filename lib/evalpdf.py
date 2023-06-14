@@ -9,6 +9,7 @@ from lib import duennhaupt as dh
 from lib import csvt
 from pdfminer.layout import LTTextLineHorizontal
 from pdfminer.layout import LTTextBoxHorizontal
+from itertools import groupby, count
 logging.basicConfig()
 
 
@@ -144,5 +145,38 @@ def prepare_text(text):
     text = text.replace("- ", "")
     return(text)
 
-
-# Dokumentation: https://github.com/jsvine/pdfplumber
+# Formatiert eine durch Komma getrennte Zahlenreihe durch Einfügen von "f." und "-"
+def format_numbers(numstr):
+    pages = numstr.split(",")
+    pages = [a.strip() for a in pages]
+    collect = []
+    lastnum = -1
+    cache = []
+    for num in pages:
+        if num == "":
+            continue
+        if "-" in num:
+            collect.extend(resolve(num))
+            continue
+        collect.append(int(num))
+    groups = groupby(collect, key=lambda item, c=count():item-next(c))
+    tmp = [list(g) for k, g in groups]
+    printlist = []
+    for item in tmp:
+        if len(item) == 1:
+            printlist.append(str(item[0]))
+        elif len(item) == 2:
+            printlist.append(str(item.pop(0)) + "f.")
+        elif len(item) > 2:
+            printlist.append(f"{str(item.pop(0))}-{str(item.pop())}")
+    printnum = ", ".join(printlist)
+    return(printnum)
+    
+def resolve(fromto = None):
+    if fromto != None:
+        fromtolist = fromto.split("-")
+        fromnum = int(fromtolist.pop(0))
+        tonum = int(fromtolist.pop()) + 1
+        result = [a for a in range(fromnum, tonum)]
+        return(result)
+    return(None)

@@ -13,7 +13,14 @@ from lib import romnumbers as rn
 from lib import provenance as prv
 
 class Record:
-    def __init__(self):
+    def __init__(self, node = None, format = None):
+        self.node = None
+        if node != None:
+            self.node = node
+        self.format = "marcxml"
+        if format != None:
+            self.format = format
+        self.data = {}
         self.persons = []
         self.copies = []
         self.places = []
@@ -39,11 +46,70 @@ class Record:
         self.format = ""
         self.date = ""
         self.digi = []
+        if node != None:
+            if format == "marcxml":
+                self.import_marc()
     def __str__(self):
         ret = "record: ID " + self.id + ", Jahr: " + self.date
         return(ret)
-    def import_marc(self, node):
-        pass
+    def import_marc(self):
+        self.get_data()
+        try:
+            bibdict = self.data["024"]
+        except:
+            pass
+        else:
+            idnumm = get_subfield_values(bibdict, "a")
+            for idn in idnumm:
+                if re.match(r"VD ?16", idn):
+                    self.vdn = idn
+                    break
+            #idnumm = filter(lambda x: ("VD16" in x), idnumm)
+            #self.vdn = "|".join(list(idnumm))
+        try:
+            self.id = self.data["035"]["01"]["a"].pop(0).replace("(DE-605)", "")
+        except:
+            pass
+        try:
+            self.date = self.data["264"]["01"]["c"].pop(0)
+        except:
+            pass
+        try:
+            self.title = self.data["245"]["01"]["a"].pop(0)
+        except:
+            pass
+
+    def get_data(self):
+        fields = self.node.findall(".//datafield")
+        occDict = {}
+        for fn in fields:
+            tag = fn.get("tag")
+            # Das Folgende schließt die Exemplardaten aus, die separat eingelesen werden
+            if tag == "101@":
+                break
+            occ = fn.get("occurrence")
+            if occ == None:
+                try:
+                    occDict[tag] += 1
+                except:
+                    occDict[tag] = 1
+                occ = str(occDict[tag]).zfill(2)
+            children = fn.findall("*")
+            for ch in children:
+                code = ch.get("code").lower()
+                try:
+                    self.data[tag][occ][code].append(ch.text)
+                except:
+                    try:
+                        self.data[tag][occ][code] = [ch.text]
+                    except:
+                        try:
+                            self.data[tag][occ] = { code: [ch.text] }
+                        except:
+                            try:
+                                self.data[tag] = { occ: { code: [ch.text] } }
+                            except:
+                                pass        
     def to_dict(self):
         res = {
             "id" : self.id,
@@ -382,3 +448,12 @@ def get_role(term):
     if term in ["VerfasserIn", "creator", "Verfasser", "Autor"]:
         return("creator")
     return("contributor")
+    
+def get_subfield_values(field_dict, code):
+    result = []
+    for occ, data in field_dict.items():
+        try:
+            result.extend(data[code])
+        except:
+            pass
+    return(result)

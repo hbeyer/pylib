@@ -41,11 +41,11 @@ class Lobid:
         if self.hits == 0:
             return([])
         start = 0
-        while start * self.size_sets <= self.hits:
+        while start <= self.hits:
             response = cl.get_json(self.query, start, self.size_sets)
-            start += 1
+            start += self.size_sets
             if response == None:
-                logging.error(f"Keine Antwort bei Treffer {str(start * self.size_sets)}")
+                logging.error(f"Keine Antwort bei Treffer {start}")
                 continue
             ids = extract_identifiers(response)
             if ids != None:
@@ -53,7 +53,7 @@ class Lobid:
             else:
                 logging.error("Keine Identifier gefunden")
         return(self.identifiers)
-    def download(self):
+    def download_marc(self):
         cm = cache.CacheMarcHBZ()
         for count, id in enumerate(self.identifiers):
             xml = cm.get_xml(id)

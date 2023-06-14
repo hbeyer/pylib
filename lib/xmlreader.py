@@ -8,24 +8,30 @@ import re
 import logging
 
 class Reader:
-    def __init__(self, path, tag = "record", namespace = ""):
+    def __init__(self, path, tag = "record", namespace = None):
         self.tag = tag
-        self.namespace = namespace
-        if self.namespace != "":
-            self.namespace = "{" + self.namespace + "}"        
+        self.namespace = ""
+        if namespace != None:
+            self.namespace = "{" + namespace + "}" 
         self.path = path
         self.recs = []
     def get_recs(self, file):
-        tree = et.parse(file)
+        try:
+            tree = et.parse(file)
+        except:
+            logging.error(f"Problem bei {str(file)}")
+            return([])
         root = tree.getroot()
+        if root.tag == self.tag:
+            return([root])
         recs = root.findall(".//" + self.namespace + self.tag)
         if recs:
             return(recs)
-        print("Keine Datensätze")
+        logging.error(f"Keine Datensätze")
         return([])
 
 class DownloadReader(Reader):
-    def __init__(self, path, tag = "", namespace = ""):
+    def __init__(self, path, tag, namespace = None):
         super().__init__(path, tag, namespace)        
         self.files = glob.glob(self.path + "/*.xml")
         self.unread = self.files

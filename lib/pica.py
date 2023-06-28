@@ -195,16 +195,20 @@ class Record:
         fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
         for fi in fields:
             tag = fi.get("tag")
+            # Bei Feld 101@ beginnt eine neue Bibliothek, daher wird die ILN dann in eine Variable gespeichert erforderlich
             if tag == "101@":
                 try:
                     iln = get_subfield(fi, "a")
                 except:
                     logging.error(f"Fehlende ILN bei PPN {self.ppn}")
+            # Dasselbe geschieht bei Feld 202D für die ELN
             if tag == "202D":
                 try:
                     eln = get_subfield(fi, "a")
                 except:
                     logging.error(f"Fehlende ELN bei PPN {self.ppn}")
+            # Bei Feld 203@ beginnt ein neues Exemplar, daher wir das bislang befüllte Exemplar aus der Variable cp in die Liste self.copies verschoben und ein neues angelegt
+            # Die zuvor gespeicherten bibliotheksspezifischen Nummern ILN und ELN werden in das neue Objekt geschrieben
             if tag == "203@":
                 if cp != None:
                     self.copies.append(cp)
@@ -217,18 +221,21 @@ class Record:
                     cp.iln = str(iln)
                     cp.eln = str(eln)
                     cp.get_bib()
+            # Auslesen der Signatur
             if tag == "209A":
                 sm = get_subfield(fi, "a")
                 if sm != None and cp.sm == "":
                     cp.sm = sm
                 elif sm == None:
                     pass
+            # Auslesen eines eventuell vorhandenen Digitalisats
             if tag == "209R" and cp.digi == None:
                 digi = get_subfield(fi, "u")
                 try:
                     cp.digi = digi
                 except:
                     logging.info(str(digi))
+            # Auslesen der Provenienzdaten
             if tag == "244Z":
                 provstr = get_subfield(fi, "a")
                 codes = get_subfield_list(fi, "x")
@@ -238,7 +245,6 @@ class Record:
                         code = val
                 ppn = get_subfield(fi, "9")
                 bbg = get_subfield(fi, "V")
-                # if provstr == None and ppn != None and code != "":
                 if provstr == None:
                     link = prv.NormLinkLocal("Kein Name in XML", ppn, code)
                     link.errors.append("Kein Name in XML. Konversionsfehler?")
@@ -252,10 +258,43 @@ class Record:
                     cp.prov_struct.append(prov)
                 else:
                     cp.prov_norm.append(prv.NormLinkLocal(provstr, ppn, code))
+        # Am Ende des Durchlaufs muss noch das zuletzt angelegte Exemplar in self.copies verschoben werden.
+        # Dabei müssen eventuell noch verbleibende Provenienzdaten angehängt werden (warum?)
         if cp != None:
             if cp.prov_struct != [] or cp.prov_norm != []:
                 cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
             self.copies.append(cp)
+    def get_local_sys(self, isil):
+        ret = []
+        fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
+        if isil == "1":
+            regex = re.compile(r"[A-Z][a-z] [0-9]+")
+            for fi in fields:
+                tag = fi.get("tag")
+                if tag == "145S":
+                    notations = get_subfield_list(fi, "a")
+                    if notations != []:
+                        ret.extend(notations)
+        if isil == "7":
+            regex = re.compile(r"[A-Z ]+\.[0-9]{3}")
+            for fi in fields:
+                tag = fi.get("tag")
+                if tag == "245Z":
+                    notations = get_subfield_list(fi, "a")
+                    if notations != []:
+                        ret.extend(notations)        
+        if isil == "23":
+            regex = re.compile(r"[A-Z]+ [A-Z][a-z]")
+            for fi in fields:
+                tag = fi.get("tag")
+                if tag == "145Z":
+                    notations = get_subfield_list(fi, "a")
+                    if notations != []:
+                        ret.extend(notations)
+        if ret != []:
+            ret = [sys for sys in ret if regex.match(sys)]
+            return(list(ret))
+        return(ret)
     def load_persons(self):
         try:
             creatorList = self.data["028A"]
@@ -531,6 +570,74 @@ class RecordVD17(Record):
         if self.copies != []:
             res["copies"] = [cp.to_dict() for cp in self.copies]
         return(res)
+    def load_copies(self):
+        cp = None
+        iln = None
+        eln = None
+        fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
+        for fi in fields:
+            tag = fi.get("tag")
+            if tag == "101@":
+                try:
+                    iln = get_subfield(fi, "a")
+                except:
+                    logging.error(f"Fehlende ILN bei PPN {self.ppn}")
+            if tag == "202D":
+                try:
+                    eln = get_subfield(fi, "a")
+                except:
+                    logging.error(f"Fehlende ELN bei PPN {self.ppn}")
+            if tag == "203@":
+                if cp != None:
+                    self.copies.append(cp)
+                cp = Copy()
+                try:
+                    cp.epn = get_subfield(fi, "0")
+                except:
+                    logging.error(f"Fehlende EPN bei PPN {self.ppn}")
+                else:
+                    cp.iln = str(iln)
+                    cp.eln = str(eln)
+                    cp.get_bib()
+            if tag == "209A":
+                sm = get_subfield(fi, "a")
+                if sm != None and cp.sm == "":
+                    cp.sm = sm
+                elif sm == None:
+                    pass
+            if tag == "209R" and cp.digi == None:
+                digi = get_subfield(fi, "u")
+                try:
+                    cp.digi = digi
+                except:
+                    logging.info(str(digi))
+            if tag == "244Z":
+                provstr = get_subfield(fi, "a")
+                codes = get_subfield_list(fi, "x")
+                code = ""
+                for val in codes:
+                    if re.search(r"\d\d", val) != None:
+                        code = val
+                ppn = get_subfield(fi, "9")
+                bbg = get_subfield(fi, "V")
+                # if provstr == None and ppn != None and code != "":
+                if provstr == None:
+                    link = prv.NormLinkLocal("Kein Name in XML", ppn, code)
+                    link.errors.append("Kein Name in XML. Konversionsfehler?")
+                    cp.prov_norm.append(link)
+                elif "!" in provstr:
+                    link = adjust_xml_244Z(provstr, code)
+                    if link != None:
+                        cp.prov_norm.append(link)
+                elif bbg == None:
+                    prov = prv.Provenance(provstr, code)
+                    cp.prov_struct.append(prov)
+                else:
+                    cp.prov_norm.append(prv.NormLinkLocal(provstr, ppn, code))
+        if cp != None:
+            if cp.prov_struct != [] or cp.prov_norm != []:
+                cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
+            self.copies.append(cp)        
 
 class RecordVD16(Record):
     def __init__(self, node):
@@ -558,6 +665,22 @@ class RecordVD16(Record):
                 continue
             placeName = re.sub("\!.+\!", "", placeName)
             self.places.append(Place(placeName, "Druck- oder Erscheinungsort"))
+    def load_places(self):
+        try:
+            placeList = self.data["033D"]
+        except:
+            return(None)
+        for occ in placeList:
+            try:
+                placeName = placeList[occ]["p"].pop(0)
+            except:
+                continue
+            try:
+                placeRel = placeList[occ]["4"].pop(0)
+            except:
+                placeRel = ""
+            placeName = re.sub("\!.+\!", "", placeName)
+            self.places.append(Place(placeName, placeRel))            
 class RecordVD18(Record):
     def __init__(self, node):
         super().__init__(node)    
@@ -839,7 +962,7 @@ def get_subfield(node, code):
     children = node.findall("*")
     for ch in children:
         retcode = ch.get("code").lower()
-        if code.lower == retcode:
+        if code == retcode:
             return(ch.text)
     return(None)
 

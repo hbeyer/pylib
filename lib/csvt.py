@@ -4,7 +4,9 @@
 import csv
 import logging
 import re
+import copy
 from lib import localsql as ls
+from lib import shelfmark as sm
 
 class Table:
     encoding = "utf-8"
@@ -26,9 +28,10 @@ class Table:
         else:
             raise StopIteration     
     def get_row_dict(self, row):
+        newrow = copy.copy(row)
         ret = {}
         for field in self.fields:
-            ret[field] = row.pop(0)
+            ret[field] = newrow.pop(0)
         return(ret)
     def to_dict(self):
         return([self.get_row_dict(row) for row in self.content])
@@ -43,6 +46,19 @@ class Table:
         self.fields.append(name)
         for row in self.content:
             row.append("")
+    def add_sortable(self, field = None):
+        if field == None:
+            field = "Signatur"
+        if field not in self.fields:
+            print("Keine Spalte " + field + " gefunden.")
+            return(False)
+        for row in self.content:
+            row_dict = self.get_row_dict(row)
+            sm_orig = row_dict[field]
+            sig = sm.StructuredShelfmark(sm_orig)
+            row.append(sig.sortable)
+        self.fields.append("Sortierform")
+        return(True)        
     def load(self, path):
         try:
             file = open(path + ".csv", "r", encoding = self.encoding)
@@ -58,7 +74,8 @@ class Table:
             self.fields = fields
         return(True)
     def toSQLite(self, fileName = "exportTable"):
-        db = ls.Database(self.fields, self.content, fileName)
+        db = ls.Database(fileName)
+        db.insert_content(self.fields, self.content)
         return(True)
 class TableWin(Table):
     encoding = "cp1252"

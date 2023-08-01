@@ -30,7 +30,7 @@ class Table():
             return(ret)
         else:
             raise StopIteration            
-    def getByField(self, field):
+    def getByField(self, field):    
         ret = [row[field] for row in self.content]
         return(ret)
     def getSelection(self, fields):

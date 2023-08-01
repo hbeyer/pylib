@@ -21,11 +21,16 @@ class Shelfmark:
             "A:" : "A",
             "Quod" : "A",
             "Theol|Jur|Hist|Bell|Pol|Oec|Eth|Med|Geog|Astr|Phys|Geom|Arit|Poet|Log|Rhet|Gram|Quod" : "A",
+            "Helmst\. Dr" : "HHD",
             "Helmst" : "H",
+            "QuH" : "HQU",
+            "QuN" : "MQN",
+            "Music" : "MMU",
             "M:" : "M",
             "([ABCDEFGHJKLMNOPRSTUVZ][a-z]|QuN) " : "M",
             "Bibel-S\." : "BS",
             "(ae|Ä)ltere [Ee]inblattdrucke" : "AEB",
+            "^I[A-Z] [0-9]" : "AEC",
             "Alv\." : "ALV",
             "Xylogr" : "XYL",
             "Druckfragm" : "FGM",
@@ -40,7 +45,13 @@ class Shelfmark:
             "Textb" : "YTM",
             "Töpfer" : "YTO",
             "Zapf" : "YHZ",
-            "G[123]" : "YGG"
+            "G[123]" : "YGG",
+            "R[1234]:" : "YRA",
+            "Dep\." : "YXD",
+            "Aug\.|Novi|Extrav|Cod\.|Blank" : "ZHS",
+            "BA [IV]" : "ZHB",
+            "^K [0-9]" : "ZKA",
+            "Graph" : "ZGR"
             }
         for rex, val in rexx.items():
             if re.search(rex, self.whole) != None:
@@ -55,7 +66,8 @@ class Shelfmark:
             except:
                 logging.error("Problem bei " + self.whole)
         else:
-            extract = re.search(r"(.+)\s\(([0-9a-d]{1,2})\)$", self.whole)
+            extract = re.search(r"(.+)\s\(([0-9]+\.?[a-dIV]{0,3})\)$", self.whole)
+            #extract = re.search(r"(.+)\s\(([0-9a-dIV]{1,3})\)$", self.whole)
             try:
                 self.part = extract.group(2)                
             except:
@@ -78,6 +90,13 @@ class Shelfmark:
         if self.part:
             ret += ' (' + self.part + ')'
         return(ret)
+    def normalize_wdb(self):
+        norm_sig = self.whole.replace("A: ", "").replace("H: ", "").replace("M: ", "")
+        norm_sig = norm_sig.replace("Helmst.", "helmst")
+        norm_sig = norm_sig.replace("°", "f")
+        norm_sig = lower(norm_sig)
+        #norm_sig = re.replace(r"\((\d+)\)", norm_sig, )
+        return(norm_sig)
     def getFormat(self):
         extract = re.search(r"2°|4°|8°|12°|16°|FM", self.whole)
         try:
@@ -106,7 +125,7 @@ class Shelfmark:
             except:
                 return(None)
         elif self.collection == "H":
-            extract = re.search(r"\s([A-Z]|QuH|Y[a-z])\s", self.whole)
+            extract = re.search(r"\s?([A-Z]|Y[a-z])\s", self.whole)
             try:
                 self.group = extract.group(1)
             except:
@@ -148,7 +167,8 @@ class Shelfmark:
                 except:
                     return(None)
         elif self.collection == "A":
-            extract = re.search(r"A: ([0-9\.-a-z]+)\s[A-Z][a-z]+\.", self.whole)
+            extract = re.search(r"([0-9\.-a-z]+)\s[A-Z][a-z]+\.", self.whole)
+            #extract = re.search(r"A: ([0-9\.-a-z]+)\s[A-Z][a-z]+\.", self.whole)
             try:
                 self.number = extract.group(1)
             except:
@@ -456,3 +476,4 @@ def searchable(sm):
     sm = sm.replace("(", "\(")
     sm = sm.replace(")", "\)")
     return(sm)
+    

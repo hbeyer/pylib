@@ -149,6 +149,17 @@ class Record:
                 self.digi = self.data["209R"]["01"]["u"].pop(0)
             except:
                 self.digi = ""
+        self.comm = []
+        self.similar = []
+        try:
+            commdict = self.data["037A"]
+        except:
+            pass
+        else:
+            for key, data in commdict.items():
+                for field, content in data.items():
+                    if field == "a":
+                        self.comm.extend(content)    
         self.load_persons()
         self.load_copies()
         self.load_places()
@@ -522,6 +533,37 @@ class Record:
         if self.date != "":
             ret = f"{ret} {self.date}"
         return(ret)
+    def get_reservation(self):
+        ret = []
+        try:
+            resdict = self.data["046X"]
+        except:
+            return(ret)
+        for occ, data in resdict.items():
+            reservation = { "status" : "", "date" : "", "isil" : "", "note" : "", "digitalisierbar" : "" }
+            try:
+                reservation["status"] = data["a"].pop()
+            except:
+                pass
+            try:
+                reservation["date"] = data["c"].pop()
+            except:
+                pass
+            try:
+                reservation["isil"] = data["5"].pop()
+            except:
+                pass
+            try:
+                reservation["note"] = data["z"].pop()
+            except:
+                pass
+            if "HAB" in reservation["note"] and reservation["isil"] == "":
+                reservation["isil"] = "DE-23"
+            reservation["digitalisierbar"] = reservation["status"].replace("cc", "Nein").replace("cb", "Ja")
+            ret.append(reservation)
+        return(ret)
+        
+
         
 class RecordVD17(Record):
     def __init__(self, node):
@@ -530,6 +572,21 @@ class RecordVD17(Record):
             self.vd17 = self.data["006W"]["01"]["0"]
         except:
             self.vd17 = []
+        for com in self.comm:
+            if "Nicht identisch mit VD" in com:
+                extr = re.search(r"mit VD ?17 ([0-9]+:[^ ]+)", com)
+                try:
+                    self.similar.append(extr.group(1))
+                except:
+                    pass
+        if self.digi == []:
+            try:
+                vtind = self.data["017E"]["01"]["5"][0]
+            except:
+                pass
+            else:
+                if vtind == "34":
+                    self.digi.append("https://vd17.gbv.de/vd/vd17/" + self.vdn.replace("VD17 ", ""))
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", VD17: " + self.vdn + ", Jahr: " + self.date
         return(ret)
@@ -637,7 +694,7 @@ class RecordVD17(Record):
         if cp != None:
             if cp.prov_struct != [] or cp.prov_norm != []:
                 cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
-            self.copies.append(cp)        
+            self.copies.append(cp)
 
 class RecordVD16(Record):
     def __init__(self, node):
@@ -998,3 +1055,64 @@ def get_role(term):
     if term in ["VerfasserIn", "creator", "Verfasser", "Autor"]:
         return("creator")
     return("contributor")
+    
+def refine_place(name):
+    name = name.replace("[?]", "")
+    name = name.replace("(?)", "")    
+    name = name.strip("?")
+    name = name.strip("[]")
+    name = name.strip()
+    repl = {
+        "!006931979e" : "Erfurt",
+        "Altdorf b. Nürnberg" : "Altdorf",
+        "ALtenburg" : "Altenburg",
+        "Altenburg/Thüringen" : "Altenburg",
+        "Altenburg$gThüringen" : "Altenburg",
+        "Beyreuth" : "Bayreuth",
+        "Brandenburg <Havel>" : "Brandenburg an der Havel",
+        "Brandenburg" : "Brandenburg an der Havel",
+        "Bytom Odrzański" : "Beuthen an der Oder",
+        "Clausthal" : "Clausthal-Zellerfeld",
+        "Dortmundt" : "Dortmund",
+        "Dillingen a. d. Donau" : "Dillingen an der Donau",
+        "Dillingen a.d. Donau" : "Dillingen an der Donau",
+        "leipzig" : "Leipzig",
+        "Frankfurt" : "Frankfurt am Main",
+        "Frankfurt, Main" : "Frankfurt am Main",
+        "Frankfurt, Oder" : "Frankfurt (Oder)",
+        "FReiberg" : "Freiberg",
+        "Freiburg, Breisgau" : "Freiburg im Breisgau",
+        "Giessen" : "Gießen",
+        "Grossenhain" : "Großenhain",
+        "Halberstedt" : "Halberstadt",
+        "Halle" : "Halle (Saale)",
+        "Halle, Saale" : "Halle (Saale)",
+        "Hof / Saale" : "Hof (Saale)",
+        "Hof <Oberfranken>" : "Hof (Saale)",
+        "Iena" : "Jena",
+        "Jawor" : "Jauer",
+        "Köngisberg" : "Königsberg",
+        "Lauingen, Donau" : "Lauingen (Donau)",
+        "Minden (Westf)" : "Minden",
+        "Münster (Westf)" : "Münster",
+        "Neuburg, Donau" : "Neuburg an der Donau",
+        "Neustadt, Aisch" : "Neustadt an der Aisch",
+        "Neustadt, Weinstraße" : "Neustadt an der Weinstraße",
+        "Nysa" : "Neiße",
+        "Oettingen i. Bay." : "Oettingen in Bayern",
+        "Oettingen" : "Oettingen in Bayern",
+        "Rothenburg <Tauber>" : "Rothenburg ob der Tauber",
+        "Statthagen" : "Stadthagen",
+        "Stargard Szczeciński" : "Stargard in Pommern",
+        "Steinau, Oder" : "Steinau an der Oder",
+        "Strassburg" : "Straßburg",
+        "Sulzbach$gOberpfalz" : "Sulzbach",
+        "Weißenfels <Halle, Saale>" : "Weißenfels",
+        "Weissenfels" : "Weißenfels",
+        "Zerbst/Anhalt" : "Zerbst"
+        }
+    try:
+        name = repl[name]
+    except:
+        pass
+    return(name)    

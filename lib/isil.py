@@ -335,6 +335,13 @@ class Isil:
 			"long" : "13.004864", 
 			"lat" : "50.579261"  
 			},
+        "DE-Ha32" : { 
+			"bib" : "Marienbibliothek Halle", 
+			"place" : "Halle (Saale)", 
+            "gettyPlace" : "1036898", 
+            "long" : "11.970288", 
+            "lat" : "51.489599"  
+			},
         "DE-Em2" : { 
 			"bib" : "Johannes a Lasco Bibliothek Große Kirche Emden", 
 			"place" : "Emden", 
@@ -476,6 +483,7 @@ class Isil:
         "20357" : "DE-16",
         "20729" : "DE-31",
         "21881" : "DE-125",
+        "3310" : "DE-Ha32",
         "3122" : "DE-Hel1",
         "3206" : "Thüringische",
         "3614" : "DE-F42",
@@ -512,6 +520,7 @@ class Isil:
         "62" : "DE-28", # UB Rostock
         "65" : "DE-3",  # ULB Halle
         "78" : "DE-115", # SB Hannover
+        "278" : "DE-Ha32", # Marienbibliothek Halle
         "620" : "#VD17R",
         "755" : "#THURKB", # Thüringische Kirchenbibliotheken
         "2001" : "DE-21", # UB Tübingen

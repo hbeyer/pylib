@@ -126,4 +126,13 @@ class Dataset:
         return(f"EPN {self.epn}: {' - '.join(self.errors)}")
                 
 def similar(a, b):
+    a = normalize_name(a)
+    b = normalize_name(b)
     return(SequenceMatcher(None, a, b).ratio())
+    
+def normalize_name(name):
+    name = name.lower()
+    repl = { "ä" : "ae", "ö" : "oe", "ü" : "ue", "ß" : "ss", " von" : "", "th" : "t" }
+    for key in repl:
+        name = name.replace(key, repl[key])
+    return(name)

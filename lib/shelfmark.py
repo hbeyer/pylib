@@ -66,7 +66,7 @@ class Shelfmark:
             except:
                 logging.error("Problem bei " + self.whole)
         else:
-            extract = re.search(r"(.+)\s\(([0-9]+\.?[a-dIV]{0,3})\)$", self.whole)
+            extract = re.search(r"(.+)\s\(([0-9]+[\.,]?[a-dIV]{0,3})\)$", self.whole)
             #extract = re.search(r"(.+)\s\(([0-9a-dIV]{1,3})\)$", self.whole)
             try:
                 self.part = extract.group(2)                
@@ -157,13 +157,13 @@ class Shelfmark:
         return(self.form)
     def getNumber(self):
         if self.collection == "H":
-            extract = re.search(r"H: ([A-Z]|Y[a-z])\s([0-9]+[a-z]{0,2}\*?)\.?(2°|4°|8°|12°)?", self.whole)
+            extract = re.search(r"(H: )?([A-Z]|Y[a-z])\s([0-9]+[a-z]{0,2}\*?)\.?(2°|4°|8°|12°)?", self.whole)
             try:
-                self.number = extract.group(2)
+                self.number = extract.group(3)
             except:
                 extract = re.search(r"H:\sQuH\s([0-9]+\.?([0-9]+)?)", self.whole)
                 try:
-                    self.number = extract.group(1)
+                    self.number = extract.group(2)
                 except:
                     return(None)
         elif self.collection == "A":
@@ -174,9 +174,9 @@ class Shelfmark:
             except:
                  return(None)
         elif self.collection == "M":
-            extract = re.search(r"M: ([A-Z][a-z]|QuN)\s((gr\.-2°|2°|4°|8°|12°)\s)?((Mischbd\.|Sammelbd\.|Kapsel)\s)?([0-9\.]+)", self.whole)
+            extract = re.search(r"(M: )?([A-Z][a-z]|QuN)\s((gr\.-2°|2°|4°|8°|12°)\s)?((Mischbd\.|Sammelbd\.|Kapsel)\s)?([0-9\.]+)", self.whole)
             try:
-                self.number = extract.group(6)
+                self.number = extract.group(7)
             except:
                 return(None)
         elif self.collection == "XYL":

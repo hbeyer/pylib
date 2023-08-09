@@ -100,7 +100,7 @@ class DataConnection(Database):
     def close(self):
         self.conn.close()
         return(True)
-    def sql_request(sql):
+    def sql_request(self, sql):
         self.curs.execute(sql)
         res = self.curs.fetchall()
         return(res)

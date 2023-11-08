@@ -51,7 +51,7 @@ class Graph:
             for count, command in enumerate(commands):  
                 session.execute_write(run_cypher, command)
                 #logging.info(f"Ausgeführt: {command}")
-                if count > 100000:
+                if count > 300000:
                     break
         driver.close()
     def save_cypher(self, file_name = None):

@@ -3,6 +3,13 @@
 
 import re
 
+def get_prof_cat(url):
+    conc = { "lips" : "Leipzig", "helmst" : "Helmstedt", "bamb" : "Bamberg" }
+    for term, result in conc.items():
+        if term in url:
+            return(result)
+    return("")
+
 def get_faculty(text):
     text = text.lower()
     conc = { "med" : "Medizinische Fakultät",
@@ -24,6 +31,24 @@ def normalize_year(text):
     except:
         return(None)
 
+def abbr_title(title):
+    title = title.replace(" || ", " ")
+    pieces = title.split()
+    new = " ".join(pieces[0:3])
+    return(new)
+        
+def merge_period(start, end, new_start, new_end):
+    start = int(start)
+    end = int(end)
+    new_start = int(new_start)
+    new_end = int(new_end)
+    if new_start < start:
+        start = new_start
+    if new_end > end:
+        end = new_end
+    return((start, end))
+    
+        
 def get_subject(text):
     match = re.search(r"für (.+) an", text)
     try:

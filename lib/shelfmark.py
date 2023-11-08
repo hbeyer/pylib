@@ -19,7 +19,6 @@ class Shelfmark:
         self.valid = False        
         rexx = {
             "A:" : "A",
-            "Quod" : "A",
             "Theol|Jur|Hist|Bell|Pol|Oec|Eth|Med|Geog|Astr|Phys|Geom|Arit|Poet|Log|Rhet|Gram|Quod" : "A",
             "Helmst\. Dr" : "HHD",
             "Helmst" : "H",
@@ -48,10 +47,10 @@ class Shelfmark:
             "G[123]" : "YGG",
             "R[1234]:" : "YRA",
             "Dep\." : "YXD",
-            "Aug\.|Novi|Extrav|Cod\.|Blank" : "ZHS",
-            "BA [IV]" : "ZHB",
-            "^K [0-9]" : "ZKA",
-            "Graph" : "ZGR"
+            "Aug\.|Novi|Extrav|Cod\.|Blank" : "ZHA",
+            "BA [IV]" : "ZHB",            
+            "Graph" : "ZGR",
+            "^K [0-9]" : "ZKA"
             }
         for rex, val in rexx.items():
             if re.search(rex, self.whole) != None:
@@ -203,7 +202,7 @@ class Shelfmark:
                     except:
                         return(None)
         else:
-            extract = re.search(r"\s([0-9\.]+[a-z]?)[^°]", self.whole)
+            extract = re.search(r"\s([0-9\.]+[a-z]?)[^°\d]", self.whole)
             try:
                 self.number = extract.group(1)
             except:
@@ -229,7 +228,10 @@ class StructuredShelfmark(Shelfmark):
             self.getVolumeNo()
             self.sortable = self.makeSortable()
         def __str__(self):
-            ret = "Bestand: " + self.collection + ", Klasse: " + self.group + ", Nummer: " + self.number
+            ret = "Bestand: " + self.collection
+            if self.group != "":
+                ret = ret + ", Klasse: " + self.group
+            ret = ret + ", Nummer: " + self.number
             if self.format:
                 ret = ret + ", Format: " + self.format
             if self.part:
@@ -238,10 +240,10 @@ class StructuredShelfmark(Shelfmark):
         def sortableNum(self, num):
             parts = num.split(".")
             parts = self.separateLetters(parts)
-            parts = [p.zfill(4) for p in parts]
-            diff = 4 - len(parts)
+            parts = [p.zfill(5) for p in parts]
+            diff = 5 - len(parts)
             for num in range(0, diff):
-                parts.append("0000")
+                parts.append("00000")
             return(".".join(parts))
         def separateLetters(self, parts):
             ret = []
@@ -297,10 +299,10 @@ class StructuredShelfmark(Shelfmark):
                 sortForm = self.form[0]
             res = [sortColl, sortGroup, sortFormat, sortForm, self.sortableNum(self.number), self.sortableNum(self.volume)]
             return(".".join(res))
-        def makeSortablePart(self, part):
+        def makeSortablePart(self):
             num = "0000"
             let = "00"
-            extract = re.search(r"([0-9]+)([a-z]+)?", part)
+            extract = re.search(r"([0-9]+)([a-z]+)?", self.part)
             try:
                 num = extract.group(1)[0:3]
             except:
@@ -311,10 +313,7 @@ class StructuredShelfmark(Shelfmark):
                 pass
             return(num.zfill(4) + let.zfill(2))
         def makeSortable(self):
-            sr = self.makeSortableRoot()
-            if self.part:
-                sr += self.makeSortablePart(self.part)
-            return(sr)
+            return(f"{self.makeSortableRoot()}.{self.makeSortablePart()}")
 class ShelfmarkList():
     def __init__(self, content = []):
         self.content = []

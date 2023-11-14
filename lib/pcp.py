@@ -48,6 +48,8 @@ def merge_period(start, end, new_start, new_end):
         end = new_end
     return((start, end))
     
+def join_name(vn_dt, name_dt, vn_lat, name_lat):
+    return(f"{vn_dt if vn_dt != '' else vn_lat} {name_dt if name_dt != '' else name_lat}")
         
 def get_subject(text):
     match = re.search(r"für (.+) an", text)

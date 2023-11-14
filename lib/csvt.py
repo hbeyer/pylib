@@ -73,6 +73,16 @@ class Table:
             fields = list(fields)
             self.fields = fields
         return(True)
+    def get_index(self, field):
+        index = {}
+        for row in self:
+            if row[field] in ["", "NULL"]:
+                continue
+            try:
+                index[row[field]].append(row)
+            except:
+                index[row[field]] = [row]
+        return(index)
     def toSQLite(self, fileName = "exportTable"):
         db = ls.Database(fileName)
         db.insert_content(self.fields, self.content)

@@ -10,6 +10,21 @@ def get_prof_cat(url):
             return(result)
     return("")
 
+def split_ids(idstring):
+    idstring = idstring.replace(",", ";").replace(" ", "")
+    if "-" in idstring:
+        extract = re.search(r"(\d+)-(\d+)", idstring)
+        try:
+            limits = (int(extract.group(1)), int(extract.group(2)))
+        except:
+            return(idstring)
+        else:
+            if limits[1] < limits[0]:
+                return(idstring)
+            ids = [str(num)for num in range(limits[0], limits[1])]
+            return(ids)
+    return(idstring.split(";"))
+    
 def get_faculty(text):
     text = text.lower()
     conc = { "med" : "Medizinische Fakultät",

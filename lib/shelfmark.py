@@ -50,7 +50,10 @@ class Shelfmark:
             "Aug\.|Novi|Extrav|Cod\.|Blank" : "ZHA",
             "BA [IV]" : "ZHB",            
             "Graph" : "ZGR",
-            "^K [0-9]" : "ZKA"
+            "^K [0-9]" : "ZKA",
+            "^1?\d{2}\.(2°|4°|8°|12°) \d{1,6}" : "ZNS",
+            "^1?\d{2}\.\d{1,6}" : "ZNC",
+            "[A-Z][A-Z] \d{2}-\d{4}" : "ZPB"
             }
         for rex, val in rexx.items():
             if re.search(rex, self.whole) != None:
@@ -139,6 +142,18 @@ class Shelfmark:
                 self.number = extract.group(3)
             except:
                 return(None)
+        elif self.collection == "YRA":
+            extract = re.search(r"R([123])", self.whole)
+            try:
+                self.group = extract.group(1).zfill(6)
+            except:
+                return(None)
+        elif self.collection == "ZPB":
+            extract = re.search(r"([A-Z][A-Z]) (\d{2})-", self.whole)
+            try:
+                self.group = extract.group(1) + extract.group(2).zfill(4)
+            except:
+                return(None)
         else:
             extract = re.search(r"([A-Z][a-z])\s", self.whole)
             try:
@@ -201,6 +216,25 @@ class Shelfmark:
                         self.number = extract.group(1)
                     except:
                         return(None)
+        elif self.collection == "ZNC":
+            extract = re.search(r"(\d+\.\d+)", self.whole)
+            try:
+                self.number = extract.group(1)
+            except:
+                return(None)
+        elif self.collection == "ZNS":
+            extract = re.search(r"(\d+)\.1?[248]° (\d+)", self.whole)
+            #extract = re.search(r"(\d+)\.1?[248]°\s\(d+)", self.whole)
+            try:
+                self.number = f"{extract.group(1)}.{extract.group(2)}"
+            except:
+                return(None)         
+        elif self.collection == "ZPB":
+            extract = re.search(r"-(\d{4})?", self.whole)
+            try:
+                self.number = extract.group(1)
+            except:
+                return(None)
         else:
             extract = re.search(r"\s([0-9\.]+[a-z]?)[^°\d]", self.whole)
             try:

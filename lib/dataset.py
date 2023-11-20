@@ -27,12 +27,23 @@ class Dataset:
             for entry in self.fields[name]:
                 ret.append({name : str(entry)})
         return(ret)
+    def __str__(self):
+        ret = "fDataset:\n {'\n'.join([entry for entry in self.content])}"
 
 class Entry:
-    def __init__(self, value, lang = "", auth_sys = "", auth_id = ""):
+    def __init__(self, value, lang = None, auth_sys = None, auth_id = None):
+        print(f"{value} {lang} {auth_sys} {auth_id}" )
+        if value == None:
+            self.value = "" 
         self.value = value
+        if lang == None:
+            self.language = ""         
         self.language = lang
+        if auth_sys == None:
+            self.auth_sys = ""         
         self.auth_sys = auth_sys
+        if auth_id == None:
+            self.auth_id = ""         
         self.auth_id = auth_id
     def __str__(self):
         ret = self.value

@@ -11,6 +11,7 @@ from lib import isil as il
 from lib import xmlserializer as xs
 from lib import romnumbers as rn
 from lib import provenance as prv
+from lib import dataset as ds
 
 class Record:
     def __init__(self, node):
@@ -562,8 +563,41 @@ class Record:
             reservation["digitalisierbar"] = reservation["status"].replace("cc", "Nein").replace("cb", "Ja")
             ret.append(reservation)
         return(ret)
-        
-
+    def to_dc(self):
+        meta = ds.DatasetDC()
+        meta.add_entry("dc.identifier", ds.Entry(self.ppn))
+        meta.add_entry("dc.format", ds.Entry("Book", "eng"))
+        meta.add_entry("dc.type", ds.Entry("Monograph", "eng"))
+        meta.add_entry("dc.title", ds.Entry(self.title))
+        meta.add_entry("dc.date", ds.Entry(self.date))
+        for pers in self.persons:
+            pers.make_persname()
+            if pers.role == "dc.creator":
+                meta.add_entry("dc.creator", ds.Entry(pers.persName, None, "GND", pers.gnd))
+            else:
+                meta.add_entry("dc.contributor", ds.Entry(pers.persName, None, "GND", pers.gnd))
+        for pub in self.publishers:
+            pub.makePersName()
+            meta.add_entry("dc.publisher", ds.Entry(pub.persName, None, "GND", pub.gnd))
+        for lng in self.lang:
+            meta.add_entry("dc.language", ds.Entry(lng))
+        for sub in self.subjects:
+            meta.add_entry("dc.subject", ds.Entry(sub))
+        mat_type = self.get_rec_type()
+        meta.add_entry("dc.description", ds.Entry(mat_type + " aus dem Bestand der Herzog August Bibliothek Wolfenbüttel", "ger"))
+        meta.add_entry("dc.rights", ds.Entry("CC BY-SA 3.0"))
+        meta.add_entry("dc.rights.uri", ds.Entry("http://diglib.hab.de/copyright.html"))
+        meta.add_entry("dcterms.rightsHolder", ds.Entry("Herzog August Bibliothek Wolfenbüttel"))
+        meta.add_entry("dc.source", ds.Entry(f"Wolfenbüttel, Herzog August Bibliothek, {';'.join([cop.sm for cop in self.copies])}"))
+        try:
+            meta.add_entry("dc.relation", ds.Entry(gw))
+        except:
+            pass
+        try:
+            meta.add_entry("dc.relation", ds.Entry(istc))
+        except:
+            pass         
+        return(meta)
         
 class RecordVD17(Record):
     def __init__(self, node):
@@ -778,7 +812,7 @@ class RecordList():
             self.content = content
     def to_json(self, file_name):
         with open(file_name + ".json", "w", encoding="utf-8") as fp:
-            json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=1, separators=[',', ':'], default=convert_record, sort_keys=False)
+            json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=1, separators=[',', ':'], default=convert_record, sort_keys=False)          
     def to_libreto(self, file_name, metadata, prov = ""):
         ser = xs.Serializer(file_name, "collection")
         ser.add_nested("metadata", metadata)

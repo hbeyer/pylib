@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import logging
 
 def get_prof_cat(url):
     conc = { "lips" : "Leipzig", "helmst" : "Helmstedt", "bamb" : "Bamberg" }
@@ -24,6 +25,76 @@ def split_ids(idstring):
             ids = [str(num)for num in range(limits[0], limits[1])]
             return(ids)
     return(idstring.split(";"))
+    
+def encode_name(name):
+    repl = { 
+        " " : "_",
+        "ä" : "ae",
+        "ö" : "oe",
+        "ü" : "ue",
+        "'" : "_",
+        "ß" : "ss",
+        "," : ""
+        }
+    name = name.lower()
+    for a, b in repl.items():
+        name = name.replace(a, b)
+    return(name)
+
+def normalize_relation(role):
+    repl = {
+        "creator" : "hasCreator",
+        "contributor" : "hasContributor",
+        "Beiträger" : "hasContributor",
+        "Beitr." : "hasContributor",
+        "BeiträgerIn" : "hasContributor",
+        "HerausgeberIn" : "hasContributor",
+        "Hrsg." : "hasContributor",
+        "VerfasserIn von ergänzendem Text" : "hasContributor",
+        "VerfasserIn von Zusatztexten" : "hasContributor",
+        "MitwirkendeR" : "hasContributor",
+        "ÜbersetzerIn" : "hasContributor",
+        "Übers." : "hasContributor",
+        "Bearb." : "hasContributor",
+        "IllustratorIn" : "hasContributor",
+        "Ill." : "hasContributor",
+        "StecherIn" : "hasContributor",
+        "Vorr." : "hasContributor",
+        "Komment." : "hasContributor",
+        "Sonstige" : "hasContributor",
+        "Präses" : "hasPraeses",
+        "Päses" : "hasPraeses",
+        "Praeses" : "hasPraeses",
+        "Praes." : "hasPraeses",
+        "Präs." : "hasPraeses",
+        "Präeses" : "hasPraeses",
+        "Präs" : "hasPraeses",
+        "Widmungsempfänger" : "hasDedicatee",
+        "Widmungempfänger" : "hasDedicatee",
+        "Widmungsempf." : "hasDedicatee",
+        "Widm.-Empf." : "hasDedicatee",
+        "Verstorb." : "hasDedicatee",
+        "Adressat" : "hasDedicatee",
+        "AdressatIn" : "hasDedicatee",
+        "Resp." : "hasRespondent",
+        "Resp" : "hasRespondent",
+        "Respondent" : "hasRespondent",
+        "erm. Resp." : "hasRespondent",
+        "RespondentIn" : "hasRespondent",
+        "VerfasserIn" : "hasCreator",
+        "Sonstige Person, Familie und Körperschaft" : "hasContributor",
+        "WidmungsempfängerIn" : "hasDedicatee",
+        "GefeierteR" : "hasDedicatee",
+        "DruckerIn" : "hasPublisher",
+        "Vertrieb" : "hasPublisher",
+        "Verlag" : "hasPublisher",
+        "Sammler" : "hasCollector"
+    }
+    try:
+        role = repl[role]
+    except:
+        logging.error(f"Unbekannte Rolle {role}")
+    return(role)
     
 def get_faculty(text):
     text = text.lower()

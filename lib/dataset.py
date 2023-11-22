@@ -28,23 +28,28 @@ class Dataset:
                 ret.append({name : str(entry)})
         return(ret)
     def __str__(self):
-        ret = "fDataset:\n {'\n'.join([entry for entry in self.content])}"
+        ret = "Dataset:\n"
+        dict_rep = self.to_dict()
+        for key, val in dict_rep.items():
+            if val == "":
+                continue
+            ret += f"{key}: {val};"
+        return(ret)
 
 class Entry:
     def __init__(self, value, lang = None, auth_sys = None, auth_id = None):
-        print(f"{value} {lang} {auth_sys} {auth_id}" )
+        self.value = value        
         if value == None:
             self.value = "" 
-        self.value = value
+        self.language = lang
         if lang == None:
             self.language = ""         
-        self.language = lang
+        self.auth_sys = auth_sys            
         if auth_sys == None:
-            self.auth_sys = ""         
-        self.auth_sys = auth_sys
+                self.auth_sys = ""
+        self.auth_id = auth_id                
         if auth_id == None:
             self.auth_id = ""         
-        self.auth_id = auth_id
     def __str__(self):
         ret = self.value
         if self.language != "":
@@ -62,7 +67,7 @@ class DatasetDC(Dataset):
             "dc.format" : [],
             "dc.type" : [],
             "dc.language" : [],
-            "dc.title" : [],
+            "dc.title" : [] ,
             "dc.subject" : [],
             "dc.coverage" : [],
             "dc.description" : [],

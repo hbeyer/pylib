@@ -542,6 +542,19 @@ Methoden:
 | makeCompStr | -- | Sortierte, durch Komma getrennte und mit "-" zusammengefasste Liste der Stücktitelangaben | Ablage des Ergebnisses unter self.compStr, Sortierung von parts |
 | \_\_str\_\_ | - | String-Repräsentation des Bandes | - |	
 
+Codebeispiel
+```python
+shelfmarks = ['M: QuN 1041 (2)', 'M: Ho 298 (5)', 'M: Ho 298 (6)', 'M: Ho 298 (1)', 'M: Ho 298 (2)', 'M: QuN 1041 (3)', 'M: Ho 298 (3)', 'M: Ho 298 (4)', 'M: QuN 1041 (1)']
+
+smlist = sm.ShelfmarkList([sm.StructuredShelfmark(shelfmark) for shelfmark in shelfmarks])
+
+smlist.makeVolumes()
+
+for vol in smlist.volumeList:
+    print(vol)
+
+```
+
 ---
 ### Modul sru
 Das Modul ermöglicht den Zugriff auf SRU-Schnittstellen zum Download bibliographischer Daten

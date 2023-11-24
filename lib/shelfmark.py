@@ -399,11 +399,11 @@ class Volume():
         for part in parts:
             self.parts.append(part)
     def makePartStr(self):
-        self.parts = sorted(self.parts, key=lambda p:StructuredShelfmark.makeSortablePart(None, p))
+        self.parts = sorted(self.parts, key = lambda p: int(p))
         self.partStr = ", ".join(self.parts)
         return(self.partStr)
     def makeCompStr(self):
-        self.parts = sorted(self.parts, key=lambda p:StructuredShelfmark.makeSortablePart(None, p))
+        self.parts = sorted(self.parts, key = lambda p: int(p))
         if len(self.parts) < 3:
             self.compStr = ", ".join(self.parts)
             return(False)

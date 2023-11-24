@@ -26,6 +26,7 @@ class Shelfmark:
             "QuN" : "MQN",
             "Music" : "MMU",
             "M:" : "M",
+            "Schulenb" : "YSL",
             "([ABCDEFGHJKLMNOPRSTUVZ][a-z]|QuN) " : "M",
             "Bibel-S\." : "BS",
             "(ae|Ä)ltere [Ee]inblattdrucke" : "AEB",
@@ -34,7 +35,6 @@ class Shelfmark:
             "Xylogr" : "XYL",
             "Druckfragm" : "FGM",
             "[WX][a-z] " : "NE",
-            "Schulenb" : "YSL",
             "Eyssen" : "YEY",
             "Kranz" : "YKR",
             "Kreuder" : "YKD",
@@ -350,7 +350,7 @@ class StructuredShelfmark(Shelfmark):
             return(f"{self.makeSortableRoot()}.{self.makeSortablePart()}")
 class ShelfmarkList():
     def __init__(self, content = []):
-        self.content = []
+        self.content = []   
         self.volumeDict = {}
         for sm in content:
             self.addSM(sm)
@@ -401,6 +401,7 @@ class Volume():
     def makePartStr(self):
         self.parts = sorted(self.parts, key=lambda p:StructuredShelfmark.makeSortablePart(None, p))
         self.partStr = ", ".join(self.parts)
+        return(self.partStr)
     def makeCompStr(self):
         self.parts = sorted(self.parts, key=lambda p:StructuredShelfmark.makeSortablePart(None, p))
         if len(self.parts) < 3:
@@ -426,7 +427,7 @@ class Volume():
         compStr = ", ".join(compParts)
         compStr = compStr.replace(", -, ", "-")
         self.compStr = compStr
-        return(True)
+        return(self.compStr)
     def __str__(self):
         ret = self.root
         if self.parts:

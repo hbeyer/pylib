@@ -115,7 +115,7 @@ def normalize_year(text):
     try:
         return(match.group(0))
     except:
-        return(None)
+        return("0")
 
 def abbr_title(title):
     title = title.replace(" || ", " ")
@@ -262,3 +262,11 @@ def get_faculty_by_subject(text):
 		return(conc[text] + " Fakultät")
 	except:
 		return("Offen")
+
+def normalize_place(place):
+    place = place.replace("  ", " ")
+    conc = { "Heßberg" : "Heßberg (bei Hildburghausen)", "Preetz, Holstein" : "Preetz", "Norden, Ostfriesland" : "Norden (Ostfriesland)" }
+    try:
+        return(conc[place])
+    except:
+        return(place)

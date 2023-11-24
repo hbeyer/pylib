@@ -63,8 +63,11 @@ class Table:
         try:
             file = open(path + ".csv", "r", encoding = self.encoding)
         except:
-            print("Keine Datei unter " + path)
-            return(False)
+            try:
+                file = open(path, "r", encoding = self.encoding)
+            except:
+                print("Keine Datei unter " + path)
+                return(False)
         reader = csv.reader(file, delimiter=";")
         self.content = [list(map(str.strip, row)) for row in reader]
         if self.fields == []:

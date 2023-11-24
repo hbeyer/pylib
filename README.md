@@ -471,7 +471,76 @@ Parsen und Erzeugen römischer Zahlen. Anders als mit dem Modul roman (https://p
 
 ---
 ### Modul shelfmark
-Beschreibung folgt
+Das Modul bietet einen strukturierten Zugriff auf die Signaturen der Herzog August Bibliothek Wolfenbüttel. Signaturen werden der jeweiligen Sammlung zugeordnet und nach Sachgruppe, Format, Nummer, Bandzählung, Stücktitel etc. analysiert. Es können Sortierformen generiert und Sammelbände anhand der Signaturen zusammengeführt werden.
+
+Klasse **Shelfmark**
+
+Properties:
+- collection
+- root
+- bareRoot
+- part
+
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | whole | -- | erzeugt das Objekt, errechnet aus der übergebenen ganzen Signatur collection, root (ohne Stücktitelangabe), bareRoot (ohne Bestandskennzeichnung) und part (Stücktitelangabe) |
+| normalize_wdb | - | Normalisierte Signatur nach dem Schema der WDB, z. B. "yx-52-8f-helmst-4s" für "H: Yx 52.8° Helmst. (4)" | - |
+| \_\_str\_\_ | - | String-Repräsentation der Signatur | -- |
+
+
+Klasse **StructuredShelfmark**
+Abgeleitete Klasse von **Shelfmark**. Bei der Initialisierung erfolgt eine vollständige Analyse der Signatur und Erzeugung einer Sortierform.
+
+Zusätzliche Properties:
+- group
+- form
+- number
+- format
+- volume
+- sortable
+
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | whole | - | Erkennt Bestandteile der Signatur und legt sie in den Propoerties root (s. Shelfmark), bareRoot (s. Shelfmark), collection (s. Shelfmark), part (s. Shelfmark), group (Sachgruppe), form (Angabe über Art der Bindung wie "Mischbd.", sofern vorhanden), number (Zählung wie "678.3"), format (Formatangabe 2°, 4°, 8°, 12° oder FM) und volume (Bandangabe) ab. Die Sortierform wird unter sortable gespeichert. |
+| makeSortable | - | Sortierform. Beispiel: "A: 57.19 Jur. 2° (1)" wird zu "A00.02Jur0.02.0.00057.00019.00000.00000.00000.00000.00000.00000.00000.00000.000100" | -  |
+| \_\_str\_\_ | - | String-Repräsentation der Signatur | -- |	
+
+Codebeispiel:
+```python
+# Erzeugung eines Dictionarys aus Sortierformen und Signaturen, die dann nach den Keys (=Sortierform) sortiert wird.
+shelfmarks = ['H: T 729a.2° Helmst. ', 'M: Ho 298 (4)', 'Lpr. Stolb. 19280 (2) ', 'Xb 4558', 'Textb. 481', 'M: Gn Kapsel 52 (6)', 'M: Li 4611', 'M: Da 602 (12)', 'Xb 10102', 'GE 58-3855', 'M: QuN 1041 (1)', 'M: Cd 4° 84 (7)', 'M: Jb 93', 'M: Be Kapsel 3 (28)', 'M: Gg 141', 'M: Da 593 (4)', 'Xb 2806 (54)', 'M: Mk 292', 'Xb 12° 388', 'M: Gm 4° 1066 (26)', 'A: 738.14 Theol.', 'H: 521 Helmst. Dr. (79)', 'Schulenb. Gb 10', 'H: P 535.2° Helmst. (1)', 'M: QuN 949 (5)', 'Xb 2806 (17)', 'Xb 2806 (43)', 'M: Ro 2° 2', 'Xb 5128', 'A: 260.16 Quod. (12)', 'M: Rh 4° 35', 'M: Lg 1844', 'Xb 12° 359', 'H: Yv 861.8° Helmst.', 'M: Th 903:2 (2)', 'M: QuN 953 (2)', 'H: B 7.4° Helmst. (8)']
+
+struct_smm = { sm.StructuredShelfmark(shelfmark).sortable : shelfmark for shelfmark in shelfmarks }
+
+index = sorted(struct_smm)
+
+for ind in index:
+    print(f"{struct_smm[ind]} - {ind}")
+```
+
+Klasse **ShelfmarkList**
+
+Fasst mehrere Objekte vom Typ StructuredShelfmark in einer Liste zusammen und erlaubt es, die Sammelbände zu bündeln. Diese werden als Volume-Objekte in der Property volumeList abgelegt.	 
+
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | content (optional, Liste mit StructuredShelfmark-Objekten) | - | Erzeugt das Objekt, legt die übergebenen Signaturen in der Property content ab. |
+| addSM | Objekt vom Typ StructuredShelfmark | - | Überprüft die Klassenzugehörigkeit des übergebenen Objekts und legt es unter content ab. |
+| makeVolumes | - | - | Erzeugt anhand der unter content vorhandenen Signaturen Volume-Objekte und legt sie unter VolumeList ab |
+| getByRoot | Signatur (str) ohne Stücktitelangabe, z. B. "57.19 Jur. 2°" | Volume-Objekt mit den zugehörigen Signaturen, None falls nicht vorhanden | - |
+
+Klasse **Volume**
+
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | bareRoot (str, Signatur ohne Stücktitelangabe), sortable (str, Sortierform für die Wurzelsignatur), parts (list, Stücktitelangaben der enthaltenen Einzelsignaturen, z. B. ["1", "2", "3"]) | - | Erzeugnung des Objekts mit den Properties bareRoot, sortable, parts |
+| makePartStr | - | Sortierte und durch ", " getrennte Liste der Stücktitelangaben | Abspeichern unter partStr, Sortierung von parts |
+| makeCompStr | -- | Sortierte, durch Komma getrennte und mit "-" zusammengefasste Liste der Stücktitelangaben | Ablage des Ergebnisses unter self.compStr, Sortierung von parts |
+| \_\_str\_\_ | - | String-Repräsentation des Bandes | - |	
 
 ---
 ### Modul sru
@@ -596,8 +665,3 @@ Reader zum Auslesen von Downloads aus einer unAPI
 ---
 ### Modul xmlserializer
 Beschreibung folgt
-
-
-> Written with [StackEdit](https://stackedit.io/).
-
-

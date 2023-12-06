@@ -40,6 +40,24 @@ def encode_name(name):
     for a, b in repl.items():
         name = name.replace(a, b)
     return(name)
+    
+def encode_prof_id(name):
+    repl = { 
+        " " : "_",
+        "ä" : "ae",
+        "ö" : "oe",
+        "ü" : "ue",
+        "'" : "",
+        "ß" : "ss",
+        " " : "",
+        "(" : "",
+        ")" : "",
+        "ë" : ""
+        }
+    #name = name.lower()
+    for a, b in repl.items():
+        name = name.replace(a, b)
+    return(name)
 
 def normalize_relation(role):
     repl = {

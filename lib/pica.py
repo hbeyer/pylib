@@ -998,7 +998,7 @@ def get_number(page_string, mult=1):
     extract = re.findall(r"\d+", clean)
     for num in extract:
         res += int(num)
-    extract = re.findall(r"([ivxdclm]+) ", clean.lower())
+    extract = re.findall(r"^([ivxdclm]+)$", clean.lower())
     for num in extract:
         arab = rn.to_arabic(num)
         if arab == None:

@@ -51,7 +51,9 @@ class Graph:
             for count, command in enumerate(commands):  
                 session.execute_write(run_cypher, command)
                 #logging.info(f"Ausgeführt: {command}")
-                if count > 300000:
+                limit = 300000
+                if count > limit:
+                    logging.error(f"Das Limit von {limit} Befehlen wurde erreicht")
                     break
         driver.close()
     def save_cypher(self, file_name = None):
@@ -119,7 +121,7 @@ class GraphGND(Graph):
         return(node)
     def import_node(self, node):
         if isinstance(node, Node) != True:
-            print(f"Kein Node übergeben: {str(node)}")
+            logging.error(f"Kein Node übergeben: {str(node)}")
             return(False)
         if str(node.id) in self.ids:
             return(False)

@@ -73,7 +73,11 @@ class Shelfmark:
             try:
                 self.part = extract.group(2)                
             except:
-                pass
+                extract2 = re.search(r"(.+)\s\(([0-9]+[/-][0-9]+)\)$", self.whole)
+                try:
+                    self.part = extract2.group(2)
+                except:
+                    pass
             try:
                 self.root = extract.group(1)
             except:
@@ -206,9 +210,9 @@ class Shelfmark:
             except:
                 return(None)
         elif self.collection == "NE":
-            extract = re.search(r"[WX][a-z]( 2°|4°|8°|12°)? ([0-9\.]+)", self.whole)
+            extract = re.search(r"[WX][a-z]( (2°|4°|8°|12°))? ([0-9\.]+)", self.whole)
             try:
-                self.number = extract.group(2)
+                self.number = extract.group(3)
             except:
                 if "FM" in self.whole:
                     extract = re.search(r"FM (\d+)", self.whole)

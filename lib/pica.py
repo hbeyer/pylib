@@ -247,6 +247,11 @@ class Record:
                     cp.digi = digi
                 except:
                     logging.info(str(digi))
+            # Auslesen der Anmerkungen in 4802
+            if tag == "220B":
+                comm = get_subfield(fi, "a")
+                if comm != None:
+                    cp.comm = comm
             # Auslesen der Provenienzdaten
             if tag == "244Z":
                 provstr = get_subfield(fi, "a")
@@ -883,6 +888,7 @@ class Copy:
         self.iln = ""
         self.epn = ""
         self.sm = ""
+        self.comm = ""
         self.prov = []
         self.prov_struct = []
         self.prov_norm = []

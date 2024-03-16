@@ -514,6 +514,7 @@ class Isil:
         "40082" : "DE-F42",
         "4369" : "DE-4369",
         "4620" : "#VD17R",
+        "4680" : "DE-Zw1",
         "5002" : "DE-MUS-621612",
         "5007" : "AT-HBTL",
         "5051" : "DE-B791",
@@ -549,6 +550,7 @@ class Isil:
         "2018" : "DE-31", # BLB Karlsruhe
         "2051" : "DE-B791", # BVG Leipzig
         "2396" : "DE-Zw1", # LBZ Rh.-Pf. Bibliotheca Bipontina
+        "4680" : "DE-Zw1", # LBZ Rh.-Pf. Bibliotheca Bipontina
         "2527" : "DE-125", # RSB Zwickau
         "2541" : "DE-2863", # KB Pegau
         "2556" : "DE-3086", # KB Annaberg-Buchholz

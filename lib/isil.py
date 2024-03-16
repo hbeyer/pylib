@@ -272,6 +272,13 @@ class Isil:
 			"long" : "12.090811", 
 			"lat" : "49.018406"  
 			},
+        "DE-188" : { 
+			"bib" : "Freie Universität Berlin, Universitätsbibliothek", 
+			"place" : "Berlin", 
+			"gettyPlace" : "1004346", 
+			"long" : "13.277468", 
+			"lat" : "52.448127"  
+			},        
         "DE-211" : { 
 			"bib" : "Erzbischöfliche Akademische Bibliothek Paderborn", 
 			"place" : "Paderborn", 
@@ -419,6 +426,13 @@ class Isil:
 			"long" : "", 
 			"lat" : ""  
 			},
+        "#VD17Polen" : { 
+			"bib" : "Polnische Bibliotheken", 
+			"place" : "Polen", 
+			"gettyPlace" : "7006366", 
+			"long" : "20.0000", 
+			"lat" : "52.0000"  
+			},        
         "#KBROEHR" : { 
 			"bib" : "Kirchenbibliothek Röhrsdorf", 
 			"place" : "Röhrsdorf", 
@@ -476,6 +490,7 @@ class Isil:
         "0547" : "DE-547",
         "0547/0039" : "DE-537",
         "0824" : "DE-824",
+        "5122" : "#VD17Polen",
         "1999" : "#VD17R",
         "2028" : "DE-32",
         "20301" : "DE-14",
@@ -493,6 +508,8 @@ class Isil:
         "40005" : "DE-17",
         "40006" : "DE-19",
         "40046" : "DE-155",
+        "40047" : "DE-188",
+        "40059" : "DE-37",
         "40074" : "DE-824",
         "40082" : "DE-F42",
         "4369" : "DE-4369",
@@ -523,6 +540,7 @@ class Isil:
         "278" : "DE-Ha32", # Marienbibliothek Halle
         "620" : "#VD17R",
         "755" : "#THURKB", # Thüringische Kirchenbibliotheken
+        "1122" : "#VD17POLEN",        
         "2001" : "DE-21", # UB Tübingen
         "2006" : "DE-14", # UB Dresden
         "2008" : "DE-24", # WLB Stuttgart
@@ -541,6 +559,7 @@ class Isil:
         "4112" : "DE-29", # UB Erlangen-Nürnberg
         "4126" : "DE-384", # UB Augsburg
         "4299" : "DE-75", # STB Nürnberg
+        "4103" : "DE-188", # UB der FU Berlin
         "4302" : "DE-107", # Pf. LB Speyer
         "4346" : "DE-70", # LB Coburg
         "4385" : "DE-F42", # St. Georgen

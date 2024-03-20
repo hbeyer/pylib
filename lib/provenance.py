@@ -43,8 +43,27 @@ class Provenance:
         ret = f"Provenienz: {self.name} / {' / '.join(self.descriptors)}"
         if self.date != "":
             ret = ret + " / Datum " + self.date
-        if self.position != "":
-            ret = ret + ", Position: " + str(self.position)
+        #if self.position != "":
+        #    ret = ret + ", Position: " + str(self.position)
+        return(ret)
+
+class ProvenanceBibLevel(Provenance):
+    def __init__(self):
+        super().__init__()
+        self.gnd = None
+        self.ppn = None
+        self.isil = ""
+        self.epn = ""
+        self.sm = ""
+        self.comment = ""
+    def __str__(self):
+        ret = f"Provenienz: {self.name}"
+        if self.gnd != None:
+            ret = ret + " " + self.gnd
+        if self.descriptors != []:
+            ret = ret + " / ".join(self.descriptors)
+        if self.date != "":
+            ret = ret + " / Datum " + self.date
         return(ret)
         
 class NormLinkLocal:

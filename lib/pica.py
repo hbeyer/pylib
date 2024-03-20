@@ -21,6 +21,7 @@ class Record:
         self.copies = []
         self.places = []
         self.publishers = []
+        self.provenances = []
         self.vdn = ""
         self.get_data()
         try:
@@ -165,6 +166,7 @@ class Record:
         self.load_copies()
         self.load_places()
         self.load_publishers()
+        self.load_bib_provenances()
         self.get_vd()        
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", Jahr: " + self.date
@@ -240,6 +242,13 @@ class Record:
                     cp.sm = sm
                 elif sm == None:
                     pass
+            # Auslesen des Abrufzeichens in der 8600
+            if tag == "209O" and cp.digi == None:
+                abl = get_subfield(fi, "a")
+                try:
+                    cp.abl = abl
+                except:
+                    logging.info(str(f"Problem mit Abrufzeichen bei {self.ppn}"))
             # Auslesen eines eventuell vorhandenen Digitalisats
             if tag == "209R" and cp.digi == None:
                 digi = get_subfield(fi, "u")
@@ -247,11 +256,11 @@ class Record:
                     cp.digi = digi
                 except:
                     logging.info(str(digi))
-            # Auslesen der Anmerkungen in 4802
-            if tag == "220B":
-                comm = get_subfield(fi, "a")
-                if comm != None:
-                    cp.comm = comm
+            # Auslesen der Anmerkungen in 4801
+            if tag == "237A":
+                comm = get_subfield_list(fi, "a")
+                if comm != []:
+                    cp.comm = ("; ").join(comm)
             # Auslesen der Provenienzdaten
             if tag == "244Z":
                 provstr = get_subfield(fi, "a")
@@ -369,6 +378,50 @@ class Record:
             pub.role = "publisher"
             pub.import_structdata(pubRow[occ])
             self.publishers.append(pub)
+    def load_bib_provenances(self):
+        try:
+            prov_data = self.data["092B"]
+        except:
+            return(None)
+        for key, row in prov_data.items():
+            provenance = prv.ProvenanceBibLevel()
+            try:
+                provenance.isil = row["5"].pop(0)
+            except:
+                logging.error(f"Provenienz ohne ISIL in {self.ppn}")
+            try:
+                provenance.epn = row["2"].pop(0)
+            except:
+                logging.error(f"Provenienz ohne EPN in {self.ppn}")
+            try:
+                provenance.sm = row["3"].pop(0)
+            except:
+                logging.error(f"Provenienz ohne Signatur in {self.ppn}")
+            try:
+                provenance.name = row["a"].pop(0)
+            except:
+                pass                
+            try:
+                provenance.date = row["c"].pop(0)
+            except:
+                pass
+            try:
+                provenance.descriptors = row["b"]
+            except:
+                pass
+            try:
+                provenance.ppn = row["9"].pop(0)
+            except:
+                pass
+            try:
+                provenance.gnd = row["7"].pop(0)
+            except:
+                pass               
+            try:
+                provenance.comment = row["k"].pop(0)
+            except:
+                pass    
+            self.provenances.append(provenance)
     def get_vd(self):
         try:
             self.vdn = self.data["006V"]["01"]["0"].pop(0)
@@ -894,6 +947,7 @@ class Copy:
         self.prov_norm = []
         self.prov_dataset = None
         self.digi = None
+        self.abl = ""
     def __str__(self):
         ret = "Signatur: " + self.sm
         if self.isil not in ["", None]:

@@ -15,12 +15,15 @@ class Cache:
             self.folder = folder
         try:
             os.mkdir(self.folder)
-        except OSError as error:
-            logging.info(f"Ordner {self.folder} bereits vorhanden")
+        except:
+            pass
     def get_content(self, url, id):
         path = self.folder + "/" + id
         if op.exists(path) != True:
-            ur.urlretrieve(url, path)
+            try:
+                ur.urlretrieve(url, path)
+            except:
+                return(None)
         file = open(path, "r", encoding="utf-8")
         content = file.read()
         return(content)
@@ -91,3 +94,8 @@ class CacheMarcHBZ(Cache):
         file = open(path, "r", encoding="utf-8")
         content = file.read()
         return(content)
+
+class CacheGNDLobid(Cache):
+    folder = "cache/gnd-lobid"
+    def __init__(self):
+        super().__init__()

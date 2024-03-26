@@ -92,6 +92,12 @@ class Request_HPB(Request_SRU):
         self.base = 'http://sru.k10plus.de/hpb'
         self.fileName = "SRU_HPB"
         
+class Request_OGND(Request_SRU):
+    def __init__(self):
+        super().__init__()
+        self.base = 'http://sru.k10plus.de/ognd'
+        self.fileName = "SRU_OGND"
+
 def chunk(iterable, max_size):
     """
     This function splits an iterable into chunks of the specified maximum size.

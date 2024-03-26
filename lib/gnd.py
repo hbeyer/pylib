@@ -136,6 +136,8 @@ class Person:
             self.relations.append(rel)
         for rel in pers_data["relatedPerson"]:
             self.relations.append(rel)        
+
+
         
 def replace_diacr(string):
     return(string.replace("ö", "ö").replace("ò", "ò").replace("̈a", "ä").replace("à", "à")).replace("̈u", "ü")

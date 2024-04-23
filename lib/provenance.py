@@ -23,6 +23,7 @@ class Provenance:
                 self.name = piece.replace("Provenienz:", "").strip()
             elif "Datum" in piece:
                 self.date = piece.replace("Datum", "").strip()
+                # Kaufdatum, Lesedatum und keine Angabe berücksichtigen
             else:
                 self.descriptors.append(piece)
         self.valid = self.validate()
@@ -38,6 +39,7 @@ class Provenance:
         if test_date == None and self.date != "":
             self.errors.append(f"Fehlerhaftes Datum: {self.date}")
             return(False)
+        # Prüfen, ob die Deskriptoren im Thesaurus stehen. DEskriptor Ort (unzulässig) rausfiltern
         return(True)
     def __str__(self):
         ret = f"Provenienz: {self.name} / {' / '.join(self.descriptors)}"

@@ -388,15 +388,18 @@ class Record:
             try:
                 provenance.isil = row["5"].pop(0)
             except:
-                logging.error(f"Provenienz ohne ISIL in {self.ppn}")
+                pass
+                #logging.error(f"Provenienz ohne ISIL in {self.ppn}")
             try:
                 provenance.epn = row["2"].pop(0)
             except:
-                logging.error(f"Provenienz ohne EPN in {self.ppn}")
+                pass
+                #logging.error(f"Provenienz ohne EPN in {self.ppn}")
             try:
                 provenance.sm = row["3"].pop(0)
             except:
-                logging.error(f"Provenienz ohne Signatur in {self.ppn}")
+                pass
+                #logging.error(f"Provenienz ohne Signatur in {self.ppn}")
             try:
                 provenance.name = row["a"].pop(0)
             except:

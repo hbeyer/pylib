@@ -92,7 +92,7 @@ class Evaluation:
 
 class EvaluationSDD(Evaluation):
     def __init__(self, path):
-        #super().__init__()
+        super().__init__()
         if path != None:
             self.path = path
         # Liste zu ergänzen

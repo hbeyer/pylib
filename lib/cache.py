@@ -43,7 +43,24 @@ class CacheGND(Cache):
             return(None)
         else:
             return(response)
-            
+"""
+class CachePICA(Cache):
+    folder = "cache/pica"
+    def __init__(self):
+        super().__init__()
+    def get_xml(self, ppn):
+        url = f""
+        try:
+            response = self.get_content(url, id)
+        except:
+            logging.error(f"Kein Download von {url} möglich")
+            #logging.info(f"Programm pausiert für 5 Minuten")
+            #sleep(300)
+            return(None)
+        else:
+            return(response)
+"""            
+
 class CacheGESA(Cache):
     folder = "cache/gesa"
     def __init__(self):

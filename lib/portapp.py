@@ -9,6 +9,7 @@ import time
 from lib import gnd
 from lib import sru
 from lib import xmlreader as xr
+from lib import xmlserializer as xs
 from lib import pica                   
 class ArtCollection:
     def __init__(self, db):
@@ -31,37 +32,13 @@ class ArtCollection:
     def loadBySQL(self, sqlArtwork):
         cursor = self.db.cursor(dictionary=True, buffered=True)
         cursorPers = self.db.cursor(dictionary=True, buffered=True)
-        cursorPersAttr = self.db.cursor(dictionary=True, buffered=True)
-        cursorPersAttrSeeAlso = self.db.cursor(dictionary=True, buffered=True)
-        cursorAttr = self.db.cursor(dictionary=True, buffered=True)
-        cursorAttrRel = self.db.cursor(dictionary=True, buffered=True)
         cursor.execute(sqlArtwork)
         for row in cursor:
             artwork = Artwork()
             artwork.importRow(row)
-            cursorPers.execute("SELECT * FROM artwork_person RIGHT JOIN person ON artwork_person.person = person.id WHERE artwork_person.artwork = " + str(artwork.id))
+            cursorPers.execute("SELECT * FROM person_representation RIGHT JOIN person ON person_representation.person_id = person.id WHERE person_representation.artwork_id = " + str(artwork.id))
             for rowPers in cursorPers:
-                cursorPersAttr.execute("SELECT * FROM person_attribute WHERE person_attribute.person = " + str(rowPers["id"]))
-                attributes = []
-                for rowAttributes in cursorPersAttr:
-                    attribute = Attribute(rowAttributes["value"], rowAttributes["type"])
-                    sql = "SELECT * FROM person_attribute_seealso WHERE person_attribute_seealso.value = %s"
-                    val = (rowAttributes["value"], )
-                    cursorPersAttrSeeAlso.execute(sql, val)
-                    for seeAlso in cursorPersAttrSeeAlso:
-                        seeAlsoValues = extractSeeAlso(seeAlso["seealso"])
-                        attribute.seealso.extend(seeAlsoValues)
-                    attributes.append(attribute)
-                artwork.importPerson(rowPers, attributes)
-            cursorAttr.execute("SELECT * FROM artwork_attribute WHERE artwork_attribute.artwork = " + str(artwork.id))
-            for rowAttr in cursorAttr:
-                attribute = Attribute(rowAttr["value"], rowAttr["type"])
-                sql = "SELECT * FROM artwork_attribute_related WHERE artwork_attribute_related.value = %s"
-                val = (rowAttr["value"], )
-                cursorAttrRel.execute(sql, val)
-                for rowAttrRel in cursorAttrRel:
-                    attribute.related.append(rowAttrRel["related"])
-                artwork.attributes.append(attribute)
+                artwork.importPerson(rowPers)
             self.addWork(artwork)
         return(1)
     def load(self, limit=100, offset=1):
@@ -251,6 +228,7 @@ class Artwork:
         self.modtime = None
         self.personsRepr = []
         self.attributes = []
+        self.attribute_string = ""
         self.likeA = ""
         self.yearNormalized = ""
         self.sourceYear = ""
@@ -278,7 +256,6 @@ class Artwork:
     def importRow(self, row):
         self.id = row["id"]
         self.anumber = row["anumber"]
-        #self.anumber = row["anumber"][2:]
         self.invNo = row["inventorynumber"]
         self.path_wdb = row["path_wdb"]
         self.sheetsize = removeLinebreaks(row["sheetsize"])
@@ -293,8 +270,10 @@ class Artwork:
         self.transcription = extractQuo(self.description)
         self.descriptionClean = cleanDescription(self.description)
         self.catalogs = removeLinebreaks(row["catalogs"], ", ")
-        self.condition = row["condition"]
+        self.condition = row["condition_artwork"]
         self.source = removeLinebreaks(row["source"])
+        self.attribute_string = row["attributes"]
+        self.importAttributesFromString()
         self.shelfmarkSource = extractShelfmark(self.source)
         self.instime = row["instime"]
         self.modtime = row["modtime"]
@@ -327,7 +306,7 @@ class Artwork:
                 setattr(publisherObj, x, publisher[x])
             self.publishers.append(publisherObj)
         return(1)        
-    def importPerson(self, row, attributes):
+    def importPerson(self, row):
         personObj = Person(row)
         personObj.id = row["id"]
         personObj.gnd = row["gndid"]
@@ -340,6 +319,8 @@ class Artwork:
         personObj.literature = removeLinebreaks(row["literature"])
         personObj.instime = row["instime"]
         personObj.modtime = row["instime"]
+        personObj.attribute_string = row["attributes"]
+        personObj.attributes = self.importAttributesFromString()
         bornData = XMLReader.readElement(row["lifetime"], "born")
         try:
             bornData[0]["date"]
@@ -367,9 +348,17 @@ class Artwork:
             pass
         else:
             personObj.placeDeath = diedData[0]["place"]
-        personObj.attributes = attributes
         self.personsRepr.append(personObj)
         return(1)
+    def importAttributesFromString(self):
+        pieces = self.attribute_string.split("|")
+        for piece in pieces:
+            subpieces = piece.split("_")
+            try:
+                attr = Attribute(subpieces[0], subpieces[1])
+            except:
+                attr = Attribute(subpieces[0], "")
+            self.attributes.append(attr)
     def makeAttributeString(self, sep="/"):
         attr = [attr.value for attr in self.attributes]
         return(sep.join(attr))
@@ -485,7 +474,7 @@ class Artwork:
         cit = rec.make_citation()
         self.source = f"Aus: {cit} [HAB: {sm}]"
     def makeTuple(self):       
-        val = (self.anumber, make_sortable(self.anumber), prepare_string(self.invNo), prepare_string(self.path_wdb), self.getArtistsXML(), self.getPublishersXML(), prepare_string(self.sheetsize), prepare_string(self.platesize), prepare_string(self.imagesize), prepare_string(self.technique), prepare_string(self.notes), prepare_string(self.description), prepare_string(self.catalogs), prepare_string(self.condition), prepare_string(self.source), self.epn, int(time.time()), int(time.time()), prepare_string(self.likeA), prepare_string(self.yearNormalized), prepare_string(self.sourceYear), prepare_string(self.keywords_technique), prepare_string(self.descriptionClean), prepare_string(self.transcription), prepare_string(self.portraitType), prepare_string(self.orientation))
+        val = (self.anumber, make_sortable(self.anumber), prepare_string(self.invNo), prepare_string(self.path_wdb), self.getArtistsXML(), self.getPublishersXML(), prepare_string(self.sheetsize), prepare_string(self.platesize), prepare_string(self.imagesize), prepare_string(self.technique), prepare_string(self.notes), prepare_string(self.description), prepare_string(self.catalogs), prepare_string(self.condition), prepare_string(self.source), int(time.time()), int(time.time()), prepare_string(self.likeA), prepare_string(self.yearNormalized), prepare_string(self.sourceYear), prepare_string(self.keywords_technique), prepare_string(self.descriptionClean), prepare_string(self.transcription), prepare_string(self.portraitType), prepare_string(self.orientation), self.attribute_string)
         return(val)
     def insertIntoDB(self, db):
         self.fillDerivatedFields(ArtCollection(db))
@@ -498,9 +487,7 @@ class Artwork:
             logging.error(f"ID {self.anumber} bereits vorhanden")
             return(False)
         cursor = db.cursor()
-        sql = "INSERT INTO `artwork`(`anumber`, `sort`, `inventorynumber`, `path_wdb`, `artists`, `publishers`, `sheetsize`, `platesize`, `imagesize`, `technique`, `notes`, `description`, `catalogs`, `condition`, `source`, `epn`, `instime`, `modtime`, `likeA`, `yearNormalized`, `sourceYear`, `keywords_technique`, `descriptionClean`, `transcription`, `portraitType`, `orientation`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        timestamp = int(time.time())
-        sortable = make_sortable(self.anumber)
+        sql = "INSERT INTO `artwork`(`anumber`, `sort`, `inventorynumber`, `path_wdb`, `artists`, `publishers`, `sheetsize`, `platesize`, `imagesize`, `technique`, `notes`, `description`, `catalogs`, `condition_artwork`, `source`, `instime`, `modtime`, `like_a`, `year_normalized`, `source_year`, `keywords_technique`, `description_clean`, `transcription`, `portrait_type`, `orientation`, `attributes`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         val = self.makeTuple()
         cursor.execute(sql, val)
         db.commit()
@@ -511,34 +498,24 @@ class Artwork:
         id_artwork = cursor.lastrowid
         for pers in self.personsRepr:
             id_person = pers.insertIfNew(db)
-            sql_rel = "INSERT INTO `artwork_person` (`artwork`, `person`) VALUES (%s, %s)"
-            val = (id_artwork, id_person)
+            sql_rel = "INSERT INTO `person_representation`(`artwork_id`, `person_id`, `location`) VALUES (%s, %s, %s)"
+            val = (id_artwork, id_person, '')
             cursor.execute(sql_rel, val)
             db.commit()
-            logging.info(f"{cursor.rowcount} Zeilen in Tabelle artwork_person geschrieben. Letzte ID: {cursor.lastrowid}")
+            logging.info(f"{cursor.rowcount} Zeilen in Tabelle person_representation geschrieben. Letzte ID: {cursor.lastrowid}")
         return(id_artwork)
     def updateInDB(self, db):
         pass
     def deleteFromDB(self, db):
         cursor = db.cursor()
-        cursor.execute(f"DELETE FROM artwork_person WHERE artwork LIKE {self.id}")
+        cursor.execute(f"DELETE FROM person_representation WHERE artwork_id LIKE {self.id}")
         db.commit()
-        logging.info(f"{cursor.rowcount} Zeilen aus Tabelle artwork_person gelöscht")
-        cursor.execute(f"DELETE FROM artwork_attribute WHERE artwork LIKE {self.id}")
-        db.commit()
-        if cursor.rowcount > 0:
-            logging.info(f"{cursor.rowcount} Zeilen aus Tabelle artwork_attribute gelöscht")        
-        for pers in self.personsRepr:
-            cursor.execute(f"SELECT * FROM artwork_person WHERE person LIKE {pers.id}")
-            result = cursor.fetch_all()
-            if len(result) == 0:
-                cursor.execute(f"UPDATE person SET deprecated=1 WHERE id LIKE {pers.id}")
-                db.commit()       
-                logging.info(f"{cursor.rowcount} Personen als deprecated markiert")
+        logging.info(f"{cursor.rowcount} Zeilen aus Tabelle person_representation gelöscht")
         cursor.execute(f"DELETE FROM artwork WHERE id LIKE {self.id}")
         db.commit()
         logging.info(f"{cursor.rowcount} Zeilen aus Tabelle artwork gelöscht")
         return(True)
+
 class Person:
     def __init__(self, name = ""):
         self.flatFields = ['id', 'gnd', 'name', 'aliases', 'nationality', 'yearStart', 'yearEnd', 'biography', 'literature', 'instime', 'modtime', 'dateBirth', 'dateDeath', 'placeBirth', 'placeDeath']
@@ -561,6 +538,7 @@ class Person:
         self.dateDeath = ""
         self.placeDeath = ""
         self.attributes = []
+        self.attribute_string = ""
     def __str__(self):
         if self.name == "":
             self.name = "Person"
@@ -580,11 +558,11 @@ class Person:
             raise StopIteration
         else:            
             return({field : getattr(self, field)})
-    def harvestFromGND(self):
+    def harvestFromGND(self, cache):
         gnd_obj = gnd.ID(self.gnd)
         if gnd_obj.valid != True:
             return(False)
-        data = gnd_obj.get_info()
+        data = gnd_obj.get_info(cache)
         if self.name == "":
             try:
                 self.name = data["preferredName"]
@@ -594,16 +572,21 @@ class Person:
             self.dateBirth = data["dateOfBirth"]
         except:
             pass
-        self.yearEnd = extractYear(self.dateBirth)
+        self.yearStart = extractYear(self.dateBirth)
         try:
             self.dateDeath = data["dateOfDeath"]
         except:
             pass            
-        self.yearStart = extractYear(self.dateDeath)
+        self.yearEnd = extractYear(self.dateDeath)        
         try:
             self.biography = data["biographicalOrHistoricalInformation"]
         except:
             pass
+        if self.biography == "":
+            try:
+                self.biography = data["professions"]
+            except:
+                pass
         try:
             self.placeBirth = data["placeOfBirth"]
         except:
@@ -616,6 +599,46 @@ class Person:
             self.aliases = data["variantNames"]
         except:
             pass
+        if self.lifetime == "":
+            self.lifetime = self.make_lifetime()
+        return(True)
+    def make_lifetime(self):
+        if self.dateBirth == "" and self.placeBirth == "" and self.dateDeath == "" and self.placeDeath == "":
+            return("")
+        ser = xs.Serializer("_lifetime", "lifetime")
+        if self.dateBirth != "" or self.placeBirth != "":
+            node_born = xs.make_node("born")
+            if self.dateBirth != "":
+                node_born_date = xs.make_node("date", self.dateBirth)
+                node_born_type = xs.make_node("type", "eq")
+                xs.add_subnode(node_born, node_born_date)
+                xs.add_subnode(node_born, node_born_type)
+            if self.placeBirth != "":
+                node_born_place = xs.make_node("place", self.placeBirth)
+                xs.add_subnode(node_born, node_born_place)
+            ser.add_node(node_born)
+        if self.dateDeath != "" or self.placeDeath != "":
+            node_died = xs.make_node("died")
+            if self.dateDeath != "":
+                node_died_date = xs.make_node("date", self.dateDeath)
+                node_died_type = xs.make_node("type", "eq")
+                xs.add_subnode(node_died, node_died_date)
+                xs.add_subnode(node_died, node_died_type)
+            if self.placeDeath != "":
+                node_died_place = xs.make_node("place", self.placeDeath)
+                xs.add_subnode(node_died, node_died_place)
+            ser.add_node(node_died)
+        xml = ser.to_string()
+        return(xml)
+    def importAttributesFromString(self):
+        pieces = self.attribute_string.split("|")
+        for piece in pieces:
+            subpieces = piece.split("_")
+            try:
+                attr = Attribute(subpieces[0], subpieces[1])
+            except:
+                attr = Attribute(subpieces[0], "")
+            self.attributes.append(attr)
     def makeAttributeString(self, sep="/"):
         attr = [attr.value for attr in self.attributes]
         return(sep.join(attr))
@@ -630,13 +653,12 @@ class Person:
         if self.gnd != None:
             cursor.execute(f"SELECT id FROM person WHERE gndid LIKE \"{self.gnd}\"")
             result = cursor.fetchone()
-            try:
+            if result != None:
                 return(result[0])
-            except:
-                return(self.insertIntoDB(db))
+        return(self.insertIntoDB(db))
     def insertIntoDB(self, db):
-        sql = "INSERT INTO `person`(`gndid`, `name`, `sort`, `aliases`, `nationality`, `startyear`, `endyear`, `lifetime`, `biography`, `literature`, `deprecated`, `notes`, `instime`, `modtime`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val = (self.gnd, prepare_string(self.name), prepare_string(self.name), prepare_string(self.aliases), prepare_string(self.nationality), self.yearStart, self.yearEnd, "", prepare_string(self.biography), prepare_string(self.literature), self.deprecated, prepare_string(self.notes), int(time.time()), int(time.time()))
+        sql = "INSERT INTO `person`(`gndid`, `name`, `sort`, `aliases`, `nationality`, `startyear`, `endyear`, `lifetime`, `biography`, `literature`, `deprecated`, `notes`, `instime`, `modtime`, `attributes`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        val = (prepare_string(self.gnd), prepare_string(self.name), prepare_string(self.name), prepare_string(self.aliases), prepare_string(self.nationality), self.yearStart, self.yearEnd, self.lifetime, prepare_string(self.biography), prepare_string(self.literature), self.deprecated, prepare_string(self.notes), int(time.time()), int(time.time()), self.attribute_string)
         cursor = db.cursor()
         cursor.execute(sql, val)
         db.commit()

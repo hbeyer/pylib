@@ -24,6 +24,9 @@ class Serializer():
                         xml_declaration=True, \
                         default_namespace=None, \
                         method="xml")
+    def to_string(self):
+        xml = et.tostring(self.root, encoding='utf8', xml_declaration=False)
+        return(xml)
 def add_subnode(node, subnode):
     node.append(subnode)
     return(node)

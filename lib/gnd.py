@@ -40,6 +40,10 @@ class ID:
         except:
             #logging.info(f"Kein variantName gefunden")
             pass
+        try:
+            persData["professions"] = "; ".join([entry["label"] for entry in data["professionOrOccupation"]])
+        except:
+            pass
         propp2 = ["placeOfBirth", "placeOfDeath"]
         for p in propp2:
             try:

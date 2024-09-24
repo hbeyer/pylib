@@ -2,8 +2,107 @@
 # -*- coding: utf-8 -*-
 
 from difflib import SequenceMatcher
+from lib import tpro
 import logging
 import re
+
+# Institutionen mit Schrägstrich, die in Provenienzketten der HAB vorhanden sind
+inst_list = [
+    "Technische Universität Dresden / Bibliothek", 
+    "Hessen / Offenbach Archival Depot", 
+    "Ordo Fratrum Minorum Capuccinorum / Zentralbibliothek", 
+    "Braunschweig <Staat> / Obergericht", 
+    "Franckesche Stiftungen zu Halle / Buchhandlung", 
+    "Universitatea din București / Biblioteca", 
+    "Paris <17. Arrondissement> / Bibliothèque municipale", 
+    "Sankt Maria in der Au / Kloster", 
+    "Stadtarchiv <Meißen> / Bücherei", 
+    "Minoriták <Szeged> / Könyvtár", 
+    "Uniwersytet Imienia Adama Mickiewicza <Poznań> / Biblioteka", 
+    "St. Joseph's College <Mill Hill> / Library", 
+    "Rostocksche Academie / Bibliothek", 
+    "Ericsbergs slott / Bibliotek", 
+    "Szegedi Tudomanyegyetem / Bibliothek", 
+    "Mecklenburg-Schwerin / Landgericht Rostock", 
+    "Staat Braunschweig / Bau-Direction", 
+    "Societatis Jesu / Domus <Wien>", 
+    "Karmelitenkloster <Frankfurt / Main>", 
+    "Magyar Nemzeti Múzeum <Budapest> / Bibliothek", 
+    "M. Kir. Erzsebet Tud. Egyetem <Pecs> / Bibliothek", 
+    "Ordo Fratrum Minorum / Schlesische Franziskanerprovinz", 
+    "Braunschweig <Staat> / Kreisgericht <Braunschweig>", 
+    "Societas Jesu / Domus <Wien>", 
+    "Baltic University / Bibliothek", 
+    "Steyler Missionare / Bibliothek", 
+    "Gymnasium <Greifswald> / Lehrerbibliothek", 
+    "Ackermann, J. C. D. / Leihbibliothek", 
+    "Regierungsbezirk Posen / Bibliothek", 
+    "Karolinska Institutet <Stockholm> / Hagströmer Biblioteket", 
+    "Franckesche Stiftungen zu Halle / Waisenhaus", 
+    "Braunschweig <Staat> / Oberstaatsanwaltschaft", 
+    "Ludwig-Maximilians-Universität München / Universitätsbibliothek", 
+    "École Libre Saint-Joseph <Lille> / Bibliothèque", 
+    "Fürstenschule St. Afra <Meißen> / Bibliothek", 
+    "Gesellschaft für Geschichte in Altenburg / Bibliothek", 
+    "Universität <Göttingen> / Seminar für Deutsche Philologie", 
+    "Communauté Israélite <Strasbourg> / Bibliothèque", 
+    "Braunschweig <Staat> / Amtsgericht <Blankenburg>", 
+    "University <Keele> / Library", 
+    "Ordo Fratrum Minorum Conventualium <Troppau> / Bibliothek", 
+    "Ostdeutsches Heimatmuseum Nienburg <Weser> / Bibliothek Klaus Prassler", 
+    "Kapuzinerkloster <Freiburg, Breisgau> / Missionsbibliothek", 
+    "Société Géologique de France / Bibliothèque", 
+    "Biblioteka Publiczna <Warschau> / Czytelnia naukowa", 
+    "Ordo Fratrum Minorum / Sächsische Franziskanerprovinz vom Heiligen Kreuze", 
+    "Technische Universität Dresden / Fakultät für Berufspädagogik und Kulturwissenschaften", 
+    "Societas Jesu / English Province", 
+    "Österreichische Nationalbibliothek / Fideikommißbibliothek", 
+    "Magyar Tudományos Akadémia <Budapest> / Könyvtár", 
+    "Deutsches Reich / Reichsgericht", 
+    "Universität <Helmstedt> / Medizinische Fakultät", 
+    "Technische Hochschule <Danzig> / Staatswissenschaftliches Seminar", 
+    "New College London / General Library", 
+    "Preußen / Oberbergamt <Halle, Saale>", 
+    "Uniwersytet Wrocławski / Biblioteka", 
+    "Magyar Nemzeti Múzeum <Budapest> / Könyvtár", 
+    "Uniwersytet Mikołaja Kopernika w Toruniu / Biblioteka Uniwersytecka", 
+    "Politechnika Gdańska / Biblioteka Główna", 
+    "Ordo Fratrum Minorum Capuccinorum / Bayerische Provinz", 
+    "Gesellschaft für Anthropologie und Urgeschichte der Oberlausitz / Zweigverein Görlitz", 
+    "Universität Helmstedt / Medizinische Fakultät", 
+    "Universitatea din București / Facultatea de Teologie Ortodoxă", 
+    "Paris <12. Arrondissement> / Bibliothèque municipale", 
+    "Vrije Universiteit <Amsterdam> / Bibliotheek", 
+    "Redemptoristen / Niederdeutsche Provinz", 
+    "Katholische Kirche <Erzdiözese Paris> / Archiv", 
+    "Paris <19. Arrondissement> / Bibliothèque municipale", 
+    "Academy Hoxton / Library", 
+    "Propstei <Münsterdorf> / Kirche Itzehoe", 
+    "Rijksuniversiteit <Leiden> / Bibliotheek", 
+    "Staatliche Museen zu Berlin (Berlin, Ost) / Zentralbibliothek", 
+    "Universität <Göttingen> / Theaterwissenschaftliches Seminar", 
+    "Braunschweig <Staat> / Handelsgericht", 
+    "Heythrop College <London> / Library", 
+    "Reemtsma-Cigarettenfabriken <Hamburg> / Tabakmuseum", 
+    "Braunschweig <Staat> / Kreisgericht <Blankenburg>", 
+    "Universität <Rostock> / Alttestamentliches Seminar", 
+    "Paris <2. Arrondissement> / Bibliothèque municipale", 
+    "Congregatio Sanctissimi Redemptoris / Österreichische Provinz", 
+    "Industrie- und Handelskammer zu Leipzig / Bücherei", 
+    "Congregatio Sanctissimi Redemptoris / Wiener Provinz <Mautern, Steiermark>", 
+    "Komitat Somogy / Könyvtár", 
+    "Braunschweig-Wolfenbüttel / Fürstliche Kanzlei", 
+    "Königliche Technische Hochschule Danzig / Bücherei", 
+    "Königliche Museen  zu Berlin / Bibliothek", 
+    "Braunschweig <Staat> / Amtsgericht <Thedinghausen>", 
+    "Braunschweig / Rat", 
+    "Landesstrafanstalt <Wolfenbüttel> / Buchbinderei", 
+    "Országos Könyvtári Központ <Budapešt> / Raktar <Szeged >", 
+    "Kapuziner / Province Belge", 
+    "Franziskanerkonvent / <Wien>", 
+    "Braunschweig <Staat> / Kreisgericht <Holzminden>", 
+    "Paris <6. Arrondissement> / Bibliothèque municipale"
+]
 
 class Provenance:
     def __init__(self, chain = None, position = None):
@@ -12,19 +111,34 @@ class Provenance:
             self.chain = chain
         self.errors = []
         self.name = ""
+        self.testInst = ""
         self.descriptors = []
         self.date = ""
         self.position = ""
         if position != None:
             self.position = int(position)
+        # Das Folgende behebt ein Spezialproblem (Unterinstitutionen mit Schrägstrich) für den Datenbestand der HAB
+        for inst in inst_list:
+            if inst in self.chain:
+                self.name = inst
+                self.chain = self.chain.replace(inst, "").strip()
+                #logging.info(f"Institution erkannt: {inst}")
+                break
+        # Ende Problembehebung
         pieces = map(str.strip, self.chain.split("/"))
+        timedescrr = ["Datum", "Kaufdatum", "Lesedatum"]
         for piece in pieces:
+            time = False
             if "Provenienz:" in piece:
                 self.name = piece.replace("Provenienz:", "").strip()
-            elif "Datum" in piece:
-                self.date = piece.replace("Datum", "").strip()
-                # Kaufdatum, Lesedatum und keine Angabe berücksichtigen
-            else:
+                continue
+            for timedescr in timedescrr:
+                if timedescr in piece:
+                    self.date = piece.replace(timedescr, "").strip()
+                    self.descriptors.append(timedescr)
+                    time = True
+                    break
+            if time == False:
                 self.descriptors.append(piece)
         self.valid = self.validate()
     def validate(self):
@@ -39,12 +153,24 @@ class Provenance:
         if test_date == None and self.date != "":
             self.errors.append(f"Fehlerhaftes Datum: {self.date}")
             return(False)
-        # Prüfen, ob die Deskriptoren im Thesaurus stehen. DEskriptor Ort (unzulässig) rausfiltern
+        invalid_descr = []
+        for count, descr in enumerate(self.descriptors):
+            if tpro.validate(descr) == False:
+                invalid_descr.append(descr)
+                if count == 0:
+                    self.testInst = self.name + " / " + descr
+        if len(invalid_descr) == 1:
+            self.errors.append(f"Ungültiger Deskriptor: {invalid_descr[0]}")
+            return(False)
+        elif len(invalid_descr) > 1:
+            self.errors.append(f"Ungültige Deskriptoren: {';'.join(invalid_descr)}")
+            return(False)
         return(True)
     def __str__(self):
         ret = f"Provenienz: {self.name} / {' / '.join(self.descriptors)}"
         if self.date != "":
             ret = ret + " / Datum " + self.date
+        ret = f"{ret}, Position: {str(self.position)}"
         #if self.position != "":
         #    ret = ret + ", Position: " + str(self.position)
         return(ret)
@@ -127,20 +253,17 @@ class Dataset:
             if link.errors != []:
                 self.errors.append(f"Fehler in Verknüpfung(en)~" + ";".join(link.errors))
         prov_names = set([prov.name for prov in self.provv])
-        link_names = set([link.name for link in self.links])
-        single_pn = [name for name in prov_names if name not in link_names]
-        ratios_pn = {}
-        for name in single_pn:
-            if name == "NN":
-                continue
-            for name_cmp in link_names:
-                ratios_pn[name_cmp] = similar(name, name_cmp)
-            if ratios_pn != {}:
-                most_similar_pn = max(ratios_pn, key=lambda x: ratios_pn[x])
-                self.errors.append(f"Abweichende Verknüpfung~Namen: \"{name}\"|\"{most_similar_pn}\"")
+        prov_positions = { prov.name : [] for prov in self.provv }
+        for prov in self.provv:
+            prov_positions[prov.name].append(prov.position)
+        for lnk in self.links:
+            if lnk.name not in prov_names:
+                if lnk.name != "Lessing, Gotthold Ephraim":
+                    most_similar_pn = get_most_sim(lnk.name, prov_names)
+                    self.errors.append(f"Kein korrespondierender Name in Kette~{lnk.name}|{most_similar_pn}")
             else:
-                self.errors.append(f"Keine Verknüpfung~Name: \"{name}\"")
-        
+                if lnk.position not in prov_positions[lnk.name]:
+                    self.errors.append(f"Abweichende Positionen~{lnk.name} {str(lnk.position)}|{','.join(map(str, prov_positions[lnk.name]))}")
     def print_errors(self):
         if self.errors == []:
             return(None)
@@ -150,6 +273,14 @@ def similar(a, b):
     a = normalize_name(a)
     b = normalize_name(b)
     return(SequenceMatcher(None, a, b).ratio())
+
+def get_most_sim(needle, hay):
+    ratios_pn = {}
+    for name_cmp in hay:
+        ratios_pn[name_cmp] = similar(needle, name_cmp)
+    if ratios_pn != {}:
+        return(max(ratios_pn, key=lambda x: ratios_pn[x]))
+    return("")
     
 def normalize_name(name):
     name = name.lower()

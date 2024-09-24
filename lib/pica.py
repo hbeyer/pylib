@@ -485,7 +485,7 @@ class Record:
         if self.copies != []:
             res["copies"] = [cp.to_dict() for cp in self.copies]
         return(res)
-    def to_libreto(self, prov = None):
+    def to_libreto(self, prov = None, gdb = None):
         itn = et.Element("item")
         et.SubElement(itn, "id").text = "lid" + self.ppn
         et.SubElement(itn, "titleCat").text = self.title
@@ -505,6 +505,14 @@ class Record:
                 et.SubElement(placen, "placeName").text = pl.placeName
                 if pl.gnd != None:
                     et.SubElement(placen, "gnd").text = pl.gnd
+                if gdb != None:
+                    gdata = gdb.get_dict(pl.placeName)
+                    if gdata != False:
+                        et.SubElement(placen, "getty").text = gdata["getty"]
+                        gdel = et.Element("geoData")
+                        et.SubElement(gdel, "lat").text = gdata["lat"]
+                        et.SubElement(gdel, "long").text = gdata["long"]
+                        placen.append(gdel)
                 placel.append(placen)
             itn.append(placel)
         if self.publishers != []:
@@ -521,6 +529,11 @@ class Record:
             for code in self.lang:
                 et.SubElement(langl, "language").text = code
             itn.append(langl)
+        if self.langOrig != []:
+            langl = et.Element("languagesOriginal")
+            for code in self.lang:
+                et.SubElement(langl, "languagesOriginal").text = code
+            itn.append(langl)            
         letter = self.bbg[0]
         mediaType = assign_mediatype(letter)
         et.SubElement(itn, "mediaType").text = mediaType
@@ -852,11 +865,11 @@ class RecordList():
     def to_json(self, file_name):
         with open(file_name + ".json", "w", encoding="utf-8") as fp:
             json.dump(self.content, fp, skipkeys=False, ensure_ascii=False, check_circular=True, allow_nan=True, cls=None, indent=1, separators=[',', ':'], default=convert_record, sort_keys=False)          
-    def to_libreto(self, file_name, metadata, prov = ""):
+    def to_libreto(self, file_name, metadata, prov = None, gdb = None):
         ser = xs.Serializer(file_name, "collection")
         ser.add_nested("metadata", metadata)
         for count, rec in enumerate(self.content):
-            itemNode = rec.to_libreto(prov)
+            itemNode = rec.to_libreto(prov, gdb)
             ser.add_node(itemNode)
         ser.save()
     

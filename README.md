@@ -55,7 +55,7 @@ Methoden:
 |to_dict| - | Liste mit allen Zeilen als Dictionary, worin die Spaltennamen die Keys sind| - |
 |add_column|name (Name der neuen Spalte)| True | Hinzufügen einer Spalte zu der Tabelle |
 |add_sortable| name (Name der Spalte, die die Signatur enthält, Standardwert "Signatur")| True|Hinzufügen einer Spalte "Sortierform", die sortierbare Strings zu den Signaturen der HAB enthält |
-|toSQLite|fileName (Standard "exportTable")|True|Export der Tabelle als SQLite-Datenbank mit einer Tabelle namens "main". Die Datenbank wird als Datei unter dem angegebenen Namen abgelegt.|
+|toSQLite|fileName (Standard "exportTable")|True|Export der Tabelle als SQLite-Datenbank mit einer Tabelle namens "main" unter Benutzung des Moduls [localsql](#modul-localsql). Die Datenbank wird als Datei unter dem angegebenen Namen abgelegt.|
 | load | path (Pfad zu der zu ladenden CSV-Datei ohne Namenserweiterung), encoding (Zeichencodierung des Dokuments, Standard ist utf-8) | True bei Erfolg, sonst False | Laden der Feldnamen in Table.fields und der Daten in Table.content |
 
 Beispiel:
@@ -312,6 +312,7 @@ Beschreibung folgt
 ---
 ### Modul localsql
 Modul zur Arbeit mit einer lokalen SQLite-Datenbank, das auf dem Python-Modul [sqlite3](https://docs.python.org/3/library/sqlite3.html) basiert.
+
 Klasse **Database**
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|

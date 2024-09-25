@@ -389,7 +389,51 @@ Beschreibung folgt
 
 ---
 ### Modul network
-Beschreibung folgt
+Klassen zur Abbildung eines Netzwerks, das auch Knoten und Relationen besteht. Daten können in Cypher ausgegeben und direkt in eine neo4j-Instanz gespielt werden. Aus der GND können Daten zur Abbildung von Personennetzen importiert werden.
+
+Klasse **Graph**
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+|\_\_init\_\_| nodes (Liste mit Objekten vom Typ network.Node, optional), relations (Liste mit Objekten vom Typ network.Relation, optional) | - | Instanziierung des Objekts |
+
+Klasse **Node**
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+|\_\_init\_\_| id (eindeutiger Identifier für den Knoten), name, type, attributes (Dictionary mit Schlüssel-Wert-Paaren) | - | Instanziierung des Objekts |
+
+Klasse **Relation**
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+|\_\_init\_\_| origin (ID des Ausgangsknotens), target (ID des Zielknotens), type (Typus der Relation), attributes (Dictionary mit Schlüssel-Wert-Paaren) |--|--|
+
+Klasse **GraphGND**
+Erstellen eines Netzwerks aus GND-Daten, ausgehend von einer oder mehreren GND-Nummern. Die GND-Datensätze werden unter der Nummer im Ordner cache/gnd abgespeichert, hierzu wird das Modul [cache](#modul-cache) verwendet.
+
+Codebeispiel:
+```python
+from lib import network as nw
+
+# Anlegen eines GND-basierten Personennetzwerks
+graph = GraphGND()
+
+# Importieren der GND-Nummern von Leibniz, Lessing und Goethe
+gnds = ["118571249", "118572121", "118540238"]
+
+# Wiederholtes Importieren der mit den vorhandenen relationierten Personen
+graph.importGNDs(gnds)
+graph.import_related()
+graph.import_related()
+graph.import_related()
+
+# Ausgabe der Zahl von Knoten und Relationen
+print(graph)
+
+# Abspeichern unter mygraph.cypher
+graph.save:cypher("mygraph")
+
+# Exportieren nach neo4j
+graph.to_neo4j("neo4j://localhost:7687", "{Nutzer}", "{Passwort}", "{Datenbank}")
+```
 
 ---
 ### Modul oai

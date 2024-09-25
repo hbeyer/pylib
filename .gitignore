@@ -9,5 +9,6 @@ example*.py
 *.py
 *.csv
 *.xml
+*.cypher
 !placeData.csv
 !vorlagen.py

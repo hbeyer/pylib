@@ -47,6 +47,7 @@ class Database():
         return(True)
     def sql_request(self, sql):
         if "select" not in sql.lower():
+            logging.error("Das SQL-Kommando muss SELECT enthalten")
             return(None)
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.curs = self.conn.cursor()
@@ -57,6 +58,7 @@ class Database():
     def sql_mult_request(self, commands):
         for sql in commands:
             if "select" not in sql.lower():
+                logging.error("Die SQL-Kommandos müssen SELECT enthalten")
                 return(None)
         res = []
         self.conn = sqlite3.connect(self.file_name + ".db")

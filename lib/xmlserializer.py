@@ -13,20 +13,23 @@ class Serializer():
         self.tree = et.ElementTree(self.root)
     def add_node(self, node):
         self.root.append(node)
+        return(True)
     def add_nested(self, tag, content):
         node = make_node(tag)
         for key in content:
             subnode = make_node(key, content[key])
             node = add_subnode(node, subnode)
         self.add_node(node)
+        return(True)
     def save(self):
         self.tree.write(self.path, encoding="UTF-8", \
                         xml_declaration=True, \
                         default_namespace=None, \
                         method="xml")
+        return(True)
     def to_string(self):
         xml = et.tostring(self.root, encoding='utf8', xml_declaration=False)
-        return(xml)
+        return(xml.decode('UTF-8'))
 def add_subnode(node, subnode):
     node.append(subnode)
     return(node)

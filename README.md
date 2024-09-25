@@ -735,4 +735,39 @@ Reader zum Auslesen von Downloads aus einer unAPI
 
 ---
 ### Modul xmlserializer
-Beschreibung folgt
+Anlegen und Abspeichern von XML-Dokumenten, basierend auf [xml.etree.ElementTree](https://docs.python.org/3/library/xml.etree.elementtree.html).
+
+Klasse **Serializer**
+
+| Methode  | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+|\_\_init\_\_| path (Pfad zum Speichern der XML-Datei, ohne Endung), root (Name des root-Elemensts, Standard "root"| - | Initiieren des Objekts |
+|add_node| node (xml.etree.ElementTree.Element)| True | Anhängen des Elements an das root-Element |
+|add_nested| tag (name des einzufügenden übergeordneten Elements), content (Dictionary mit Tagnames und Inhalten) | True | Anhängen eines Elements mit Unterelementen an das root-Element |
+|save| - | True | Abspeichern des XML-Dokuments unter dem beim Initiieren angegebenen Pfad path plus ".xml" |
+|to_string| - | XML als String | - |
+
+Funktion **make_node**
+| Parameter | Rückgabewert | Effekt |
+|--|--|--|
+| name, value (Textinhalt, optional), att_name (Attribut, optional), att_value (Wert des Attributs, optional) | xml.etree.ElementTree.Element | - |
+
+Funktion **add_subnode**
+| Parameter | Rückgabewert | Effekt |
+|--|--|--|
+| node, subnode (beides xml.etree.ElementTree.Element)| node mit angehängtem subnode | - |
+
+Codebeispiel:
+```python
+from lib import xmlserializer as xs
+ser = xs.Serializer("test")
+content = { 
+	"vdn" : "VD17 23:292360E", 
+	"title" : "Der Junckfrawen Hundt", 
+	"year" : "1620"
+	}
+ser.add_nested("data", content)
+print(ser.to_string())
+# Erzeugt die Datei test.xml
+ser.save()
+```

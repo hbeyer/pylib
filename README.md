@@ -52,7 +52,7 @@ Methoden:
 | \_\_init\_\_ | fields (Liste mit Feldnamen, Standard leer), content (Liste mit Listen, die Werte enthalten, Standard leer) | Objekt der Klasse Table | - |
 | save | path (Pfad zum Speichern ohne Namenserweiterung), encoding (Zeichencodierung, Standard ist "utf-8") | True | Abspeichern einer CSV-Tabelle mit Zeichencodierung utf-8 und Delimiter ";" unter dem angegebenen Namen oder Pfad |
 |to_dict| - | Liste mit allen Zeilen als Dictionary, worin die Spaltennamen die Keys sind| - |
-|add_column|Spaltenname als String| True | Hinzufügen einer Spalte zu der Tabelle |
+|add_column|name (Spaltenname)| True | Hinzufügen einer Spalte zu der Tabelle |
 |add_sortable| name (Name der Spalte, die die Signatur enthält, Standardwert "Signatur")| True|Hinzufügen einer Spalte "Sortierform", die sortierbare Strings zu den Signaturen der HAB enthält |
 |toSQLite|fileName (Standard "exportTable")|True|Export der Tabelle als SQLite-Datenbank mit einer Tabelle namens "main". Die Datenbank wird als Datei unter dem angegebenen Namen abgelegt.|
 | load | path (Pfad zu der zu ladenden CSV-Datei ohne Namenserweiterung), encoding (Zeichencodierung des Dokuments, Standard ist utf-8) | True bei Erfolg, sonst False | Laden der Feldnamen in Table.fields und der Daten in Table.content |
@@ -69,7 +69,7 @@ data = [
 table = csvt.Table(fields, data)
 table.save("VD16")
 ```
-Über die Klasse kann iteriert werden, zurückgegeben wird jeweils ein Dictionary mit den Spaltennamen als Keys:
+Über das Objekt kann iteriert werden, zurückgegeben wird jeweils ein Dictionary mit den Spaltennamen als Keys:
 ```python
 for row in table:
 	print(row["VD16-Nummer"])

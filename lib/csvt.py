@@ -54,7 +54,7 @@ class Table:
         if field == None:
             field = "Signatur"
         if field not in self.fields:
-            print("Keine Spalte " + field + " gefunden.")
+            logging.error(f"Keine Spalte {field} gefunden.")
             return(False)
         for row in self.content:
             row_dict = self.get_row_dict(row)
@@ -62,7 +62,26 @@ class Table:
             sig = sm.StructuredShelfmark(sm_orig)
             row.append(sig.sortable)
         self.fields.append("Sortierform")
-        return(True)        
+        return(True)
+    def add_normalized_year(self, field = None):
+        if field == None:
+            field = "Jahr"
+        if field not in self.fields:
+            logging.error(f"Keine Spalte {field} gefunden.")
+            return(False)
+        for row in self.content:
+            row_dict = self.get_row_dict(row)
+            year = row_dict[field].replace("(", "").replace(")", "")
+            try:
+                year_normalized = re.search(r"[12][0-9]{3}", year).group(0)
+            except:
+                if row_dict[field] != "":
+                    print(f"{row[0]} - {row_dict[field]}")
+                row.append("")
+            else:
+                row.append(year_normalized)
+        self.fields.append("Jahr_normalisiert")
+        return(True)
     def load(self, path):
         try:
             file = open(path + ".csv", "r", encoding = self.encoding)

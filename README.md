@@ -13,6 +13,32 @@ from lib import {modul} as {namespace}
 ## Beschreibung der Module
 Unvollständige oder obsolete Module werden ausgelassen. Methoden oder Eigenschaften werden nur angegeben, wenn sie für die Benutzung relevant sind.
 
+### Modul aadgenre
+[Gattungsbegriffe der Arbeitsgemeinschaft Alte Drucke beim GBV und SWB](http://uri.gbv.de/terminology/aadgenres/) zur Benutzung in Python.
+Codebeispiel:
+```python
+from lib import aadgenre
+test = "Rezensionszeitschrift"
+
+# URI zu Begriff bekommen 
+uri = aadgenre.get_url("Vorlesungsverzeichnis")
+if uri != None:
+	print(uri)
+	
+# Testen, ob ein Begriff in den AAD-Gattungsbegriffen vorkommt
+if(aadgenre.test_genre(test) == True):
+	print(f"{test} ist ein AAD-Gattungsbegriff")
+
+# Alle auflisten
+terms = aadgenre.get_list()
+print(terms)
+
+# Dictionary mit PPNs und Begriffen ausgeben
+aad_dict = aadgenre.Genre.genre_list
+print(aad_dict)
+
+```
+---
 ### Modul bookwheel
 
 Recherche von Erwerbungsdaten anhand von Seitenzahlen im Bücherradkatalogs von August dem Jüngeren (1579–1666).  Zugrunde gelegt werden die Angaben bei Maria von Katte, Herzog August und die Kataloge seiner Bibliothek, in: Wolfenbütteler Beiträge 1 (1972), S. 168–199, hier S. 177–182
@@ -38,6 +64,8 @@ Ausgabe:
 
 `{'start': 2511, 'end': 2738, 'group': 'Libri Varii', 'dateBegin': '1634', 'year': 1634, 'writer': 'Herzog August'}`
 
+---
+### Modul cache
 ---
 ### Modul csvt
 
@@ -284,6 +312,9 @@ Ausgabe:
 `{'preferredName': 'Antoinette Amalie, Braunschweig-Lüneburg, Herzogin', 'dateOfBirth': '22. April 1696', 'dateOfDeath': '6. März 1762', 'biographicalOrHistoricalInformation': 'Frau von Herzog Ferdinand Albrecht II. von Braunschweig-Bevern (1680-1735); jüngste Tochter von Herzog Ludwig Rudolf von Braunschweig-Lüneburg (1671-1735) und Prinzessin Christine Luise von Oettingen-Oettingen', 'placeOfBirth': 'Wolfenbüttel', 'placeOfDeath': 'Braunschweig', 'gender': 'Frau'}`
 
 ---
+### Modul hbz
+
+---
 ### Modul html
 Beschreibung folgt
 
@@ -307,6 +338,10 @@ Beschreibung folgt
 
 ---
 ### Modul lido
+Beschreibung folgt
+
+---
+### Modul lobid
 Beschreibung folgt
 
 ---
@@ -350,6 +385,10 @@ Beschreibung folgt
 
 ---
 ### Modul mets
+Beschreibung folgt
+
+---
+### Modul network
 Beschreibung folgt
 
 ---

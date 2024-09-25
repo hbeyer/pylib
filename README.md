@@ -1,5 +1,6 @@
 
 
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -52,7 +53,7 @@ Methoden:
 | \_\_init\_\_ | fields (Liste mit Feldnamen, Standard leer), content (Liste mit Listen, die Werte enthalten, Standard leer) | Objekt der Klasse Table | - |
 | save | path (Pfad zum Speichern ohne Namenserweiterung), encoding (Zeichencodierung, Standard ist "utf-8") | True | Abspeichern einer CSV-Tabelle mit Zeichencodierung utf-8 und Delimiter ";" unter dem angegebenen Namen oder Pfad |
 |to_dict| - | Liste mit allen Zeilen als Dictionary, worin die Spaltennamen die Keys sind| - |
-|add_column|name (Spaltenname)| True | Hinzufügen einer Spalte zu der Tabelle |
+|add_column|name (Name der neuen Spalte)| True | Hinzufügen einer Spalte zu der Tabelle |
 |add_sortable| name (Name der Spalte, die die Signatur enthält, Standardwert "Signatur")| True|Hinzufügen einer Spalte "Sortierform", die sortierbare Strings zu den Signaturen der HAB enthält |
 |toSQLite|fileName (Standard "exportTable")|True|Export der Tabelle als SQLite-Datenbank mit einer Tabelle namens "main". Die Datenbank wird als Datei unter dem angegebenen Namen abgelegt.|
 | load | path (Pfad zu der zu ladenden CSV-Datei ohne Namenserweiterung), encoding (Zeichencodierung des Dokuments, Standard ist utf-8) | True bei Erfolg, sonst False | Laden der Feldnamen in Table.fields und der Daten in Table.content |
@@ -310,7 +311,37 @@ Beschreibung folgt
 
 ---
 ### Modul localsql
-Beschreibung folgt
+Modul zur Arbeit mit einer lokalen SQLite-Datenbank, das auf dem Python-Modul [sqlite3](https://docs.python.org/3/library/sqlite3.html) basiert.
+Klasse **Database**
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | file_name (optional, Standardwert "mydb") | - | Initiieren der Klasse, kein Abspeichern der Datenbank |
+|insert_content|fields (Liste der Spaltennamen), content (Liste mit Listen, die die zugehörigen Werte enthalten)|True|Anlage einer Datenbank unter dem bei der Initiierung angegebenen Dateinamen plus Endung ".db". Die Datenbank enhält eine Tabelle "main" mit den Feldnamen als Spalten und den in content übergebenen Daten als Inhalt. |
+|fetch_dict| - | Gesamte Tabelle main als Dictionary | - |
+|sql_action| command | True | Ausführen eines SQL-Kommandos |
+|sql_mult_action| commands (Liste) | True |Ausführen mehrerer SQL-Kommandos|
+|sql_request| sql (Anfrage, die "SELECT" enthalten muss. | Ergebnisse eines SQL-Request als Liste, None bei ungültiger Anfrage | Ausführen mehrerer SQL-Befehle |
+|sql_mult_request| commands (Mehrere SQL-Requests als Liste, müssen jeweils "SELECT" enthalten) | Liste mit den Ergebnissen der einzelnen Requests, jeweils als Liste. None bei ungültiger Anfrage. | -- |
+|print_description| - | True | Druck der enthaltenen Tabellen und Spalten in der Standardausgabe |
+|erase| - | True/False je nach Erfolg | Löschen der Datei mit der Datenbank |
+
+Codebeispiel:
+```python
+from lib import localsql as ls
+
+db = ls.Database()
+columns = ["VDNummer", "Titel", "Jahr"]
+content = [
+        ["VD17 23:741880L", "Vienna Gloriosa Honoribus Illustrissimorum, Perillustrium, Reverendorum, Prænobilium, Nobilium, Ac Eruditorum Dominorum Neo-Baccalaureorum", "1700"],
+        ["VD17 23:716651Z", "Ad Tumulum Viri Plurimum Reverendi, Excellentissimi & Clarissimi Dn. Michaelis Behmii, SS. Theologiae Doctoris, & Professoris in alma Regiomontana quondam Celeberrimi", "1652"],
+        ["VD17 23:641886D", "Newe Carmelitische Schatz-Cammer Das ist Kurtzer bericht von dem Reichtumb und geistlichen Schatz der Bruderschafft des wurdigen Scapuliers unser lieben Frawen", "1628"],
+        ["VD17 23:757429X", "Geistlich Tagwerck/ aller Christglaubigen/ so zu Gott irem Schöpffer vnd Erlöser/ vnd zum ewigen Leben/ lust vnd lieb haben", "1607"]
+    ]
+db.insert_content(columns, content)
+
+test = db.sql_request("SELECT * FROM main WHERE Titel LIKE '%Excell%'")
+print(test)
+```
 
 ---
 ### Modul maps

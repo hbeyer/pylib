@@ -23,25 +23,31 @@ class Database():
         self.conn.commit()
         self.conn.close()
         logging.info("Es wurde die Datenbank \"" + self.file_name + ".db\" mit der Tabelle \"main\" und den Feldern \"" + ", ".join([field for field in self.fields]) + "\" angelegt.")
+        return(True)
     def erase(self):
         try:
             os.remove(self.file_name + ".db")
         except:
-            pass
+            return(False)
+        return(True)
     def sql_action(self, command):
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.curs = self.conn.cursor()
         self.curs.execute(command)
         self.conn.commit()
         self.conn.close()
+        return(True)
     def sql_mult_action(self, commands):
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.curs = self.conn.cursor()
         for com in commands:
             self.curs.execute(com)
             self.conn.commit()
-        self.conn.close()        
+        self.conn.close()
+        return(True)
     def sql_request(self, sql):
+        if "select" not in sql.lower():
+            return(None)
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.curs = self.conn.cursor()
         self.curs.execute(sql)
@@ -49,6 +55,9 @@ class Database():
         self.conn.close()
         return(res)
     def sql_mult_request(self, commands):
+        for sql in commands:
+            if "select" not in sql.lower():
+                return(None)
         res = []
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.curs = self.conn.cursor()
@@ -77,6 +86,7 @@ class Database():
                 if coltype == "":
                     coltype = "no data type"
                 print(f"\tSpalte \"{coldict['colname']}\" ({coltype})\n")
+        return(True)
     def fetch_dict(self):
         with sqlite3.connect(self.file_name + ".db") as conn:
             cursor = conn.cursor()

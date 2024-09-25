@@ -1,0 +1,13 @@
+cache/*
+downloads/*
+source/*
+scripts/*
+lib/__pycache__/*
+gattungen-ac
+example*.py
+20*
+*.py
+*.csv
+*.xml
+!placeData.csv
+!vorlagen.py

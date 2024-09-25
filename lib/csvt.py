@@ -42,6 +42,10 @@ class Table:
             for row in self.content:
                 writer.writerow(row)
         return(True)
+    # Das Folgende ist notwendig, weil add_row irreführend benannt ist.
+    def add_column(self, name):
+        self.add_row(name)
+        return(True)
     def add_row(self, name):
         self.fields.append(name)
         for row in self.content:

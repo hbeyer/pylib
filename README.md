@@ -1,6 +1,5 @@
 
 
-
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -45,13 +44,17 @@ Abspeichern von Daten in einer CSV-Tabelle, Auslesen vorhandener CSV-Tabellen.
 
 Klasse **Table**:
 
-Abstraktionsschicht für die Arbeit mit einer CSV-Tabelle
+Abstraktionsschicht für die Arbeit mit einer CSV-Tabelle.
 
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | fields (Liste mit Feldnamen, Standard leer), content (Liste mit Listen, die Werte enthalten, Standard leer) | Objekt der Klasse Table | - |
 | save | path (Pfad zum Speichern ohne Namenserweiterung), encoding (Zeichencodierung, Standard ist "utf-8") | True | Abspeichern einer CSV-Tabelle mit Zeichencodierung utf-8 und Delimiter ";" unter dem angegebenen Namen oder Pfad |
+|to_dict| - | Liste mit allen Zeilen als Dictionary, worin die Spaltennamen die Keys sind| - |
+|add_column|Spaltenname als String| True | Hinzufügen einer Spalte zu der Tabelle |
+|add_sortable| name (Name der Spalte, die die Signatur enthält, Standardwert "Signatur")| True|Hinzufügen einer Spalte "Sortierform", die sortierbare Strings zu den Signaturen der HAB enthält |
+|toSQLite|fileName (Standard "exportTable")|True|Export der Tabelle als SQLite-Datenbank mit einer Tabelle namens "main". Die Datenbank wird als Datei unter dem angegebenen Namen abgelegt.|
 | load | path (Pfad zu der zu ladenden CSV-Datei ohne Namenserweiterung), encoding (Zeichencodierung des Dokuments, Standard ist utf-8) | True bei Erfolg, sonst False | Laden der Feldnamen in Table.fields und der Daten in Table.content |
 
 Beispiel:
@@ -66,11 +69,33 @@ data = [
 table = csvt.Table(fields, data)
 table.save("VD16")
 ```
+Über die Klasse kann iteriert werden, zurückgegeben wird jeweils ein Dictionary mit den Spaltennamen als Keys:
+```python
+for row in table:
+	print(row["VD16-Nummer"])
+```
+Klasse **TableWin**:
+Abgeleitete Klasse mit der Zeichencodierung "cp1252"
 
 Klasse **TableGeoBrowser**:
 
-Erzeugt eine CSV-Tabelle zum Import in den DARIAH GeoBrowser.
+Erzeugt eine CSV-Tabelle zum Import in den DARIAH GeoBrowser. Die Felder sind: `Name`, `Address`, `Description`, `Longitude`, `Latitude`, `TimeStamp`, `TimeSpan:begin`, `TimeSpan:end`, `GettyID`, `weight`. 
 
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | content (Liste mit Objekten vom Typ `csvt.GeoDataRow`), optional | - |
+|import_row|row (Objekt vom Typ `csvt.GeoDataRow`)|--|--|
+|fill_geo_data|gdb (Objekt vom Typ `geo.DB`)| True | Ergänzen der Felder `Longitude` und `Latitude`, wo sie leer sind aus einer lokalen Geodatensammlung  |
+|save|path (Dateipfad, unter dem abgespeichert werden soll ohne ".csv"|True|Abspeichern der Datei unter dem angegebenen Pfad, mit Ergänzen der Endung|
+
+Klasse **GeoDataRow**:
+Die Klasse enthält die Daten für eine Zeile in der von `TableGeoBrowser` verwalteten Tabelle.
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | name, long, lat, timeStamp, weight (alle optional) | - |
+|to_list| - | Liste mit den für die Aufnahme in `TableGeoBrowser` notwendigen Werten | - |
 ---
 ### Modul dataset
 
@@ -607,6 +632,7 @@ req.download(folder)
 ---
 ### Modul table_winibw
 Klasse zur Arbeit mit CSV-Dateien, die mit MS Excel erzeugt wurden (Zeichencodierung "cp1252", Trennzeichen ";"). Insbesondere mit der WinIBW erzeugte CSV-Tabellen (Funktion "Exceltabelle erzeugen") können so leicht verarbeitet werden.
+Das Modul überschneidet sich mit dem obigen [Modul csvt](#modul-csvt), das ursprünglich zum Serialisieren von Daten mit Python ohne Import aus einer Windows-Anwendung gedacht war. Inzwischen ist der Funktionsumfang von csvt größer.
 
 Klasse **Table**
 Repräsentiert eine Tabelle und enthält die Daten in der Property `content`, die Felder in der Property `fields`. Ist iterierbar und gibt einzelne Zeilen als OrdererdDict aus.

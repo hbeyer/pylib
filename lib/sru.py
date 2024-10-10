@@ -67,6 +67,12 @@ class Request_VD18(Request_SRU):
         super().__init__()
         self.base = 'http://sru.k10plus.de/vd18'
         self.fileName = "downloadVD18"
+        
+class Request_VD18_ADB(Request_SRU):
+    def __init__(self):
+        super().__init__()
+        self.base = 'http://sru.k10plus.de/vd18adb'
+        self.fileName = "downloadVD18"
 
 class Request_HAB(Request_SRU):
     def __init__(self):

@@ -1,7 +1,3 @@
-
-
-
-
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -335,7 +331,15 @@ Umrechnung der kataloginternen Bibliothekskennung ELN in eine ISIL gemäß der B
 
 ---
 ### Modul language
-Beschreibung folgt
+Sprachcodes nach ISO 639.2
+Funktionen
+
+    getLang(str code)
+Gibt die deutsche Sprachbezeichnung bei Eingabe des Codes aus, bei unbekanntem Code False
+
+    getCode(language)
+
+Gibt zur Sprachbezeichnung den Code aus, bei unbekannten Sprachen False.
 
 ---
 ### Modul lido
@@ -369,7 +373,9 @@ for tit in titles:
 
 ```
 Klasse **Request_GNDLobid**
-Abgeleitet von Request_GND. Suche nach Normdaten in https://lobid.org/gnd
+Abgeleitet von Request_GND. 
+Suche nach Normdaten in https://lobid.org/gnd. Für das Harvesten von Informationen zu einzelnen GND-Nummern s. neben der unten stehenden Klasse Request_GNDLobid_ID auch das Modul [gnd](#modul-gnd).
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | size (Standardwert 100) | - | Initiieren der Klasse |

@@ -21,8 +21,8 @@ class Request_Lobid():
         self.url = self.base + "?q=" + self.query_enc + "&size=" + self.size + "&format=" + self.format
         return(True)
     def get_num(self):
-        lc = cache.CacheGNDLobid()
-        text = lc.get_content(self.url, self.query)
+        lc = cache.CacheLobid()
+        text = lc.get_content(self.query, 0, 100)
         try:
             self.data = json.loads(text)
         except:
@@ -54,6 +54,22 @@ class Request_GNDLobid(Request_Lobid):
         self.base = "http://lobid.org/gnd/search"
         if size != None:
             self.size = size
+    def get_num(self):
+        lc = cache.CacheGNDLobid()
+        text = lc.get_content(self.url, self.query)
+        try:
+            self.data = json.loads(text)
+        except:
+            #logging.error(f"Fehler beim Laden des Ergebnisses für {self.query}")
+            pass
+        try:      
+            self.num_found = self.data["totalItems"]
+        except:
+            #logging.error(f"Fehler beim Laden des Ergebnisses für {self.query}")
+            return(None)
+        #else:
+            #logging.info(f"{self.num_found} Treffer für {self.query}")        
+        return(True)
     def get_result(self):
         result = []
         try:
@@ -77,7 +93,8 @@ class Request_GNDLobid(Request_Lobid):
             "placeOfDeath" : "", 
             "periodOfActivity" : "", 
             "biographicalOrHistoricalInformation" : "", 
-            "gender" : ""
+            "gender" : "",
+            "wikidata" : ""
         }
         try:
             info["variantNames"] = ";".join(mem["variantName"]).replace('"', '').replace("„", "").replace("“", "")
@@ -111,7 +128,17 @@ class Request_GNDLobid(Request_Lobid):
             info["gender"] = mem["gender"][0]["label"]
         except:
             pass
-        return(info)        
+        try:
+            sameAsList = mem["sameAs"]
+        except:
+            pass
+        else:
+            wikidataSet = set();
+            for data in sameAsList:
+                if "wikidata" in data["id"]:
+                    wikidataSet.add(data["id"].replace("http://www.wikidata.org/entity/", ""))
+            info["wikidata"] = "|".join(wikidataSet)
+        return(info)
 
 # Eine Suche, bei der eine GND-Nummer übergeben wird
 class Request_GNDLobid_ID(Request_GNDLobid):

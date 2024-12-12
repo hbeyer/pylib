@@ -89,8 +89,10 @@ class CacheLobid(Cache):
         else:
             return(response)        
     def get_content(self, query, start, size):
-        path = f"{self.folder}/{query}_{start}-{str(start + size)}"
+        path = f"{self.folder}/{query.replace(':', '_')}_{start}-{str(start + size)}"
         if op.exists(path) != True:
+            self.make_url(query, str(start), str(size))
+            print(path)
             ur.urlretrieve(self.url, path)
         file = open(path, "r", encoding="utf-8")
         content = file.read()

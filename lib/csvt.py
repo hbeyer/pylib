@@ -50,6 +50,19 @@ class Table:
         self.fields.append(name)
         for row in self.content:
             row.append("")
+    def get_by_field(self, row, field_name):
+        for num, field in enumerate(self.fields):
+            if field == field_name:
+                return(row[num])
+        logging.error(f"KeinFeld {field_name} gefunden")
+        return(null)
+    def set_by_field(self, row, field_name, value):
+        for num, field in enumerate(self.fields):
+            if field == field_name:
+                row[num] = value
+                return(row)
+        logging.error(f"KeinFeld {field_name} gefunden")
+        return(row)
     def add_sortable(self, field = None):
         if field == None:
             field = "Signatur"

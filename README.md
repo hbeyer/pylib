@@ -1,6 +1,7 @@
 
 
 
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -342,7 +343,57 @@ Beschreibung folgt
 
 ---
 ### Modul lobid
-Beschreibung folgt
+Suche in der lobid-Schnittstelle des HBZ (http://lobid.org/)
+
+Klasse **Request_Lobid**
+Allgemeine Suchanfrage
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | base (URL der Schnittstelle, z. B. http://lobid.org/gnd/search) | - | Initiieren der Klasse |
+| prepare | query (in der Form title:diss*) | True bei Erfolg | Speichert die abgefragte URL unter self.url, die geparsten JSON-Daten unter self.data und die Treffermenge unter self.num_found. Die Antwort zu jeder Anfrage wird unter `cache/lobid` gespeichert, dieser Ordner muss ggf. vorher angelegt und bei Änderungen an den Daten geleert werden. |
+
+Codebeispiel:
+```python
+import logging
+import re
+from  lib import lobid
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
+
+req = lobid.Request_Lobid("https://lobid.org/resources/search")
+req.prepare("title:harmoniumbau")
+print(f"Gefundene Treffer: {req.num_found}")
+titles = req.data["member"]
+for tit in titles:
+    print(tit['title'])
+
+```
+Klasse **Request_GNDLobid**
+Abgeleitet von Request_GND. Suche nach Normdaten in https://lobid.org/gnd
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | size (Standardwert 100) | - | Initiieren der Klasse |
+| prepare | query (in der Form preferredName:Twain) | True bei Erfolg | Speichert die abgefragte URL unter self.url, die geparsten JSON-Daten unter self.data und die Treffermenge unter self.num_found. Die Antwort zu jeder Anfrage wird unter `cache/gnd-lobid` gespeichert, dieser Ordner muss ggf. vorher angelegt und bei Änderungen an den Daten geleert werden. |
+| get_result | - | Dictionary mit Daten zu den gefundenen Entitäten | - |
+
+Klasse **Request_GNDLobid_ID**
+Abgeleitet von Request_GNDLobid. Suche nach Normdaten, bei der eine GND-Nummer übergeben wird.
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | size (Standardwert 100) | - | Initiieren der Klasse |
+| prepare | query (in der Form preferredName:Twain) | True bei Erfolg | Speichert die abgefragte URL unter self.url, die geparsten JSON-Daten unter self.data und die Treffermenge unter self.num_found. Die Antwort zu jeder Anfrage wird unter `cache/gnd-lobid` gespeichert, dieser Ordner muss ggf. vorher angelegt und bei Änderungen an den Daten geleert werden. |
+| get_result | - | Dictionary mit Daten zu den gefundenen Entitäten | - |
+
+Eigens extrahiert werden die Felder preferredName, gnd, variantNames, dateOfBirth, dateOfDeath, placeOfBirth, placeOfDeath, periodOfActivity, biographicalOrHistoricalInformation, gender, wikidata 
+
+Codebeispiel
+```python
+req = lobid.Request_GNDLobid()
+req.prepare("119362767")
+data = req.get_result()
+for key, value in data[0].items():
+    print(f"{key}: {value}")
+```
 
 ---
 ### Modul localsql

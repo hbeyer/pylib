@@ -69,13 +69,14 @@ Ausgabe:
 ### Modul cache
 
 Caching von Daten, die von einer Schnittstelle mit einer ID oder Suchanfrage heruntergeladen werden.
+
 Klasse **Cache**
 
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_  | folder (Standardwert cache/default) | - | Anlegen des Ordners, wenn er nicht vorhanden ist. |
-| get_content | url, id | Datei | Wenn die Datei im Ordner unter id abgelegt wird, wird sie von dort geladen, ansonsten wird sie von url geladen und gecacht. |
+| get_content | url, id | Datei | Wenn die Datei im Ordner unter id abgelegt ist, wird sie von dort geladen, ansonsten wird sie von url geladen und gecacht. |
 
 Klasse **CacheGND**
 
@@ -92,7 +93,7 @@ Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_  | folder (Standardwert cache/lobid) | - | Anlegen des Ordners, wenn er nicht vorhanden ist. |
-| get_json | query, start, size | JSON-Datei | Wenn die Datei im Ordner abgelegt ist, wird sie von dort geladen, ansonsten wird sie von https://lobid.org/resources/search geladen und gecacht. |
+| get_json | query, start, size | JSON-Datei | Wenn die Datei im Ordner unter `query_start-ende` abgelegt ist, wird sie von dort geladen, ansonsten wird sie von https://lobid.org/resources/search geladen und gecacht. |
 
 Klasse **CacheMarcHBZ**
 
@@ -100,7 +101,7 @@ Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_  | folder (Standardwert cache/marc-hbz) | - | Anlegen des Ordners, wenn er nicht vorhanden ist. |
-| get_xml | id | XML-Datei | Wenn die Datei im Ordner abgelegt ist, wird sie von dort geladen, ansonsten wird sie von https://alma.lobid.org/marcxml/{id} geladen und gecacht. |
+| get_xml | id | XML-Datei | Wenn die Datei im Ordner unter id abgelegt ist, wird sie von dort geladen, ansonsten wird sie von https://alma.lobid.org/marcxml/{id} geladen und gecacht. |
 
 ---
 ### Modul csvt

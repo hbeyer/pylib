@@ -112,6 +112,13 @@ class Table:
             fields = list(fields)
             self.fields = fields
         return(True)
+    def trim(self):
+        fields_copy = self.fields.copy();
+        while fields_copy.pop() == "":
+            self.fields.pop()
+        for row in self.content:
+            while len(row) > len(self.fields):
+                row.pop()
     def get_index(self, field):
         index = {}
         for row in self:

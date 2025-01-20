@@ -3,6 +3,7 @@
 
 import json
 import logging
+import re
 import urllib.request as ur
 import urllib.parse as up
 from lib import cache
@@ -165,3 +166,31 @@ class Request_GNDLobid_ID(Request_GNDLobid):
             return(result)
         result.append(self.extract_info(self.data))
         return(result)
+
+def test_temp(year, year_birth, year_death, period_active, min_age = None):
+    if min_age == None:
+        min_age = 15
+    if is_year(year) == False:
+        return(False)
+    if is_year(year_birth) and is_year(year_death):
+        if int(year) > int(year_birth) + min_age and int(year) <= int(year_death):
+            return(True)
+    dates_active = period_active.split("-")
+    try:
+        active_to = int(dates_active[1])
+        active_from = int(dates_active[0])
+    except:
+        return(False)
+    else:
+        if (int(year) >= active_from and int(year) <= active_to):
+            return(True)
+    return(False)
+
+def is_year(text):
+    if text == "":
+        return(False)
+    if re.match('^\d{1,4}$', str(text)) == None:
+        return(False)
+    if int(text) < 1 or int(text) > 2100:
+        return(False)
+    return(True)

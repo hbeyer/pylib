@@ -69,6 +69,7 @@ class Record:
                     self.title = self.data["036C"]["01"]["a"].pop()
                 except:
                     self.title = ""
+        self.title = self.title.strip(".").replace("@", "")
         try:
             self.title = self.title + ". " + self.data["021A"]["01"]["d"].pop(0)
         except:
@@ -135,6 +136,10 @@ class Record:
             self.date = self.data["011@"]["01"]["a"].pop(0)
         except:
             self.date = ""
+        try:
+            self.dateEnd = self.data["011@"]["01"]["b"].pop(0)
+        except:
+            self.dateEnd = ""
         self.digi = []
         try:
             digiDict = self.data["017D"]
@@ -290,6 +295,15 @@ class Record:
             if cp.prov_struct != [] or cp.prov_norm != []:
                 cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
             self.copies.append(cp)
+    def get_sdd_sys(self):
+        ret = []
+        fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
+        sdd_not = []
+        for fi in fields:
+            tag = fi.get("tag")
+            if tag == "145Z":
+                sdd_not = get_subfield_list(fi, "a")
+        return(";".join(sdd_not))
     def get_local_sys(self, isil):
         ret = []
         fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")
@@ -367,7 +381,13 @@ class Record:
             except:
                 placeRel = ""
             placeName = re.sub("\!.+\!", "", placeName)
-            self.places.append(Place(placeName, placeRel))
+            place = Place(placeName, placeRel)
+            try:
+                expansion = placeList[occ]["7"].pop(0)
+                place.gnd = re.search("gnd/([\d\-]{7,12})", expansion).group(1)
+            except:
+                pass
+            self.places.append(place)
     def load_publishers(self):
         try:
             pubRow = self.data["033J"]
@@ -597,13 +617,13 @@ class Record:
         authors = ", ".join([pers.persName for pers in self.persons if pers.role in ["VerfasserIn", "creator"]])
         places = ", ".join([pl.placeName for pl in self.places])
         publishers = ", ".join([pub.persName for pub in self.publishers])
-        ret = self.title
+        ret = self.title.strip(".")
+        if self.edition:
+            ret = f"{ret}. {self.edition.strip('.')}"
         if authors != "":
             ret = f"{authors}: {ret}"
-        try:
+        if self.vol:
             ret = f"{ret}. Teil {self.vol}"
-        except:
-            pass
         if places != "":
             ret = f"{ret}. {places}"
             if publishers != "":
@@ -822,6 +842,10 @@ class RecordVD16(Record):
                 placeRel = placeList[occ]["4"].pop(0)
             except:
                 placeRel = ""
+            try:
+                placePPN = placeList[occ]["9"].pop(0)
+            except:
+                placePPN = ""                
             placeName = re.sub("\!.+\!", "", placeName)
             self.places.append(Place(placeName, placeRel))            
 class RecordVD18(Record):
@@ -1020,6 +1044,7 @@ class Place:
         self.placeName = placeName
         self.getty = None
         self.geoNames = None
+        self.ppn = None
         self.gnd = None
         self.rel = rel
     def to_dict(self):

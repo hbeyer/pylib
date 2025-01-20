@@ -4,7 +4,9 @@
 import urllib.parse as up
 import urllib.request as ur
 import xml.etree.ElementTree as et
-import os.path as op
+#import os.path as op
+import os
+import glob
 
 class Request_SRU:
     def __init__(self, base = "", version = "2.0"):
@@ -43,13 +45,18 @@ class Request_SRU:
         while count <= self.numFound:
             path = self.folder + "/" + self.fileName + "-" + str(countFiles) + ".xml"
             url = self.make_url(500, count)
-            if op.exists(path) == False:
+            if os.path.exists(path) == False:
                 ur.urlretrieve(url, path)
-            if op.exists(path):
+            if os.path.exists(path):
                 print("Download " + str(countFiles) + " erledigt")
             count += 500
             countFiles += 1
-
+    """
+    def clear(self):
+        files = glob.glob(self.folder)
+        for f in files:
+            os.remove(f)    
+    """
 class Request_K10plus(Request_SRU):
     def __init__(self):
         super().__init__()

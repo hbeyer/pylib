@@ -209,8 +209,8 @@ import mysql.connector
 mydb = mysql.connector.connect(
   host = "localhost",
   user = "root",
-  passwd = "schleichkatze",
-  database = "helmstedt"
+  passwd = "{Passwort}",
+  database = "{Datenbank}"
 )
 
 mycursor = mydb.cursor()
@@ -291,4 +291,36 @@ logging.info("Es wurden alle Dateien geladen")
 logging.warning("Laden der nicht essenziellen Datei xy fehlgeschlagen")
 logging.error("Es ist ein Problem aufgetreten")
 logging.critical("Wegen eines Problems muss das Programm beendet werden")
+"""
+
+"""
+# Erstellem eines HTML-Dokuments
+
+from bs4 import BeautifulSoup
+
+def makeOPACLink(shelfmark):
+    shelfmark = shelfmark.replace("(", "").replace(")", "")
+    shelfmark = urllib.parse.quote_plus(shelfmark)
+    return(f"http://opac.lbs-braunschweig.gbv.de/DB=2/CMD?ACT=SRCHA&TRM=sgb+{shelfmark}")
+
+htmbase = f"<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body><h1>Neuerscheinungen der Sammlung Deutscher Drucke 1601&ndash;1700</h1></body></html>"
+soup = BeautifulSoup(htmbase, 'html.parser')
+
+orig_tag = soup.h1
+h2 = soup.new_tag("h2")
+h2.string = "02 Philosophie"
+orig_tag.insert_after(h2)
+orig_tag = h2
+par = soup.new_tag("p")
+par.string = "Crell, Fortunatus: Fortunati Crellii Isagoge Logica. In Duas Partes Tributa ; In communem Et Propriam. Editio Septima. Neustadt an der Weinstraße: Schramm, Nikolaus, Wilhelm Harnisch Erben 1602 "
+ahref = soup.new_tag("a")
+ahref.string = cp.sm
+ahref["href"] = makeOPACLink(cp.sm)
+ahref["target"] = "_blank"
+ahref["title"] = "Titel im OPAC anzeigen"
+par.append(ahref)
+orig_tag.insert_after(par)
+
+with open("SDDList.htm", "w", encoding="utf-8") as file:
+    file.write(str(soup.prettify()))
 """

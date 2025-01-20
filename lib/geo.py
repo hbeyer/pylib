@@ -28,13 +28,13 @@ class DB:
         try:
             row = self.table.content[self.index[name][0]]
         except:
-            return(False)
+            return(None)
         else:
             return(row)
     def get_dict(self, name):
         row = self.get_by_name(name)
-        if row == False:
-            return(False)
+        if row == None:
+            return(None)
         return({"placeName" : row[0], "getty" : row[1], "gnd" : row[2], "long" : row[3], "lat" : row[4], "comment" : row[5]})
     def normalize_name(self, name):
         name = name.strip()

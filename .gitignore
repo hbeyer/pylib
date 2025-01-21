@@ -1,3 +1,4 @@
+*.docx
 cache/*
 downloads/*
 source/*
@@ -5,6 +6,7 @@ scripts/*
 lib/__pycache__/*
 gattungen-ac
 example*.py
+*.htm
 20*
 *.py
 *.csv
@@ -12,3 +14,4 @@ example*.py
 *.cypher
 !placeData.csv
 !vorlagen.py
+!lib/*py

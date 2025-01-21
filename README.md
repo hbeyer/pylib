@@ -2,6 +2,7 @@
 
 
 
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -245,6 +246,30 @@ Enthält die Daten zu einer einzelnen Person in folgenden Propertys:
 
 Die magische Methode \_\_str\_\_ gibt den Namen mit Geburts- und Sterbejahr sowie GND-Nummer aus.
 
+---
+### Modul evallist
+Abgleichen von Titelliste mit dem K10plus oder dem OPAC der HAB. Das Modul nutzt die Module **pica**, **sru** und **xmlreader**.
+
+Klasse **Evaluation**:
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| __init\_\_ | pers (Personenname, optional), title (Titel, optional), place (Erscheinungsort, optional), year (Erscheinungsjahr, optional) | Instanz von Evaluation | Bilden einer Suchanfrage und Ablage unter Evaluation.query |
+| evaluate | - | Anzahl der Treffer | Ablage der Treffer in Evaluation.numFound (Integer), der PPNs als Array in Evaluation.ppns (Liste), aller Signaturen in Evaluation.shelfmarks (Liste) |
+
+Die abgefragte URL kann unter Evaluation.req.url abgerufen werden. Weil für die Ermittlung der PPNs und Signaturen nur die Aufnahmen der Druck-Ausgabe berücksichtigt werden (A-Aufnahmen), kann das Ergebnis abweichen.
+
+Klasse **Evaluation_HAB**:
+Dasselbe für den OPAC der HAB Wolfenbüttel.
+
+Codebeispiel:
+```python
+from lib import evallist as el
+
+testeval = el.Evaluation_HAB(None, "Neujahres Wundsch", None, "1698")
+testeval.evaluate()
+
+print(f"{str(testeval.numFound)} Treffer. PPNS: {', '.join(testeval.ppns)}, Signaturen: {'; '.join(testeval.shelfmarks)}")
+```
 
 ---
 ### Modul evalpdf

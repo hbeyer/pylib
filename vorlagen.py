@@ -324,3 +324,15 @@ orig_tag.insert_after(par)
 with open("SDDList.htm", "w", encoding="utf-8") as file:
     file.write(str(soup.prettify()))
 """
+
+"""
+# Erstellen oder Verändern eines Word-Dokuments
+from docx import Document
+doc = Document("Vorlage.docx")
+# Leeres Dokument:
+# doc = Document()
+doc.add_heading(f"Titel des Dokuments", level=1)
+doc.add_heading("Untertitel", level=2)
+doc.add_paragraph("Das ist ein Absatz.")
+doc.save(f"Mein_Word-Dokument.docx")
+"""

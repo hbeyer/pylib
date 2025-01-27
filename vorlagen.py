@@ -328,6 +328,7 @@ with open("SDDList.htm", "w", encoding="utf-8") as file:
 """
 # Erstellen oder Verändern eines Word-Dokuments
 from docx import Document
+
 doc = Document("Vorlage.docx")
 # Leeres Dokument:
 # doc = Document()

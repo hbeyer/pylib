@@ -13,19 +13,20 @@ class Evaluation:
         if pers != None:
             query_ell.append(f"pica.per={pers}")
         if title != None:
-            words = get_words(clean_title(title))
+            words = get_words(clean_title(title), 3)
             query_ell.append(f"pica.tit={'+'.join(words)}")
         if place != None:
             query_ell.append(f"pica.vlo={place}")
         if year != None:
             query_ell.append(f"pica.jah={year}") 
-        self.query = " and ".join(query_ell)
+        self.query = "+and+".join(query_ell)
         self.req = sru.Request_K10plus()
         self.numFound = 0
         self.ppns = []
         self.shelfmarks = []
     def evaluate(self):
         self.req.prepare(self.query)
+        print(self.req.url)
         self.numFound = self.req.numFound
         if self.numFound == 0:
             return(0)

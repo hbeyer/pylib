@@ -20,9 +20,10 @@ class Request_SRU:
     def prepare(self, query_pica, format = "picaxml"):
         self.query_pica = query_pica
         self.format = format
-        self.query_pica_enc = self.query_pica.replace(", ", ",")
+        #self.query_pica_enc = self.query_pica.replace(", ", ",")
+        self.query_pica_enc = self.query_pica.replace(", ", ",").replace("=", "%3D").replace(" ", "+")
         #self.query_pica_enc = self.query_pica_enc.replace(",", "%2C")
-        self.query_pica_enc = up.quote(self.query_pica_enc)
+        #self.query_pica_enc = up.quote(self.query_pica_enc)
         self.url = self.make_url()
         fileobject = ur.urlopen(self.url, None, 10)
         tree = et.parse(fileobject)

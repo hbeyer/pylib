@@ -271,9 +271,14 @@ class Record:
                 provstr = get_subfield(fi, "a")
                 codes = get_subfield_list(fi, "x")
                 code = ""
+                geog = get_subfield(fi, "g")
+                if geog not in ["", None]:
+                    provstr = f"{provstr}$g{geog}"
                 for val in codes:
                     if re.search(r"\d\d", val) != None:
                         code = val
+                    else:
+                        provstr = f"{provstr}$x{val}"
                 ppn = get_subfield(fi, "9")
                 bbg = get_subfield(fi, "V")
                 if provstr == None:

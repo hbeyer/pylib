@@ -41,23 +41,23 @@ class Subject:
         {"sdd" : "34", "name" : "Archäologie, Geschichte", "dbs" : "34", "name-dbs" : "Archäologie, Geschichte, einschl. Sozial- und Wirtschaftsgeschichte"},        
         {"sdd" : "35", "name" : "Geographie, Volkskunde", "dbs" : "35", "name-dbs" : "Geographie, Heimat- und Länderkunde, Reisen, Atlanten, Volks- und Völkerkunde"}
         ]
-def get_sdd_sys():
+def get_sys():
     ret = {}
     for row in Subject.conc:
         if row["sdd"] == "":
             continue
-        ret.append(row["sdd"], row["name"])
+        ret[row["sdd"]] = row["name"]
     return(ret)
 
-def get_dbs_sys():
+def get_sys_dbs():
     ret = {}
     for row in Subject.conc:
         if row["dbs"] == "":
             continue
-        ret.append(row["dbs"], row["name-dbs"])
+        ret[row["dbs"]] = row["name-dbs"]
     return(ret)
     
-def get_sdd_label(num):
+def get_label(num):
     if isinstance(num, str):
         if len(num) == 1:
             num = num.zfill(2)
@@ -65,5 +65,16 @@ def get_sdd_label(num):
         num = str(num).zfill(2)
     for row in Subject.conc:
         if row["sdd"] == num:
+            return(row["name"])
+    return(None)
+    
+def get_label_dbs(num):
+    if isinstance(num, str):
+        if len(num) == 1:
+            num = num.zfill(2)
+    elif isinstance(num, int):
+        num = str(num).zfill(2)
+    for row in Subject.conc:
+        if row["dbs"] == num:
             return(row["name"])
     return(None)

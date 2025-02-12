@@ -1,8 +1,4 @@
 
-
-
-
-
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -603,6 +599,68 @@ Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 18
 Klasse **RecordInc**
 Abgeleitete Klasse zur Verarbeitung von Inkunabeln
 
+### Felder für bibliographische Einheiten
+
+| Feld | Typ | Inhalt |
+|--|--|--|
+| ppn | String | ID in der Datenbank |
+| vdn | String | VD-Nummer |
+| bbg| String | Code für Bibliographische Gattung und Status s. [Dokumentation](https://swbtools.bsz-bw.de/cgi-bin/help.pl?cmd=kat&val=0500&regelwerk=RDA&verbund=GBV) |
+| catRule | String | Bei der Katalogisierung angewandtes Regelwerk, entweder "rak" oder "rda" |
+| date | String | Datierung als Jahreszahl |
+| lang | Liste| Sprachcodes nach ISO 639-2 |
+| langOrig | Liste| Sprachcodes der Originalsprache bei Übersetzungen |
+| title | String | Titel einschließlich Untertitel |
+| resp | String | Verantwortlichkeitsangabe |
+| edition | String | Ausgabevermerk |	
+| format | String | Bibliographisches Format |
+| pages | String | Kollationsvermerk |
+| normPages | Integer | Normalisierte Seitenangabe. Der Algorithmus berücksichtigt Seiten- und Blattangaben, von-bis-Angaben, Ausdrücke mit "i.e." oder "das heißt" und römische Zahlen. S. die Funktion get_norm_p() unter https://github.com/hbeyer/pylib/blob/main/lib/pica.py |
+| ppn_sup | String | Bei Teilen mehrbändiger Werke: ID der Gesamtaufnahme |
+| title_sup | String | Bei Teilen mehrbändiger Werke: Titel der Gesamtaufnahme |
+| vol | String | Bei Teilen mehrbändiger Werke: Bandangabe |
+| digi | Liste | URLs von Digitalisaten |
+| gatt | Liste | Gattungsbegriffe der AAD |
+| subjects| Liste | Schlagwörter |
+| persons | Liste | Personen, die als VerfasserInnen, BeiträgerInnen oder sonstige Personen erwähnt sind als Person-Objekte |
+| publishers | Liste | DruckerInnen und/oder VerlegerInnen als Person-Objekte |
+| places | Liste | Erscheinungsorte als Place-Objekte |
+| copies | Liste | Exemplare als Copy-Objekte |
+| provenances | Liste | Provenienzinformationen auf dem Shared Level (Feld 9100) in strukturierter Form (s. Modul provenance)
+
+### Klasse Person
+
+| Feld | Typ | Inhalt |  
+|--|--|--|
+| persName | String | Name, in der Form "Vorname, Nachname" |
+| role | String | Beziehungskennzeichnung nach RDA (VerfasserIn etc.) oder DC (creator, contributor, publisher) |
+| gnd | String | GND-Nummer |
+| dateBirth | String | Geburtsdatum |
+| dateDeath | String | Sterbedatum |
+
+### Klasse Place
+
+| Feld | Typ | Inhalt |  
+|--|--|--|
+| placeName | String | Ortsname |
+| getty | String | ID im Getty Thesaurus |
+| geoNames | String | ID bei GeoNames |
+| gnd | String | GND-Nummer |
+| rel | String | Beziehungskennzeichnung: "Erscheinungsort", "Herstellungsort", "Enstehungsort" oder "Vertriebsort" |
+
+### Klasse Copy
+
+| Feld | Typ | Inhalt |  
+|--|--|--|
+| place | String | Bibliotheksort |
+| bib | String | Bibliothek |
+| isil | String | ISIL der Bibliothek, s. [ISIL-Datei](https://sigel.staatsbibliothek-berlin.de/suche/) |
+| eln | String | ELN (External Library Number) der Bibliothek |
+| iln | String | ILN (Internal Library Number) der Bibliothek |
+| shelfmark | String | Signatur |
+| epn | String | ID des Lokalsatzes |
+| prov_dataset | Liste | Lokale Provenienzinformationen in strukturierter Form (Modul provenance) |
+
 ---
 ### Modul portapp
 
@@ -711,7 +769,14 @@ Darstellung, Auswertung und Validierung von Provenienzen im OPAC der HAB, bezoge
 
 Klasse **Provenance**
 
-Auswertung von Provenienzketten im Feld 680X
+Auswertung von lokalen und auf dem Shared Level befindlichen Provenienzinformationen (Feld 680X und 9100)
+
+Klasse **ProvenanceBibLevel**
+Abgeleitete Klasse für das Feld 9100.
+
+Klasse **NormLinkLocal**
+
+Auswertung von lokalen Normdatenverknüpfungen im Feld 688X
 
 Klasse **NormLinkLocal**
 
@@ -895,6 +960,16 @@ tab.addSortable()
 tab.save("records-sortable")
 ```
 
+---
+### Modul tpro
+Repräsentation des T-PRO Thesaurus der Provenienzbegriffe (Quelle: https://provenienz.gbv.de/T-PRO_Thesaurus_der_Provenienzbegriffe). 
+Die Liste der Deskriptoren ist als Dictionary mit `tpro.descriptors` abzurufen. Sie folgt dem Schema "Name" : "Typ". Die Deskriptorentypen sind "Exemplartypen", "Rechtlicher Status", "Physische Merkmale", "Zeitangabe". Verweisformen wie "Supralibros", die bei der Provenienzforschung nicht verwendet werden sollen, sind weggelassen.
+
+| Methode  | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| get_descriptors | type ("Exemplartypen"\|"Rechtlicher Status"\|"Physische Merkmale"\|"Zeitangabe"\|None) | - | Gibt eine Liste aller Deskriptoren des Typs zurück, bei None alle Deskriptoren |
+| validate | desc (Name Deskriptor) | - | True wenn Deskriptor vorhanden, False wenn nicht |
+| get_type | descr | - | Typ des angegebenen Deskriptors, None falls nicht vorhanden |
 ---
 ### Modul unapi
 Beschreibung folgt

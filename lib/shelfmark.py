@@ -3,6 +3,7 @@
 
 import re
 import logging
+import requests
 
 class Shelfmark:
     def __init__(self, whole):
@@ -99,10 +100,24 @@ class Shelfmark:
     def normalize_wdb(self):
         norm_sig = self.whole.replace("A: ", "").replace("H: ", "").replace("M: ", "")
         norm_sig = norm_sig.replace("Helmst.", "helmst")
+        norm_sig = norm_sig.replace("Sammelbd.", "sbd")
+        norm_sig = norm_sig.replace("Sammelband", "sbd")        
         norm_sig = norm_sig.replace("°", "f")
-        norm_sig = lower(norm_sig)
-        #norm_sig = re.replace(r"\((\d+)\)", norm_sig, )
+        norm_sig = norm_sig.replace("(", "").replace(")", "s")
+        norm_sig = norm_sig.replace(". ", "-")
+        norm_sig = norm_sig.replace(" ", "-")
+        norm_sig = norm_sig.lower()
         return(norm_sig)
+    def check_digi_status(self, folder = None):
+        if folder == None:
+            folder = "drucke"
+        norm_sig = self.normalize_wdb()
+        url = f"http://diglib.hab.de/{folder}/{norm_sig}/facsimile.xml"
+        #http://diglib.hab.de/drucke/{norm_sig}/thumbs/00001.jpg
+        response = requests.get(url)
+        code = response.status_code
+        logging.info(f"Code für {url}: {code}")
+        return(code)
     def getFormat(self):
         extract = re.search(r"2°|4°|8°|12°|16°|FM", self.whole)
         try:

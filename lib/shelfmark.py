@@ -174,7 +174,13 @@ class Shelfmark:
             pass
         return(self.form)
     def getNumber(self):
-        if self.collection == "H":
+        if self.collection == "HHD":
+            extract = re.search(r"(H: )?([0-9]+\.?([0-9]+)?)\sHelmst\.\sDr\.", self.whole)
+            try:
+                self.number = extract.group(2)
+            except:
+                return(None)
+        elif self.collection == "H":
             extract = re.search(r"(H: )?([A-Z]|Y[a-z])\s([0-9]+[a-z]{0,2}\*?)\.?(2°|4°|8°|12°)?", self.whole)
             try:
                 self.number = extract.group(3)

@@ -59,6 +59,19 @@ class Record:
             self.catRule = self.data["010E"]["01"]["e"].pop(0)
         except:
             self.catRule = "rak"
+        self.fingerprint = ""
+        self.fingerprint_type = ""
+        try:
+            self.fingerprint = self.data["007P"]["01"]["0"].pop(0)
+            self.fingerprint_type = self.data["007P"]["01"]["s"].pop(0)
+        except:
+            pass
+        if self.fingerprint_type != "fei":
+            try:
+                self.fingerprint = self.data["007P"]["02"]["0"].pop(0)
+                self.fingerprint_type = self.data["007P"]["02"]["s"].pop(0)
+            except:
+                pass
         try:
             self.title = self.data["021A"]["01"]["a"].pop(0)
         except:
@@ -262,10 +275,18 @@ class Record:
                 except:
                     logging.info(str(digi))
             # Auslesen der Anmerkungen in 4801
+            if tag == "220B":
+                comm = get_subfield_list(fi, "a")
+                if comm != []:
+                    if cp.comm != "":
+                        cp.comm = cp.comm + "; "
+                    cp.comm = cp.comm + ("; ").join(comm)
             if tag == "237A":
                 comm = get_subfield_list(fi, "a")
                 if comm != []:
-                    cp.comm = ("; ").join(comm)
+                    if cp.comm != "":
+                        cp.comm = cp.comm + "; "
+                    cp.comm = cp.comm + ("; ").join(comm)
             # Auslesen der Provenienzdaten
             if tag == "244Z":
                 provstr = get_subfield(fi, "a")
@@ -665,6 +686,7 @@ class Record:
             reservation["digitalisierbar"] = reservation["status"].replace("cc", "Nein").replace("cb", "Ja")
             ret.append(reservation)
         return(ret)
+
     """        
     def to_dc(self):
         meta = ds.DatasetDC()

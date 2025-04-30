@@ -154,8 +154,11 @@ class Record:
         except:
             self.dateEnd = ""
         self.digi = []
+        digi_field = "017D"
+        if self.bbg[0:1] == "O":
+            digi_field = "017C"
         try:
-            digiDict = self.data["017D"]
+            digiDict = self.data[digi_field]
         except:
             pass
         else:
@@ -164,11 +167,6 @@ class Record:
                     self.digi.extend(digiDict[key]["u"])
                 except:
                     pass
-        if self.bbg[0] == "O":
-            try:
-                self.digi = self.data["209R"]["01"]["u"].pop(0)
-            except:
-                self.digi = ""
         self.comm = []
         self.similar = []
         try:
@@ -553,8 +551,16 @@ class Record:
                     et.SubElement(placen, "gnd").text = pl.gnd
                 if gdb != None:
                     gdata = gdb.get_dict(pl.placeName)
-                    if gdata != False:
+                    try:
                         et.SubElement(placen, "getty").text = gdata["getty"]
+                    except:
+                        pass
+                    try:
+                        lat = gdata["lat"]
+                        long = gdata["long"]
+                    except:
+                        pass
+                    else:
                         gdel = et.Element("geoData")
                         et.SubElement(gdel, "lat").text = gdata["lat"]
                         et.SubElement(gdel, "long").text = gdata["long"]
@@ -578,7 +584,7 @@ class Record:
         if self.langOrig != []:
             langl = et.Element("languagesOriginal")
             for code in self.lang:
-                et.SubElement(langl, "languagesOriginal").text = code
+                et.SubElement(langl, "languageOriginal").text = code
             itn.append(langl)            
         letter = self.bbg[0]
         mediaType = assign_mediatype(letter)
@@ -1038,14 +1044,10 @@ class Copy:
         self.bib = bibd["bib"]
         self.place = bibd["place"]
         return(True)
-    """def load_provenances(self):
-        for pc in self.prov:
-            if "Provenienz:" in pc:
-                self.prov_struct.append(prv.Provenance(pc))
+    def get_prov_names(self):
         if self.prov_struct == []:
-            return(False)
-        return(True)"""
-        
+            return("")
+        return(";".join([prov.name for prov in self.prov_struct]))
     def to_dict(self):
         ret = {}
         if self.place != "":

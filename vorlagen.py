@@ -337,3 +337,53 @@ doc.add_heading("Untertitel", level=2)
 doc.add_paragraph("Das ist ein Absatz.")
 doc.save(f"Mein_Word-Dokument.docx")
 """
+
+"""
+# Erstellen eines Word-Dokuments mit Tabelle
+sdd = [
+    {"Signatur" : "Xb 2° 69 (1)", "Jahr" : "1619", "Exemplarspezifika" : "", "Notizen" : ""},
+    {"Signatur" : "Xb 2° 103", "Jahr" : "1696", "Exemplarspezifika" : "unisignifikant", "Notizen" : ""},
+    {"Signatur" : "Xb 2° 125 (1)", "Jahr" : "1692", "Exemplarspezifika" : "", "Notizen" : ""}    
+    ]
+from docx import Document
+doc = Document("Vorlage.docx")
+table = doc.add_table(1, 4)
+headings = ["Signatur", "Jahr", "Exemplarspezifika", "Anmerkungen"]
+for num, head in enumerate(headings):
+    table.rows[0].cells[num].text = head
+for sdd_row in sdd:
+    new_cells = table.add_row().cells
+    new_cells[0].text = sdd_row["Signatur"]
+    new_cells[1].text = sdd_row["Jahr"]
+    new_cells[2].text = sdd_row["Exemplarspezifika"]
+    new_cells[3].text = sdd_row["Notizen"] 
+doc.save(f"Word-Dokument_mit_Liste.docx")
+"""
+
+"""
+# Erstellen einer abgestuft weichgezeichneten Bilderreihe
+import os
+import glob
+import logging
+from PIL import Image, ImageFilter
+logging.basicConfig(level=logging.INFO)
+
+radii = [10, 20, 40, 60, 80, 100]
+folder = "blurred_images"
+if not os.path.exists(folder):
+    os.makedirs(folder)
+
+image_paths = glob.glob('*.jpg')
+
+for path in image_paths:
+    file_name = path.replace(".jpg", "")
+    im = Image.open(path, mode = "r")
+    for rad in radii:
+        blurred_im = im.filter(ImageFilter.GaussianBlur(radius=rad))
+        path_save = f"{folder}/{file_name}-{str(1000 - rad).zfill(4)}.jpg"
+        blurred_im.save(path_save)
+        logging.info(f"Gespeichert: {path_save}")
+    path_save = f"{folder}/{file_name}-9999.jpg"
+    im.save(path_save)
+    logging.info(f"Gespeichert: {path_save}")
+"""

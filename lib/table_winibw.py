@@ -41,6 +41,12 @@ class Table():
         # Gibt die function None aus, wird die entsprechende Zeile entfernt
         self.content = [row for row in self.content if row != None]
         return(self.content)
+    def addColumn(self, name):
+        if name in self.fields:
+            return(False)
+        self.fields.append(name)
+        for row in self.content:
+            row[name] = ""
     def addSortable(self, field = "Signatur"):
         if field not in self.fields:
             print("Keine Spalte " + field + " gefunden.")
@@ -76,7 +82,7 @@ class Table():
     def save(self, fileName = "myTable"):
         body = [[row[key] for key in row] for row in self.content]
         table = csvt.Table(self.fields, body)
-        table.save(fileName)
+        table.save(fileName + ".csv")
         return(True)
     def toSQLite(self, fileName = "exportTable"):
         db = ls.Database(self.fields, [[row[field] for field in self.fields] for row in self.content], fileName)

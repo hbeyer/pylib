@@ -150,9 +150,9 @@ class Record:
         except:
             self.date = ""
         try:
-            self.dateEnd = self.data["011@"]["01"]["b"].pop(0)
+            self.date_end = self.data["011@"]["01"]["b"].pop(0)
         except:
-            self.dateEnd = ""
+            self.date_end = ""
         self.digi = []
         digi_field = "017D"
         if self.bbg[0:1] == "O":
@@ -279,6 +279,13 @@ class Record:
                     if cp.comm != "":
                         cp.comm = cp.comm + "; "
                     cp.comm = cp.comm + ("; ").join(comm)
+            # Auslesen der Bestandsdaten bei Zeitschriften (Ab-Sätze)
+            if tag == "231B":
+                hist = get_subfield(fi, "a")
+                try:
+                    cp.holdings = hist
+                except:
+                    logging.error(f"Fehler beim Auslesen des Erscheinungsverlaufs {cp.sm}");
             if tag == "237A":
                 comm = get_subfield_list(fi, "a")
                 if comm != []:
@@ -908,6 +915,103 @@ class RecordInc(Record):
                         self.gw = link
                     elif link.find("istc") != -1:
                         self.istc = link
+class RecordZS(Record):
+    def __init__(self, node):
+        super().__init__(node)
+        self.mediatype = "keine Angabe"
+        try:
+            mtd = [val["a"].pop(0) for key, val in self.data["002E"].items()]
+        except:
+            pass
+        else:
+            self.mediatype = ";".join(mtd)
+        try:
+            self.serial_type = self.data["013D"]["01"]["a"].pop(0)
+        except:
+            self.serial_type = "Zeitschrift oder Zeitung"
+        self.ppn_repr = ""
+        self.zdb_repr = ""       
+        try:
+            self.zdb = self.data["007G"]["01"]["0"].pop(0)
+        except:
+            self.zdb = ""
+        try:
+            self.country = self.data["019@"]["01"]["a"].pop(0)
+        except:
+            self.country = ""            
+        try:
+            sys_repr = self.data["039I"]["01"]["c"]
+            ids_repr = self.data["039I"]["01"]["6"]
+            self.ids_repr = dict(zip(sys_repr, ids_repr))
+            try:
+                self.ppn_repr = self.ids_repr["KXP"]
+            except:
+                pass
+            try:
+                self.zdb_repr = self.ids_repr["ZDB"]
+            except:
+                pass              
+        except:
+            pass
+        try:
+            self.pub_hist_rough = self.data["031@"]["01"]["a"].pop(0)
+        except:
+            pass
+        try:
+            self.pub_hist_bibl = PublishingHistory(self.data["031N"]["01"])
+        except:
+            pass
+        
+class PublishingHistory():
+    def __init__(self, fieldDict = None, type = None):
+        self.type = "general"
+        if type == "local":
+            self.type = "local"
+        self.start = { "year" : 0, "volume" : 0, "issue" : 0 }
+        self.end = { "year" : 0, "volume" : 0, "issue" : 0 }
+        self.complete = True
+        if isinstance(fieldDict, dict):
+            try:
+                self.start["year"] = int(fieldDict["j"].pop(0))
+            except:
+                pass
+            try:
+                self.start["volume"] = int(fieldDict["d"].pop(0))
+            except:
+                pass
+            try:
+                self.end["year"] = int(fieldDict["n"].pop(0))
+            except:
+                pass
+            try:
+                self.end["volume"] = int(fieldDict["k"].pop(0))
+            except:
+                pass
+           
+"""
+{'d': ['1'], 'j': ['1800'], 'n': ['2'], 'k': ['1800']}
+167481029
+{'j': ['1800'], 'k': ['1806']}
+167443402
+{'j': ['1800'], 'k': ['1823']}
+167401971
+{'d': ['1'], 'j': ['1800'], 'n': ['12'], 'k': ['1835']}
+167392026
+{'d': ['1'], 'j': ['1800'], 'n': ['3'], 'k': ['1802']}
+166821837
+{'d': ['1'], 'j': ['1800'], 'n': ['8'], 'k': ['1807']}
+166774677
+{'j': ['1800'], 'k': ['1805']}
+166311197
+{'d': ['1', '3'], 'j': ['1800', '1804'], '0': [' '], 'n': ['5'], 'k': ['1806']}
+165658770
+
+{'i': ['Elektronische Reproduktion'], 'l': ['Wiedemann, Christian Rudolph Wilhelm *1770-*'], 't': ['Archiv für Zoologie und Zootomie'], 'd': ['Braunschweig'], 'e': ['Gedruckt und im Verlage bei Karl Reichard'], 'f': ['1800'], 'h': ['Online-Ressource'], 'c': ['KXP', 'DNB', 'ZDB'], '6': ['799122297', '1059626489', 'zdb/2794548-0']}
+            
+Erscheinungsverlauf Bib. Level
+$v1$b1798/99$V7$E1807/21; $b1834$E1857
+031N ƒd1ƒj1798/99ƒn7ƒk1807/21ƒ0 ƒj1834ƒk1857
+"""            
 
 class RecordList():
     def __init__(self, content = None):
@@ -1021,6 +1125,8 @@ class Copy:
         self.prov_dataset = None
         self.digi = None
         self.abl = ""
+        # Nur für Zeitschriftenexemplarsätze
+        self.holdings = ""
     def __str__(self):
         ret = "Signatur: " + self.sm
         if self.isil not in ["", None]:

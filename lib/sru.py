@@ -7,6 +7,7 @@ import xml.etree.ElementTree as et
 #import os.path as op
 import os
 import glob
+import logging
 
 class Request_SRU:
     def __init__(self, base = "", version = "2.0"):
@@ -49,7 +50,7 @@ class Request_SRU:
             if os.path.exists(path) == False:
                 ur.urlretrieve(url, path)
             if os.path.exists(path):
-                print("Download " + str(countFiles) + " erledigt")
+                logging.info("Download " + str(countFiles) + " erledigt")
             count += 500
             countFiles += 1
     """
@@ -87,6 +88,12 @@ class Request_HAB(Request_SRU):
         super().__init__()
         self.base = 'http://sru.k10plus.de/opac-de-23'
         self.fileName = "SRU_HAB"
+        
+class Request_Helmst(Request_SRU):
+    def __init__(self):
+        super().__init__()
+        self.base = 'http://sru.k10plus.de/opac-de-hel1'
+        self.fileName = "SRU_Helmst"
         
 class Request_Greifswald(Request_SRU):
     def __init__(self):

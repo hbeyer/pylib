@@ -419,6 +419,31 @@ class Record:
             except:
                 pass
             self.places.append(place)
+    def get_ill_information(self):
+        type_strings = ["ill", "kupferst", "holzschn", "portr", "abb", "frontisp", "kupfert", "kt", "karte", "falttaf", "druckerm", "graph"]
+        regex_quant = f"(\d+)\]?\s({'|'.join(type_strings)})"
+        self.num_ill = 0
+        self.types_ill = set()
+        if self.illustrations == "":
+            return(0)
+        elements = [el.strip().lower() for el in self.illustrations.split(",")]
+        for el in elements:
+            extr = re.search(f"(.+)\s\((.+)\)", el)
+            if extr == None:
+                for ts in type_strings:
+                    if ts in el:
+                        self.types_ill.add(ts)
+                continue
+            for ts in type_strings:
+                if ts in extr.group(2):
+                    self.types_ill.add(ts)
+        for el in elements:
+            extr_quant = re.search(r"\d+", el)
+            try:
+                self.num_ill += int(extr_quant.group(0))
+            except:
+                self.num_ill += 1
+        return(self.num_ill)
     def load_publishers(self):
         try:
             pubRow = self.data["033J"]

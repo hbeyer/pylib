@@ -387,3 +387,23 @@ for path in image_paths:
     im.save(path_save)
     logging.info(f"Gespeichert: {path_save}")
 """
+
+# Serialisieren und Laden von Daten mit json
+"""
+data = { "name_dt" : "Hering", "name_lat" : "Clupea" }
+with open("dump.json", "w") as file:
+    json.dump(data, file)
+    
+with open('dump.json', 'r') as openfile:
+    data = json.load(openfile)
+"""
+
+# Prüfen, ob eine URL gültig ist
+import requests
+def check_url_log(url):
+    try:
+        get = requests.get(url)
+        # besser: requests.head(url)!
+        return(get.status_code)
+    except requests.exceptions.RequestException as e:
+        raise SystemExit(f"{url}: is Not reachable \nErr: {e}")

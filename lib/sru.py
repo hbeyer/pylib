@@ -18,7 +18,8 @@ class Request_SRU:
         self.query_pica = ""
         self.query_pica_enc = ""
         self.numFound = 0
-    def prepare(self, query_pica, format = "picaxml"):
+        self.ns_resp = "http://docs.oasis-open.org/ns/search-ws/sruResponse"
+    def prepare(self, query_pica, format = "picaxml"): 
         self.query_pica = query_pica
         self.format = format
         #self.query_pica_enc = self.query_pica.replace(", ", ",")
@@ -29,7 +30,7 @@ class Request_SRU:
         fileobject = ur.urlopen(self.url, None, 10)
         tree = et.parse(fileobject)
         root = tree.getroot()
-        nbs = root.findall('.//{http://docs.oasis-open.org/ns/search-ws/sruResponse}numberOfRecords')
+        nbs = root.findall('.//{' + self.ns_resp + '}numberOfRecords')
         for ele in nbs:
             self.numFound = int(ele.text)
             self.url = self.make_url(500)
@@ -118,6 +119,14 @@ class Request_OGND(Request_SRU):
         super().__init__()
         self.base = 'http://sru.k10plus.de/ognd'
         self.fileName = "SRU_OGND"
+        
+class Request_RISM(Request_SRU):
+    def __init__(self):
+        super().__init__()
+        self.base = 'https://muscat.rism.info/sru'
+        self.fileName = "SRU_RISM"
+        self.version = "1.1"
+        self.ns_resp = "http://www.loc.gov/zing/srw/"
 
 def chunk(iterable, max_size):
     """

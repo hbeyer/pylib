@@ -986,7 +986,22 @@ class RecordZS(Record):
             self.pub_hist_bibl = PublishingHistory(self.data["031N"]["01"])
         except:
             pass
-        
+
+class RecordRISM(Record):
+    def __init__(self, node):
+        super().__init__(node)
+        self.rism = []
+        try:
+            bibref_data = self.data["007S"]
+        except:
+            pass
+        else:
+            for key1, data1 in bibref_data.items():
+                for key2, val_list in data1.items():
+                    for val in val_list:
+                        if "RISM" in val:
+                            self.rism.append(val)
+
 class PublishingHistory():
     def __init__(self, fieldDict = None, type = None):
         self.type = "general"

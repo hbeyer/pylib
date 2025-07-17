@@ -10,19 +10,25 @@ class Database():
         self.file_name = "mydb"
         if file_name != None:
             self.file_name = file_name
-    def insert_content(self, fields, content):
+        self.num_found = 0
+        self.rows_affected = 0
+        self.query = ""
+    def insert_content(self, fields, content, table = None):
+        self.table = "main"
+        if table != None:
+            self.table = table
         self.erase()
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.cursor = self.conn.cursor()
         self.fields = [field.replace("+", "") for field in fields]
-        sql = "CREATE TABLE main (" + (", ".join(fields)) + ")"
+        sql = f"CREATE TABLE {self.table} (" + (", ".join(fields)) + ")"
         self.cursor.execute(sql)
         for row in content:
-            sql = "INSERT INTO main VALUES (" + ", ".join(["?" for field in self.fields]) + ")"
+            sql = f"INSERT INTO {self.table} VALUES (" + ", ".join(["?" for field in self.fields]) + ")"
             self.cursor.execute(sql, row)
         self.conn.commit()
         self.conn.close()
-        logging.info("Es wurde die Datenbank \"" + self.file_name + ".db\" mit der Tabelle \"main\" und den Feldern \"" + ", ".join([field for field in self.fields]) + "\" angelegt.")
+        logging.info(f"Es wurde die Datenbank \"" + self.file_name + f".db\" mit der Tabelle \"{self.table}\" und den Feldern \"" + ", ".join([field for field in self.fields]) + "\" angelegt.")
         return(True)
     def erase(self):
         try:
@@ -34,6 +40,8 @@ class Database():
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.curs = self.conn.cursor()
         self.curs.execute(command)
+        self.query = command
+        self.rows_affected = self.curs.rowcount
         self.conn.commit()
         self.conn.close()
         return(True)
@@ -52,7 +60,9 @@ class Database():
         self.conn = sqlite3.connect(self.file_name + ".db")
         self.curs = self.conn.cursor()
         self.curs.execute(sql)
+        self.query = sql
         res = self.curs.fetchall() 
+        self.num_found = self.curs.arraysize
         self.conn.close()
         return(res)
     def sql_mult_request(self, commands):
@@ -114,5 +124,14 @@ class DataConnection(Database):
         return(True)
     def sql_request(self, sql):
         self.curs.execute(sql)
+        self.query = sql
         res = self.curs.fetchall()
+        self.num_found = self.curs.arraysize
         return(res)
+    def sql_action(self, command):
+        self.conn = sqlite3.connect(self.file_name + ".db")
+        self.curs = self.conn.cursor()
+        self.curs.execute(command)
+        self.rows_affected = self.curs.rowcount
+        self.conn.commit()
+        return(True)

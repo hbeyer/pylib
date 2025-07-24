@@ -3,8 +3,10 @@
 
 import logging
 import httpx
-from lib import localsql as lsql
+import json
+import functools
 from datetime import date
+from lib import localsql as lsql
 logging.basicConfig(level=logging.INFO)
 
 class Resolver():
@@ -32,7 +34,7 @@ class Resolver():
             test_url = self.make_link(norm_sig, year, folder)
             r = httpx.get(test_url)
             if r.status_code == 200:
-                ins_action = self.dc.sql_action(f"INSERT INTO main VALUES ('{norm_sig}', '{folderself.folder}', '{year}')")
+                ins_action = self.dc.sql_action(f"INSERT INTO main VALUES ('{norm_sig}', '{self.folder}', '{year}')")
                 if self.dc.rows_affected > 0:
                     logging.info(f"Es wurden die Werte {norm_sig}, {self.folder}, {year} in die Datenbank {self.dc.file_name} eingefügt.")
                     return(str(year))
@@ -48,6 +50,9 @@ class Resolver():
             page = "00001"
         link = f"https://image.hab.de/iiif/images/{self.folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/info.json"
         return(link)
+    def make_default(self, norm_sig, year, folder, page):
+        link = f"https://image.hab.de/iiif/images/{self.folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/full/max/0/default.jpg"
+        return(link)        
     def forget_item(self, norm_sig, folder = None):
         if folder != None:
             self.folder = folder
@@ -68,4 +73,23 @@ class Resolver():
         return(res)
     def close(self):
         self.dc.close()
-        self.dc_fail.close()        
+        self.dc_fail.close()
+
+# Das Caching bringt nicht viel, da es nur zur Laufzeit des Programms verfügbar ist. => Datenbank o. ä. einbinden
+@functools.lru_cache(maxsize=10000)
+def get_dimensions(url):
+    #url = f"https://image.hab.de/iiif/images/{folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/info.json"
+    r = httpx.get(url)
+    if r.status_code != 200:
+        logging.error(f" {url} konnte nicht geladen werden")
+        return(None)
+    parsed_json = json.loads(r.text)
+    try:
+        dim = (parsed_json["width"], parsed_json["height"])
+    except:
+        #logging.error(f" Abmessungen zu {folder}/{norm_sig}, Seite {page} konnten nicht geladen werden")
+        return(None)
+    return(dim)
+        
+    
+        

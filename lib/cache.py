@@ -3,10 +3,14 @@
 
 import logging
 import os
+import sqlite3
+import shutil
 import urllib.parse as up
+import httpx
 import os.path as op
 import urllib.request as ur
 from time import sleep
+from lib import image_resolver as ir
 
 class Cache:
     folder = "cache/default"
@@ -18,6 +22,22 @@ class Cache:
         except:
             pass
     def get_content(self, url, id):
+        path = f"{self.folder}/{id}"
+        if op.exists(path) == True:
+            #file = open(path, "r" encoding="utf-8")
+            file = open(path, "r")
+            content = file.read()
+            return(content)
+        r = httpx.get(url)
+        if r.status_code != 200:
+            logging.error(f" {url} konnte nicht geladen werden")
+            return(None)
+        response = r.text
+        with open(path, "w") as f:
+            f.write(response)
+        #ur.urlretrieve(self.url, path)
+        return(response)
+    def _get_content(self, url, id):
         path = self.folder + "/" + id
         if op.exists(path) != True:
             try:
@@ -28,22 +48,52 @@ class Cache:
         content = file.read()
         return(content)
 
-class CacheGND(Cache):
-    folder = "cache/gnd"
+class CacheSRU_O(Cache):
     def __init__(self):
-        super().__init__()
-    def get_json(self, id):
-        url = f"http://hub.culturegraph.org/entityfacts/{id}"
+        super().__init__("cache/sru_o")
+    def get_xml(self, url, id):
         try:
             response = self.get_content(url, id)
         except:
             logging.error(f"Kein Download von {url} möglich")
-            #logging.info(f"Programm pausiert für 5 Minuten")
-            #sleep(300)
             return(None)
         else:
-            return(response)
-"""
+            return(response)        
+        
+class CacheStruct(Cache):
+    def __init__(self):
+        super().__init__("cache/struct")
+    def get_xml(self, sig, folder_wdb = None):
+        if folder_wdb == None:
+            folder_wdb = "drucke"
+        url = f"https://diglib.hab.de/{folder_wdb}/{sig}/tei-struct.xml"
+        try:
+            response = self.get_content(url, sig)
+        except:
+            logging.error(f"Kein Download von {url} möglich")
+            return(None)
+        else:
+            if response == None:
+                logging.error(f"Kein Download von {url} möglich")
+            return(response)   
+            
+class CacheFacsimile(Cache):
+    def __init__(self):
+        super().__init__("cache/facs")
+    def get_xml(self, sig, folder_wdb = None):
+        if folder_wdb == None:
+            folder_wdb = "drucke"
+        url = f"https://diglib.hab.de/{folder_wdb}/{sig}/facsimile.xml"
+        try:
+            response = self.get_content(url, sig)
+        except:
+            logging.error(f"Kein Download von {url} möglich")
+            return(None)
+        else:
+            if response == None:
+                logging.error(f"Kein Download von {url} möglich")
+            return(response)          
+"""            
 class CachePICA(Cache):
     folder = "cache/pica"
     def __init__(self):
@@ -118,3 +168,80 @@ class CacheGNDLobid(Cache):
     folder = "cache/gnd-lobid"
     def __init__(self):
         super().__init__()
+
+class CacheSQLite:
+    def __init__(self, file_name = None):
+        self.file_name = "cache"
+        if file_name != None:
+            self.file_name = file_name
+        self.conn = sqlite3.connect(self.file_name + ".db")
+        self.cursor = self.conn.cursor()
+        try:
+            self.cursor.execute("SELECT * FROM main LIMIT 5")
+        except:
+            sql = f"CREATE TABLE main (url type UNIQUE, result)"
+            self.cursor.execute(sql)
+            self.conn.commit()
+    def get(self, url):
+        sql = f"SELECT * FROM main WHERE url LIKE \"{url}\""
+        self.cursor.execute(sql)
+        res = self.cursor.fetchall()
+        try:
+            ret = res[0][1]
+        except:
+            logging.info(f" Laden aus {url}")
+            data = self.get_dataset(url)
+            if data != None:
+                self.insert_dataset(data, url)
+            try:
+                ret = ",".join(data)
+            except:
+                return(None)
+            else:
+                return(ret)
+        else:
+            return(ret)
+    def get_dataset(self):
+        return(None)
+    def close(self):
+        self.conn.close()
+    def show_content(self, limit = None):
+        if limit == None:
+            limit = 100
+        sql = "SELECT * FROM main"
+        self.cursor.execute(sql)
+        row = self.cursor.fetchone()
+        cnt = 0
+        print(f"Inhalt der Datenbank {self.file_name}.db (Maximum: {limit} Datensätze):")
+        while row != None:
+            print(row)
+            cnt += 1
+            if cnt > limit:
+                break
+            row = self.cursor.fetchone()
+    def forget_everything(self):
+        old_file = self.file_name + ".db"
+        new_file = self.file_name + "_backup.db"
+        shutil.copyfile(old_file, new_file)
+        logging.info(f" Backup erstellt: {new_file}")
+        sql = "DELETE FROM main"
+        self.cursor.execute(sql)
+        self.conn.commit()
+        
+class CacheImageDimensions(CacheSQLite):
+    def __init__(self):
+        super().__init__("image_dimensions")
+    def get_dataset(self, url):
+        dimensions = ir.get_dimensions(url)
+        try:
+            width, height = dimensions
+        except:
+            logging.error(f" Nicht vorhandenes Bild: {url}")
+            return(None)
+        return([str(width), str(height)])
+    def insert_dataset(self, data, url):
+        # Auf Dubletten prüfen?
+        sql = "INSERT INTO main VALUES (?, ?)"
+        row = [url, ",".join(data)]
+        self.cursor.execute(sql, row)
+        self.conn.commit()

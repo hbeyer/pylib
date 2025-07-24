@@ -25,13 +25,14 @@ class Harvester():
         self.folder = folder
         self.diglib = diglib
         self.image_list = []        
-        file = ur.urlopen(f"http://unapi.k10plus.de/?id=gvk:ppn:{self.ppn_o}&format=picaxml")
+        file = ur.urlopen(f"https://unapi.k10plus.de/?id=gvk:ppn:{self.ppn_o}&format=picaxml")
         tree = et.parse(file)
         node = tree.getroot()        
-        self.rec_o = pica.Record(node)       
+        self.rec_o = pica.Record(node)
+        print(self.rec_o)
         self.sig = self.rec_o.copies[0].sm
         self.digi = self.rec_o.digi
-        search = re.search("http://diglib.hab.de/([^/]+)/([^/]+)/start.htm", self.digi)
+        search = re.search("diglib.hab.de/([^/]+)/([^/]+)/start.htm", ";".join(self.digi))
         try:
             self.diglib = search.group(1)
         except:
@@ -49,7 +50,7 @@ class Harvester():
         sig_sru = self.sig.replace("(", "").replace(")", "").replace(" ", "+")
         req = sru.Request_HAB()
         req.prepare("pica.sgb=" + sig_sru)
-        wr = xr.webReader(req.url, tag = "record", namespace = "http://docs.oasis-open.org/ns/search-ws/sruResponse")
+        wr = xr.WebReader(req.url, tag = "record", namespace = "http://docs.oasis-open.org/ns/search-ws/sruResponse")
         for node in wr:
             rc = pica.RecordInc(node)
             if rc.bbg[0] == "A":
@@ -59,11 +60,13 @@ class Harvester():
             logging.warning(f"Keine A-Aufnahme über SRU gefunden")
             self.rec_a = self.rec_o
         self.extract_metadata()
+        """
         try:
             self.meta_list = self.meta.to_list()
         except:
             raise Exception("Die Metadaten konnten nicht geladen werden")
         self.valid = True
+        """
     def __str__(self):
         ret = f"Harvester für {self.digi} \n \
         PPN: {self.ppn_o} (Digitalisat), {self.ppn_a} (Vorlage) \n \
@@ -76,7 +79,7 @@ class Harvester():
         self.make_folder()
         self.download_xml()
         self.download_images(overwrite_images = overwrite_images)
-        self.save_metadata()
+        #self.save_metadata()
         logging.info(f"Dateien geladen im Ordner {self.path}")
     def make_folder(self):
         if os.path.exists(self.path):
@@ -118,7 +121,7 @@ class Harvester():
                 original = self.folder_ma + im.replace("jpg", "tif")
                 target = self.path + "/" + im.replace("jpg", "tif")
                 if os.path.exists(target) == False or overwrite_images == True:
-                        shutil.copyfile(original, target)
+                        shutil.copyfile(original, target)                       
     def extract_metadata(self):
         self.meta = ds.DatasetDC()
         self.meta.add_entry("dc.identifier", ds.Entry(self.rec_o.digi))
@@ -127,13 +130,13 @@ class Harvester():
         self.meta.add_entry("dc.title", ds.Entry(self.rec_a.title))
         self.meta.add_entry("dc.date", ds.Entry(self.rec_a.date))
         for pers in self.rec_a.persons:
-            pers.makePersName()
+            pers.make_persname()
             if pers.role == "dc.creator":
                 self.meta.add_entry("dc.creator", ds.Entry(pers.persName, None, "GND", pers.gnd))
             else:
                 self.meta.add_entry("dc.contributor", ds.Entry(pers.persName, None, "GND", pers.gnd))
         for pub in self.rec_a.publishers:
-            pub.makePersName()
+            pub.make_persname()
             self.meta.add_entry("dc.publisher", ds.Entry(pub.persName, None, "GND", pub.gnd))
         for lng in self.rec_a.lang:
             self.meta.add_entry("dc.language", ds.Entry(lng))
@@ -187,16 +190,35 @@ class Uploader():
             p = s.post(rest_url + f"authn/login?user={user}&password={password}", data={ "user":user, "password":password  }, headers={ "X-XSRF-TOKEN":cookie })
         print(p)
 
-"""
-class Uploader():
-    def __init__(self, user, password, rest_url, collection):
-        self.valid = False
-        self.client = drc.DSpaceRestClient(user, password, rest_url, False, True)
-        if self.client is None:
-            raise Exception(f"Fehler beim Erzeugen des REST-Clients für {rest_url}, user {user}")
-        self.collection_id = self.client.get_id_by_handle(collection)
-        if collection_id is None:
-            raise Exception(f"ID für die Collection {collection} konnte nicht gefunden werden")
-        else:
-            self.valid = True
-"""
+
+# Download von JPG-Dateien aus der WDB mit basalen Metadaten
+from lib import digitized_book as db
+def download_images_jpg(sig, path = None, overwrite_images = False):
+    if path == None:
+        path = "downloads/images_wdb"
+    with open(f"//server/Digitalisate/copy/drucke/{sig}/facsimile.xml", "r") as file:
+        tree = et.parse(file)
+        root = tree.getroot()
+        image_list = []
+        folder = f"{path}/{sig}"
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        for gr in root:
+            im_name = gr.attrib["url"].split("/").pop()
+            image_list.append(im_name)
+            for im in image_list:
+                original = f"//server/Digitalisate/copy/drucke/{sig}/max/{im}"
+                target = f"{folder}/{im}"
+                if os.path.exists(target) == False or overwrite_images == True:
+                    shutil.copyfile(original, target)
+        book = db.Book(sig)
+        record = book.get_bib_data()
+        ppn = book.bib_record.ppn
+        vdn = book.bib_record.vdn
+        title = book.bib_record.make_citation()
+        with open(f"{folder}/metadata.txt", "a") as f:
+            f.write(f"PPN: {ppn}\n")
+            f.write(f"VD-Nummer: {vdn}\n")
+            f.write(f"Titel: {title}\n")
+            f.write(f"Digitalisat: https://diglib.hab.de/drucke/{sig}/start.htm")
+        print(f"{sig} verarztet")

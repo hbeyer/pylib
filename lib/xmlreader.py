@@ -29,7 +29,7 @@ class Reader:
             return(recs)
         logging.error(f"Keine Datensätze")
         return([])
-
+      
 class DownloadReader(Reader):
     def __init__(self, path, tag, namespace = None):
         super().__init__(path, tag, namespace)        
@@ -62,6 +62,38 @@ class DownloadReader(Reader):
         else:
             return(rec)
 
+class StringReader(DownloadReader):
+    def __init__(self, data, tag = "record", namespace = None):
+        super().__init__("", tag, namespace) 
+        self.tag = tag
+        self.namespace = ""
+        if namespace != None:
+            self.namespace = "{" + namespace + "}"
+        self.data = data
+        self.recs = []
+    def get_recs(self):
+        try:
+            root = et.fromstring(self.data)
+        except:
+            logging.error(f" Nicht lesbar: {data}")
+            return([])
+        if root.tag == self.tag:
+            return([root])
+        self.recs = root.findall(".//" + self.namespace + self.tag)
+        if len(self.recs) == 0:
+            logging.error(f"Keine Datensätze")
+            return
+    def __iter__(self):
+        self.get_recs()
+        return(self)
+    def __next__(self):
+        try:
+            rec = self.recs.pop(0)
+        except:
+            raise StopIteration
+        else:
+            return(rec)            
+            
 class WebReader(Reader):
     def __init__(self, path, tag = "", namespace = ""):
         super().__init__(path, tag, namespace)

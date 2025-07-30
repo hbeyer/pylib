@@ -83,7 +83,6 @@ Methoden:
 | \_\_init\_\_  | folder (Standardwert cache/gnd) | - | Anlegen des Ordners, wenn er nicht vorhanden ist. |
 | get_json | id (=GND-Nummer) | JSON-Datei | Wenn die Datei im Ordner unter id vorhanden ist, wird sie von dort geladen, ansonsten wird sie von http://hub.culturegraph.org/entityfacts/{id} geladen und gecacht. |
 
-
 Klasse **CacheLobid**
 
 Methoden:
@@ -99,6 +98,26 @@ Methoden:
 |--|--|--|--|
 | \_\_init\_\_  | folder (Standardwert cache/marc-hbz) | - | Anlegen des Ordners, wenn er nicht vorhanden ist. |
 | get_xml | id | XML-Datei | Wenn die Datei im Ordner unter id abgelegt ist, wird sie von dort geladen, ansonsten wird sie von https://alma.lobid.org/marcxml/{id} geladen und gecacht. |
+
+Klasse **CacheSQLite**
+Cache, bei dem anstelle eines Ordners eine SQLite-Datenbank verwendet wird.
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_  | file_name (Standardwert "cache") | - | Anlegen einer Datenbank mit einer Tabelle main und den Spalten "url" und "result" |
+| get | url | Ein Ergebnis (String), das aus der Datenbank oder von der URL mithilfe der Methode get_dataset retrieved wurde | Bei fehlendem Eintrag in der Datenbank wird ein INSERT-Befehl ausgeführt |
+| show_content | limit (Standardwert: 100) | - | Gibt den Inhalt der Datenbank bis limit über die print-Funktion aus |
+| forget_everything | - | - | Leeren der Datenbank. Es wird ein Backup der db-Datei mit dem Präfix "-" angelegt. |
+
+Klasse **CacheImageDimensions**
+
+Abgeleitet von CacheSQLite. Dient dem Auslesen und Speichern von Bildabmessungen von einer IIIF-Image-API.
+Methoden:
+| Name | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_  | file_name (Standardwert "cache") | - | Anlegen einer Datenbank mit einer Tabelle main und den Spalten "url" und "result" |
+| get_dataset | url | Tupel mit Breite und Höhe, jeweils als String | Die Daten werden mithilfe der Funktion get_dimensions im Modul image_resolver geholt. |
+
 
 ---
 ### Modul csvt
@@ -206,6 +225,10 @@ print(example.to_dict())
 Ausgabe:
 
 `{'dc.identifier': 'VD16 D 340', 'dc.identifier.urn': '', 'dc.format': '', 'dc.type': '', 'dc.language': '', 'dc.title': 'Poematum || HENRICI || DECIMATORIS || GIFFHORNENSIS.|| Libri IIII.||@lat', 'dc.subject': '', 'dc.coverage': '', 'dc.description': '', 'dc.creator': 'Decimator, Heinrich#GND_124613934', 'dc.contributor': '', 'dc.publisher': '', 'dc.rights': '', 'dc.rights.uri': '', 'dcterms.rightsHolder': '', 'dc.source': '', 'dc.relation': '', 'dc.date': '1586', 'dc.date.embargo': '', 'dcterms.extent': '', 'dcterms.isPartOf': ''}`
+
+---
+### Modul digitized_book
+Beschreibung folgt
 
 ---
 ### Modul duennhaupt
@@ -374,6 +397,14 @@ Ausgabe:
 
 ---
 ### Modul html
+Beschreibung folgt
+
+---
+### Modul iiif
+Beschreibung folgt
+
+---
+### Modul image_resolver
 Beschreibung folgt
 
 ---

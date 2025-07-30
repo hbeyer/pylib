@@ -193,22 +193,24 @@ class Uploader():
 
 # Download von JPG-Dateien aus der WDB mit basalen Metadaten
 from lib import digitized_book as db
-def download_images_jpg(sig, path = None, overwrite_images = False):
+def download_images_jpg(sig, folder = None, path = None, overwrite_images = False):
     if path == None:
         path = "downloads/images_wdb"
-    with open(f"//server/Digitalisate/copy/drucke/{sig}/facsimile.xml", "r") as file:
+    if folder == None:
+        folder = "drucke"
+    with open(f"//server/Digitalisate/copy/{folder}/{sig}/facsimile.xml", "r") as file:
         tree = et.parse(file)
         root = tree.getroot()
         image_list = []
-        folder = f"{path}/{sig}"
+        folder_local = f"{path}/{sig}"
         if not os.path.exists(folder):
             os.makedirs(folder)
         for gr in root:
             im_name = gr.attrib["url"].split("/").pop()
             image_list.append(im_name)
             for im in image_list:
-                original = f"//server/Digitalisate/copy/drucke/{sig}/max/{im}"
-                target = f"{folder}/{im}"
+                original = f"//server/Digitalisate/copy/{folder}/{sig}/max/{im}"
+                target = f"{folder_local}/{im}"
                 if os.path.exists(target) == False or overwrite_images == True:
                     shutil.copyfile(original, target)
         book = db.Book(sig)

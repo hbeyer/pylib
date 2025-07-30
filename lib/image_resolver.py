@@ -89,7 +89,4 @@ def get_dimensions(url):
     except:
         #logging.error(f" Abmessungen zu {folder}/{norm_sig}, Seite {page} konnten nicht geladen werden")
         return(None)
-    return(dim)
-        
-    
-        
+    return(dim)    

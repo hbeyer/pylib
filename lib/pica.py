@@ -502,6 +502,17 @@ class Record:
                 pass    
             self.provenances.append(provenance)
     def get_vd(self):
+        if self.bbg[0] == "O":
+            try:
+                bib_refs = self.data["007S"]
+            except:
+                pass
+            else:
+                for key, val in bib_refs.items():
+                    text = val["0"].pop(0)
+                    if "VD1" in text:
+                        self.vdn = text
+                        return
         try:
             self.vdn = self.data["006V"]["01"]["0"].pop(0)
         except:

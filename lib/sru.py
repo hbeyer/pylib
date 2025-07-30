@@ -39,7 +39,13 @@ class Request_SRU:
     def make_url(self, maxRecords = 1, start = 1):
         url = self.base + "?version=" + self.version + "&operation=searchRetrieve&query=" + self.query_pica_enc + "&maximumRecords=" + str(maxRecords) + "&startRecord=" + str(start) + "&recordSchema=" + self.format
         return(url)
-    def download(self, folder = "", fileName = False):
+    def download(self, folder = None, fileName = False):
+        if folder == None:
+            folder = ""
+        if not os.path.exists(folder):
+        # Create a new directory because it does not exist
+            os.makedirs(folder)
+            logging.info(" Ordner {folder} wurde angelegt")
         self.folder = folder
         if fileName != False:
             self.fileName = fileName

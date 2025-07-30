@@ -13,6 +13,7 @@ from lib import xmlreader as xr
 from lib import image_resolver as ir
 from lib import pica
 from lib import cache
+from lib import iiif
 # https://rdflib.readthedocs.io/en/stable/intro_to_creating_rdf.html
 logging.basicConfig(level=logging.INFO)
 
@@ -34,6 +35,10 @@ class Book:
         self.cache_struct = cache.CacheStruct()
         self.cache_dim = cache.CacheImageDimensions()
         self.resolver = ir.Resolver()
+        self.get_year_digi()
+        self.get_bib_data()
+        self.get_pages()
+        self.get_struct_doc()
     def get_year_digi(self):
         self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
         if self.year_digi == None:
@@ -45,16 +50,8 @@ class Book:
                 return(False)
         return(True)
     def get_bib_data(self):
-        #req = sru.Request_HAB()
         url = f"http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.url=diglib.hab.de{self.folder}{self.norm_sig}start.htm and pica.bbg=o*&maximumRecords=1&startRecord=1&recordSchema=picaxml"
         xml = self.cache_sru.get_xml(url, f"{self.folder}_{self.norm_sig}")
-        #req.prepare(f"pica.url=diglib.hab.de{self.folder}{self.norm_sig}start.htm and pica.bbg=o*")
-        #print(req.url)
-        #if req.numFound == 0:
-        #    logging.error(f" Keine O-Aufnahme gefunden für {self.folder}/{self.norm_sig}")
-        #    return(False)
-        #r = httpx.get(req.url)
-        #xml = r.text
         reader = xr.StringReader(xml, "record", "http://docs.oasis-open.org/ns/search-ws/sruResponse")
         for node in reader:
             self.bib_record = pica.Record(node)
@@ -88,6 +85,52 @@ class Book:
             self.export_folder = folder
         if not os.path.exists(self.export_folder):
             os.makedirs(self.export_folder)
+        self.get_year_digi()
+        main_res = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/manifest.json"
+        manifest = iiif.Manifest(main_res)
+        if self.bib_record:
+            label = self.bib_record.make_citation()
+            manifest.add_label(label)
+            for pers in self.bib_record.persons:
+                if pers.role in ["VerfasserIn", "Verfasser", "creator"]:
+                    manifest.add_metadata_property("VerfasserIn", pers.persName, "Author")
+            manifest.add_metadata_property("Titel", self.bib_record.title, "Title")
+            if self.bib_record.edition:
+                manifest.add_metadata_property("Ausgabe", self.bib_record.edition, "Edition")
+            if len(self.bib_record.publishers) > 0:
+                pub_str = "; ".join([pub.persName for pub in self.bib_record.publishers])
+                manifest.add_metadata_property("Drucker/Verlag", pub_str, "Publisher")
+            if len(self.bib_record.places) > 0:
+                place_str = "; ".join([pl.placeName for pl in self.bib_record.places])
+                manifest.add_metadata_property("Erscheinungsort", place_str, "Place")                
+            manifest.add_metadata_property("Datum", self.bib_record.date, "Date")
+            phys_descr = self.bib_record.pages
+            if self.bib_record.format:
+                phys_descr = phys_descr + ", " + self.bib_record.format
+            if self.bib_record.illustrations:
+                phys_descr = phys_descr + ", " + self.bib_record.illustrations
+            manifest.add_metadata_property("Physische Beschreibung", phys_descr, "Physical description")
+            if self.bib_record.vdn:
+                manifest.add_metadata_property("VD-Nr.", self.bib_record.vdn, "No. VD")
+            manifest.add_homepage("Katalogeintrag", "Catalogue entry", f"https://opac.lbs-braunschweig.gbv.de/DB=2/XMLPRS=N/PPN?PPN={self.bib_record.ppn}")
+        for page in self.pages:
+            image_no, number, _struct = page
+            base_do = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}"
+            base_api = f"https://image.hab.de/iiif/images/{self.folder}/{self.norm_sig}/{self.year_digi}_standard_original/{self.norm_sig}_{image_no}.jp2/"
+            url_info = self.resolver.make_link(self.norm_sig, self.year_digi, self.folder, image_no)
+            dimensions = self.cache_dim.get(url_info)
+            if dimensions == None:
+                logging.error(f" Abmessungen konnten nicht geladen werden für {self.norm_sig} Image {image_no}")
+                continue
+            width, height = dimensions.split(",")
+            manifest.add_page_lazily(base_do, base_api, image_no, height, width, 'image/jpeg')
+        return(manifest)
+        
+    def _to_iiif(self, folder = None):
+        if folder != None:
+            self.export_folder = folder
+        if not os.path.exists(self.export_folder):
+            os.makedirs(self.export_folder)
         self.create_graph()
         man_res = URIRef(f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/manifest.json")        
         self.graph.add((man_res, RDF.type, self.namespaces["SC"].Manifest))
@@ -104,7 +147,7 @@ class Book:
                     self.graph.add((pers_node, RDFS.label, Literal("AutorInnen", lang="ger")))
                     self.graph.add((pers_node, RDF.value, Literal(pers.persName)))
                     self.graph.add((man_res, self.namespaces["SC"].metadataLabels, pers_node))
- 
+
             tit_node = BNode()
             self.graph.add((tit_node, RDFS.label, Literal("Titel", lang="ger")))
             self.graph.add((tit_node, RDFS.label, Literal(self.bib_record.title)))
@@ -177,7 +220,7 @@ class Book:
             self.graph.add((ann_node, self.namespaces["OA"].hasBody, im_node))
             self.graph.add((ann_node, self.namespaces["OA"].hasTarget, canv_node))
             
-        self.save_to_location("C:/Users/beyer/Documents/08 Querschnittsaufgaben/WDB/IIIF/Drucke/test_man_generator.json", "json-ld", None, False)
+        self.save_to_location("C:/Users/beyer/Documents/08 Querschnittsaufgaben/WDB/IIIF/Drucke/test_man_generator.json", "json-ld", context, True)
         self.save_to_location("C:/Users/beyer/Documents/08 Querschnittsaufgaben/WDB/IIIF/Drucke/test_man_generator.xml", "xml", None, False)
         self.save_to_location("C:/Users/beyer/Documents/08 Querschnittsaufgaben/WDB/IIIF/Drucke/test_man_generator.ttl", "turtle", None, False)
         #print(self.graph.serialize(format="json-ld", auto_compact=True))
@@ -206,4 +249,4 @@ class Book:
         self.graph.bind("oa", self.namespaces["OA"])
         self.namespaces["DCTYPES"] = Namespace("http://purl.org/dc/dcmitype/")
         self.graph.bind("dctypes", self.namespaces["DCTYPES"])
-        return(True)        
+        return(True)

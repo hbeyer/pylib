@@ -47,9 +47,19 @@ class Manifest:
         canvas.add_thumbnail(id_thumb, format)
         self.add_canvas(canvas)
         return
+    def add_structures(self, base_do, ranges):
+        items = []
+        for range_num, range in enumerate(ranges):
+            canvases = []
+            for page in range.pages:
+                image_number, num = page
+                canvases.append({ "id" : f"{base_do}-{image_number}/canvas", "type" : "Canvas" })
+            items.append({ "id" : f"{base_do}-{image_number}/range/{range_num}", "type" : "Range", "label" : { "de" : [ range.heading ] }, "items" : canvases })
+        self.content["structures"] = [ {"id" : f"{base_do}range/toc", "type" : "Range", "label" : { "de" : [ "Inhaltsverzeichnis" ] }, "items" : items } ]
+        return
     def serialize(self):
         self.content_json = json.dumps(self.content)
-        return
+        return(self.content_json)
         
 class Canvas:
     def __init__(self, ressource, height, width):

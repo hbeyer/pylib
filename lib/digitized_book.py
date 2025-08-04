@@ -27,6 +27,7 @@ class Book:
         self.bib_record = None
         self.pages = []
         self.struct_doc = None
+        self.ranges = []
         self.export_folder = "manifests"
         self.graph = None
         self.namespaces = {}
@@ -39,6 +40,8 @@ class Book:
         self.get_bib_data()
         self.get_pages()
         self.get_struct_doc()
+        if self.struct_doc != None:
+            self.get_ranges()
     def get_year_digi(self):
         self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
         if self.year_digi == None:
@@ -79,6 +82,24 @@ class Book:
             logging.info(f" Keine Strukturdaten zu {self.folder}/{self.norm_sig}")
             return
         self.struct_doc = et.fromstring(xml)
+        return
+    def get_ranges(self):
+        divs = self.struct_doc.findall(".//{http://www.tei-c.org/ns/1.0}div")
+        for div in divs:
+            div_type = div.attrib.get("type", "")
+            head = div.find(".//{http://www.tei-c.org/ns/1.0}head")
+            try:
+                heading = head.text
+            except:
+                heading = None
+            range = Range(heading, div_type)
+            pbs = div.findall(".//{http://www.tei-c.org/ns/1.0}pb")
+            for pb in pbs:
+                facs = pb.attrib.get("facs", "")
+                image_no = facs.replace(f"#{self.folder}_{self.norm_sig}_", "")
+                num = pb.attrib.get("n", "")
+                range.add_page((image_no, num))
+            self.ranges.append(range)
         return
     def to_iiif(self, folder = None):
         if folder != None:
@@ -124,129 +145,28 @@ class Book:
                 continue
             width, height = dimensions.split(",")
             manifest.add_page_lazily(base_do, base_api, image_no, height, width, 'image/jpeg')
+        if len(self.ranges) > 0:
+            manifest.add_structures(base_do, self.ranges)
         return(manifest)
         
-    def _to_iiif(self, folder = None):
-        if folder != None:
-            self.export_folder = folder
-        if not os.path.exists(self.export_folder):
-            os.makedirs(self.export_folder)
-        self.create_graph()
-        man_res = URIRef(f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/manifest.json")        
-        self.graph.add((man_res, RDF.type, self.namespaces["SC"].Manifest))
-        #self.graph.add((man_res, RDF.context, URIRef("http://iiif.io/api/presentation/3/context.json")))
-        context = "http://iiif.io/api/presentation/3/context.json"
-        self.graph.add((man_res, FOAF.logo, URIRef("https://dev.hab.de/signaturen/public/assets/icons/logo.svg")))
-        
-        if self.bib_record:
-            label = self.bib_record.make_citation()
-            self.graph.add((man_res, RDFS.label, Literal(label)))
-            for pers in self.bib_record.persons:
-                if pers.role in ["VerfasserIn", "Verfasser", "creator"]:
-                    pers_node = BNode()
-                    self.graph.add((pers_node, RDFS.label, Literal("AutorInnen", lang="ger")))
-                    self.graph.add((pers_node, RDF.value, Literal(pers.persName)))
-                    self.graph.add((man_res, self.namespaces["SC"].metadataLabels, pers_node))
-
-            tit_node = BNode()
-            self.graph.add((tit_node, RDFS.label, Literal("Titel", lang="ger")))
-            self.graph.add((tit_node, RDFS.label, Literal(self.bib_record.title)))
-            self.graph.add((man_res, self.namespaces["SC"].metadataLabels, tit_node))
-
-            date_node = BNode()
-            self.graph.add((date_node, RDFS.label, Literal("Datierung", lang="ger")))
-            self.graph.add((date_node, RDFS.label, Literal(self.bib_record.date)))
-            self.graph.add((man_res, self.namespaces["SC"].metadataLabels, date_node))
-
-            if len(self.bib_record.publishers) > 0:
-                pub_node = BNode()
-                self.graph.add((pub_node, RDFS.label, Literal("Drucker/Verleger", lang="ger")))
-                self.graph.add((pub_node, RDFS.label, Literal("; ".join([pub.persName for pub in self.bib_record.publishers]))))
-                self.graph.add((man_res, self.namespaces["SC"].metadataLabels, pub_node))
-
-            if len(self.bib_record.places) > 0:
-                place_node = BNode()
-                self.graph.add((place_node, RDFS.label, Literal("Erscheinungsort", lang="ger")))
-                self.graph.add((place_node, RDFS.label, Literal("; ".join([pl.placeName for pl in self.bib_record.places]))))  
-                self.graph.add((man_res, self.namespaces["SC"].metadataLabels, place_node))                
-
-            pages_node = BNode()
-            self.graph.add((pages_node, RDFS.label, Literal("Umfang", lang="ger")))
-            self.graph.add((pages_node, RDFS.label, Literal(self.bib_record.pages)))
-            self.graph.add((pages_node, RDFS.label, Literal(self.bib_record.format)))
-            if self.bib_record.illustrations:
-                self.graph.add((pages_node, RDFS.label, Literal(self.bib_record.illustrations)))
-            self.graph.add((man_res, self.namespaces["SC"].metadataLabels, pages_node))
-            
-            if self.bib_record.vdn:
-                vd_node = BNode()
-                self.graph.add((vd_node, RDFS.label, Literal("VD-Nummer", lang="ger")))
-                self.graph.add((vd_node, RDFS.label, Literal(self.bib_record.vdn)))  
-                self.graph.add((man_res, self.namespaces["SC"].metadataLabels, vd_node))
-            
-        main_seq = URIRef(f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/start.htm#sequence-1")
-        self.graph.add((main_seq, RDF.type, self.namespaces["SC"].Sequence))
-        self.graph.add((main_seq, RDFS.label, Literal("Current order", lang="eng")))
-        self.graph.add((man_res, self.namespaces["SC"].hasSequences, main_seq))
-        
-        for page in self.pages:
-            image = page[0]
-            num = page[1]
-            label = num if num else f"[{image}]"
-            url_info = self.resolver.make_link(self.norm_sig, self.year_digi, self.folder, image)
-            dimensions = self.cache_dim.get(url_info)
-            if dimensions == None:
-                logging.error(f" Keine Abmessungen zu {self.folder}/{self.norm_sig} gefunden")
-                continue
-            canv_node = URIRef(f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/start.htm#canvas-{image}")
-            self.graph.add((canv_node, RDF.type, self.namespaces["SC"].Canvas))
-            self.graph.add((canv_node, RDFS.label, Literal(label)))
-            width, height = dimensions.split(",")
-            self.graph.add((canv_node, self.namespaces["EXIF"].height, Literal(int(height), datatype=XSD.integer)))
-            self.graph.add((canv_node, self.namespaces["EXIF"].width, Literal(int(width), datatype=XSD.integer)))
-            self.graph.add((man_res, self.namespaces["SC"].hasCanvases, canv_node))
-            
-            ann_node = URIRef(f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/start.htm#annotation-{image}")
-            self.graph.add((canv_node, self.namespaces["SC"].hasAnnotations, ann_node))
-            self.graph.add((ann_node, RDF.type, self.namespaces["OA"].Annotation))
-            self.graph.add((ann_node, self.namespaces["OA"].motivatedBy, self.namespaces["SC"].painting))
-
-            im_node = URIRef(self.resolver.make_default(self.norm_sig, self.year_digi, self.folder, image))
-            self.graph.add((im_node, RDF.type, self.namespaces["DCTYPES"].Image))
-            self.graph.add((im_node, self.namespaces["SVCS"].hasService, URIRef(url_info)))
-            self.graph.add((im_node, self.namespaces["EXIF"].height, Literal(int(height), datatype=XSD.integer)))
-            self.graph.add((im_node, self.namespaces["EXIF"].width, Literal(int(width), datatype=XSD.integer)))
-            self.graph.add((im_node, DC.format, Literal("image/jpeg")))
-            self.graph.add((ann_node, self.namespaces["OA"].hasBody, im_node))
-            self.graph.add((ann_node, self.namespaces["OA"].hasTarget, canv_node))
-            
-        self.save_to_location("C:/Users/beyer/Documents/08 Querschnittsaufgaben/WDB/IIIF/Drucke/test_man_generator.json", "json-ld", context, True)
-        self.save_to_location("C:/Users/beyer/Documents/08 Querschnittsaufgaben/WDB/IIIF/Drucke/test_man_generator.xml", "xml", None, False)
-        self.save_to_location("C:/Users/beyer/Documents/08 Querschnittsaufgaben/WDB/IIIF/Drucke/test_man_generator.ttl", "turtle", None, False)
-        #print(self.graph.serialize(format="json-ld", auto_compact=True))
-        #print(self.graph.serialize(format="json-ld", context=context))
-
-    def save_to_location(self, path, format, context = None, auto_compact=None):
-        with open(path, "w", encoding="utf-8") as f:
-            content = self.graph.serialize(format=format, context=context, auto_compact=auto_compact)
-            f.write(content)
-            return
-    def create_graph(self):
-        self.graph = Graph()
-        self.graph.bind("dcterms", DCTERMS)
-        self.graph.bind("rdf", RDF)
-        self.graph.bind("rdfs", RDFS)
-        self.graph.bind("dc", DC)
-        self.namespaces["HAB"] = Namespace("https://diglib.hab.de/")
-        self.graph.bind("hab", self.namespaces["HAB"])
-        self.namespaces["SC"] = Namespace("http://iiif.io/api/presentation/2#")
-        self.graph.bind("sc", self.namespaces["SC"])
-        self.namespaces["EXIF"] = Namespace("http://www.w3.org/2003/12/exif/ns#")
-        self.graph.bind("exif", self.namespaces["EXIF"])
-        self.namespaces["SVCS"] = Namespace("http://rdfs.org/sioc/services#")
-        self.graph.bind("svcs", self.namespaces["SVCS"])   
-        self.namespaces["OA"] = Namespace("http://www.w3.org/ns/oa#")
-        self.graph.bind("oa", self.namespaces["OA"])
-        self.namespaces["DCTYPES"] = Namespace("http://purl.org/dc/dcmitype/")
-        self.graph.bind("dctypes", self.namespaces["DCTYPES"])
+class Range:
+    def __init__(self, heading = None, type = None):
+        self.heading = ""
+        if heading != None:
+            self.heading = heading
+        self.type = ""
+        if type != None:
+            self.type = type
+        self.pages = []
+    def add_page(self, tuple):
+        if len(tuple) != 2:
+            return(False)
+        self.pages.append(tuple)
         return(True)
+    def __str__(self):
+        if self.heading == "":
+            self.heading = "ohne Titel"
+        if self.type == "":
+            self.type = "unbestimmt"
+        ret = f"Abschnitt {self.heading}, Typ {self.type}, {len(self.pages)} Seiten"
+        return(ret)

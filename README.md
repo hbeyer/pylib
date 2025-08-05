@@ -1,4 +1,5 @@
 
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -405,7 +406,37 @@ Beschreibung folgt
 
 ---
 ### Modul image_resolver
-Beschreibung folgt
+Ermitteln des Digitalisierungsjahres sowie von Bildamessungen für Digitalisate der HAB. Die Informationen sind zur Erzeugung von IIIF-Manifesten notwendig.
+Klasse **Resolver**
+| Methode | Parameter | Rückgabewert | Effekt |
+|-|--|--|--|
+| \_\_init\_\_ | -  | - | Initiieren des Objekts, Anlage zweier SQLite-Datenbanken (`year_digi.db` und `digi_fail.db)` |
+| close | -  | - | Schließen der beiden Datenbanken |
+| get_digi_year | norm_sig, folder (Standardwert "drucke") | year (Jahr der Erstellung, Integer | Der Wert wird zunächst in der Datenbank `year_digi.db` gesucht, wenn er dort nicht abgespeichert ist, werden alle möglichen Jahre vom laufenden bis 1998 abwärts durchprobiert. Gefundene Werte werden in der Datenbank gespeichert, nicht aufzufindende in der Datenbank `digi_fail.db` dokumentiert. |
+| forget_item | norm_sig, folder (Standardwert "Drucke") | - | Löschen  des Eintrags aus beiden Datenbanken |
+
+#### Funktionen
+| Name | Parameter | Rückgabewert | Effekt |
+|-|--|--|--|
+| get_dimensions | url (Adresse der info.json-Datei, s. make_link)  | Tupel mit den Werten für Breite und Höhe | Initiieren des Objekts, Anlage zweier SQLite-Datenbanken (`year_digi.db` und `digi_fail.db)` |
+| make_link | norm_sig, year, folder (Standardwert "drucke"), page (Standardwert "00001") | url der info.json-Datei auf dem Image-Server | - |
+| make_default_link | norm_sig, year, folder, page | url der Normalansicht (endend auf "/max/0/default.jpg") auf dem Image-Server | - |
+
+Codebeispiel
+```python
+from lib import cache
+from lib import image_resolver as ir
+
+norm_sig = "39-10-hist"
+resolver = ir.Resolver()
+year = resolver.get_digi_year(norm_sig)
+url_info = ir.make_link(norm_sig, year)
+url_image = ir.make_default_link(norm_sig, year)
+cache_dim = cache.CacheImageDimensions()
+width, height = cache_dim.get_dataset(url_info)
+print(f"Das Bild unter {url_image} ist {width} Pixel breit und {height} Pixel hoch.")
+resolver.close()
+```
 
 ---
 ### Modul incunabula
@@ -1043,6 +1074,8 @@ Klasse **UnAPIReader**
 
 Reader zum Auslesen von Downloads aus einer unAPI
 
+Klasse **StringReader**
+Reader zum Auslesen von XML, das als String vorliegt.
 
 ---
 ### Modul xmlserializer

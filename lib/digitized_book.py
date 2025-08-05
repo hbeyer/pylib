@@ -138,7 +138,7 @@ class Book:
             image_no, number, _struct = page
             base_do = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}"
             base_api = f"https://image.hab.de/iiif/images/{self.folder}/{self.norm_sig}/{self.year_digi}_standard_original/{self.norm_sig}_{image_no}.jp2/"
-            url_info = self.resolver.make_link(self.norm_sig, self.year_digi, self.folder, image_no)
+            url_info = ir.make_link(self.norm_sig, self.year_digi, self.folder, image_no)
             dimensions = self.cache_dim.get(url_info)
             if dimensions == None:
                 logging.error(f" Abmessungen konnten nicht geladen werden für {self.norm_sig} Image {image_no}")

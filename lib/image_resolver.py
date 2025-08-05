@@ -10,7 +10,7 @@ from lib import localsql as lsql
 logging.basicConfig(level=logging.INFO)
 
 class Resolver():
-    def __init__(self, file_name = None):
+    def __init__(self):
         self.folder = "drucke"
         self.year_init = 1998
         self.dc = lsql.DataConnection("year_digi")
@@ -31,7 +31,7 @@ class Resolver():
             return(None)
         year = date.today().year
         while year >= self.year_init:
-            test_url = self.make_link(norm_sig, year, folder)
+            test_url = make_link(norm_sig, year, folder)
             r = httpx.get(test_url)
             if r.status_code == 200:
                 ins_action = self.dc.sql_action(f"INSERT INTO main VALUES ('{norm_sig}', '{self.folder}', '{year}')")
@@ -42,18 +42,8 @@ class Resolver():
         ins_action = self.dc_fail.sql_action(f"INSERT INTO main VALUES ('{norm_sig}', '{self.folder}')")
         if self.dc_fail.rows_affected > 0:
             logging.info(f"Es wurden die Werte {norm_sig}, {self.folder} in die Datenbank {self.dc_fail.file_name} eingefügt.")
-        return(None)
-    def make_link(self, norm_sig, year, folder = None, page = None):
-        if folder != None:
-            self.folder = folder
-        if page == None:
-            page = "00001"
-        link = f"https://image.hab.de/iiif/images/{self.folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/info.json"
-        return(link)
-    def make_default(self, norm_sig, year, folder, page):
-        link = f"https://image.hab.de/iiif/images/{self.folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/full/max/0/default.jpg"
-        return(link)        
-    def forget_item(self, norm_sig, folder = None):
+        return(None)     
+    def forget_item(self, folder = None, page = None):
         if folder != None:
             self.folder = folder
         sql = f"DELETE FROM main WHERE norm_sig LIKE '{norm_sig}' and folder LIKE '{self.folder}'"
@@ -78,7 +68,6 @@ class Resolver():
 # Das Caching bringt nicht viel, da es nur zur Laufzeit des Programms verfügbar ist. => Datenbank o. ä. einbinden
 @functools.lru_cache(maxsize=10000)
 def get_dimensions(url):
-    #url = f"https://image.hab.de/iiif/images/{folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/info.json"
     r = httpx.get(url)
     if r.status_code != 200:
         logging.error(f" {url} konnte nicht geladen werden")
@@ -89,4 +78,19 @@ def get_dimensions(url):
     except:
         #logging.error(f" Abmessungen zu {folder}/{norm_sig}, Seite {page} konnten nicht geladen werden")
         return(None)
-    return(dim)    
+    return(dim)
+    
+def make_link(norm_sig, year, folder = None, page = None):
+    if folder == None:
+        folder = "drucke"
+    if page == None:
+        page = "00001"
+    link = f"https://image.hab.de/iiif/images/{folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/info.json"
+    return(link)
+def make_default_link(norm_sig, year, folder = None, page = None):
+    if folder != None:
+        folder = folder
+    if page == None:
+        page = "00001"    
+    link = f"https://image.hab.de/iiif/images/{folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/full/max/0/default.jpg"
+    return(link)      

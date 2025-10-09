@@ -11,7 +11,6 @@ from lib import isil as il
 from lib import xmlserializer as xs
 from lib import romnumbers as rn
 from lib import provenance as prv
-from lib import dataset as ds
 
 class Record:
     def __init__(self, node):
@@ -735,17 +734,6 @@ class Record:
             reservation["digitalisierbar"] = reservation["status"].replace("cc", "Nein").replace("cb", "Ja")
             ret.append(reservation)
         return(ret)
-
-    """        
-    def to_dc(self):
-        meta = ds.DatasetDC()
-        meta.add_entry("dc.identifier", ds.Entry(self.ppn))
-        meta.add_entry("dc.format", ds.Entry("Book", "eng"))
-        meta.add_entry("dc.type", ds.Entry("Monograph", "eng"))
-        meta.add_entry("dc.title", ds.Entry(self.title))
-        meta.add_entry("dc.date", ds.Entry(self.date))         
-        return(meta)
-    """
 
 class RecordVD17(Record):
     def __init__(self, node):

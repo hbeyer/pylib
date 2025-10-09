@@ -84,7 +84,7 @@ def make_link(norm_sig, year, folder = None, page = None):
     if folder == None:
         folder = "drucke"
     if page == None:
-        page = "00001"
+        page = "00001"
     link = f"https://image.hab.de/iiif/images/{folder}/{norm_sig}/{year}_standard_original/{norm_sig}_{page}.jp2/info.json"
     return(link)
 def make_default_link(norm_sig, year, folder = None, page = None):

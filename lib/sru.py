@@ -69,13 +69,13 @@ class Request_SRU:
 class Request_K10plus(Request_SRU):
     def __init__(self):
         super().__init__()
-        self.base = 'http://sru.k10plus.de/opac-de-627'
+        self.base = 'https://sru.k10plus.de/opac-de-627'
         self.fileName = "downloadK10plus"
 
 class Request_VD17(Request_SRU):
     def __init__(self):
         super().__init__()
-        self.base = 'http://sru.k10plus.de/vd17'
+        self.base = 'https://sru.k10plus.de/vd17'
         self.fileName = "downloadVD17"
 
 class Request_VD18(Request_SRU):
@@ -93,7 +93,7 @@ class Request_VD18_ADB(Request_SRU):
 class Request_HAB(Request_SRU):
     def __init__(self):
         super().__init__()
-        self.base = 'http://sru.k10plus.de/opac-de-23'
+        self.base = 'https://sru.k10plus.de/opac-de-23'
         self.fileName = "SRU_HAB"
         
 class Request_Helmst(Request_SRU):

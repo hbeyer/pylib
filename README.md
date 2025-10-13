@@ -17,7 +17,8 @@ from lib import sru
 from lib import xmlreader as xr
 from lib import pica
 
-# Downloadordner für die XML-Dateien (muss zuvor angelegt und bei Abänderung der Suchanfrage geleert werden)
+# Downloadordner für die XML-Dateien (muss zuvor angelegt und bei Abänderung 
+# der Suchanfrage geleert werden)
 folder = "downloads/k10plus"
 
 # Anlegen eines Request-Objekts für den K10plus
@@ -28,12 +29,14 @@ print(f"{req.numFound} Datensätze gefunden. URL: {req.url}")
 # Download der XML-Dateien
 req.download(folder)
 
-# Anlegen eines Readers zum Extrahieren aller Knoten mit dem Namen "record" und dem angegebenen Namespace aus den XML-Dateien
+# Anlegen eines Readers zum Extrahieren aller Knoten mit dem Namen "record" 
+# und dem angegebenen Namespace aus den XML-Dateien
 reader = xr.DownloadReader(folder, "record", "info:srw/schema/5/picaXML-v1.0")
 
 # Iterieren über die Knoten, die der Reader ausgibt
 for no, node in enumerate(reader):
-    # Erzeugen eines Record-Objekts aus den einzelnen Knoten, das die Daten der Aufnahme in strukturierter Form enthält
+    # Erzeugen eines Record-Objekts aus den einzelnen Knoten, das die 
+    # Daten der Aufnahme in strukturierter Form enthält
 	rec = pica.Record(node)
 	# Umwandeln serieller Properties in Strings
 	authors = ", ".join([pers.persName for pers in rec.persons if pers.role in ["creator", "VerfasserIn"]])
@@ -265,12 +268,12 @@ Ausgabe:
 
 ---
 ### Modul digitized_book
-Handling von Digitalisaten der HAB. Ausgehend von der normalisierten Signatur (z. B. "46-astron-2")  wird ein Objekt angelegt, in das die bibliographischen Daten und Strukturdaten geladen und ein IIIF-Manifest erzeugt werden kann.
+Handling von Digitalisaten der HAB. Ausgehend von der normalisierten Signatur (z. B. "46-astron-2")  wird ein Objekt angelegt, in das die bibliographischen Daten und Strukturdaten geladen werden und woraus ein IIIF-Manifest erzeugt werden kann.
 
 #### Klasse Book
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-| \_\_init\_\_ | norm_sig (normalisierte Signatur), folder (Standardwert "drucke") | - | Anlegegen des Objekts. Laden der bibliographischen Daten (bib_record), Seiteninformationen (pages) und Strukturdaten (struct_doc) sowie der Ranges (ranges), sofern Strukturdaten gefunden wurden |
+| \_\_init\_\_ | norm_sig (normalisierte Signatur), folder (Standardwert "drucke") | - | Anlegen des Objekts. Laden der bibliographischen Daten (bib_record), Seiteninformationen (pages) und Strukturdaten (struct_doc) sowie der Ranges (ranges), sofern Strukturdaten gefunden wurden |
 | to_iiif | folder (Standardwert "drucke") | Objekt der Klasse iiif.Manifest (s. u. Modul iiif) | - |
 
 #### Klasse Range
@@ -445,6 +448,7 @@ Ausgabe:
 ---
 ### Modul iiif
 Erzeugen von IIIF-Manifesten als JSON-Objekte.
+
 Klasse **Manifest**
 | Methode | Parameter | Rückgabewert | Effekt |
 |-|--|--|--|
@@ -502,6 +506,7 @@ Umrechnung der kataloginternen Bibliothekskennung ELN in eine ISIL gemäß der B
 
 ---
 ### Modul language
+
 Sprachcodes nach ISO 639.2
 Funktionen
 
@@ -514,6 +519,7 @@ Gibt zur Sprachbezeichnung den Code aus, bei unbekannten Sprachen False.
 
 ---
 ### Modul lobid
+
 Suche in der lobid-Schnittstelle des HBZ (http://lobid.org/)
 
 Klasse **Request_Lobid**
@@ -1023,6 +1029,7 @@ req.download(folder)
 ---
 ### Modul table_winibw
 Klasse zur Arbeit mit CSV-Dateien, die mit MS Excel erzeugt wurden (Zeichencodierung "cp1252", Trennzeichen ";"). Insbesondere mit der WinIBW erzeugte CSV-Tabellen (Funktion "Exceltabelle erzeugen") können so leicht verarbeitet werden.
+
 Das Modul überschneidet sich mit dem obigen [Modul csvt](#modul-csvt), das ursprünglich zum Serialisieren von Daten mit Python ohne Import aus einer Windows-Anwendung gedacht war. Inzwischen ist der Funktionsumfang von csvt größer.
 
 Klasse **Table**

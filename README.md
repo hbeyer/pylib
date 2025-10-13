@@ -9,6 +9,42 @@ from lib import {modul} as {namespace}
 ```
 {modul} ist dabei der Name einer im Ordner "lib" liegenden Python-Datei ohne Endung. {namespace} ist ein frei wählbares Kürzel, die Verwendung ist optional.
 
+## Zugriff auf bibliographische Daten im PICA-System
+
+Die Module [sru](#modul-sru), [xmlreader](#modul-xmlreader) und [pica](#modul-pica) ermöglichen im Zusammenspiel den Download und die Auswertung großer Mengen an bibliographischen Daten aus PICA-basierten Katalogen, insb. dem K10plus, VD 17, VD 18 und den OPACs des Verbunds. Ein mögliches Vorgehen ist folgendes:
+```python
+from lib import sru
+from lib import xmlreader as xr
+from lib import pica
+
+# Downloadordner für die XML-Dateien (muss zuvor angelegt und bei Abänderung der Suchanfrage geleert werden)
+folder = "downloads/k10plus"
+
+# Anlegen eines Request-Objekts für den K10plus
+req = sru.Request_K10plus()
+# Übergabe einer Suchanfrage in PICA-Suchsyntax
+num = req.prepare("pica.bbg=(Aa* or Af*) and pica.tit=dissertatio* and pica.vlo=goettingen")
+print(f"{req.numFound} Datensätze gefunden. URL: {req.url}")
+# Download der XML-Dateien
+req.download(folder)
+
+# Anlegen eines Readers zum Extrahieren aller Knoten mit dem Namen "record" und dem angegebenen Namespace aus den XML-Dateien
+reader = xr.DownloadReader(folder, "record", "info:srw/schema/5/picaXML-v1.0")
+
+# Iterieren über die Knoten, die der Reader ausgibt
+for no, node in enumerate(reader):
+    # Erzeugen eines Record-Objekts aus den einzelnen Knoten, das die Daten der Aufnahme in strukturierter Form enthält
+	rec = pica.Record(node)
+	# Umwandeln serieller Properties in Strings
+	authors = ", ".join([pers.persName for pers in rec.persons if pers.role in ["creator", "VerfasserIn"]])
+	places = ", ".join([pl.placeName for pl in rec.places])
+	print(f"{authors}: {rec.title}, {places} {rec.date}")
+    # Begrenzung der Ausgabe auf 100 Titel
+	if no > 100:
+		break
+
+```
+
 ## Beschreibung der Module
 Unvollständige oder obsolete Module werden ausgelassen. Methoden oder Eigenschaften werden nur angegeben, wenn sie für die Benutzung relevant sind.
 
@@ -229,9 +265,22 @@ Ausgabe:
 
 ---
 ### Modul digitized_book
-Beschreibung folgt
+Handling von Digitalisaten der HAB. Ausgehend von der normalisierten Signatur (z. B. "46-astron-2")  wird ein Objekt angelegt, in das die bibliographischen Daten und Strukturdaten geladen und ein IIIF-Manifest erzeugt werden kann.
 
+#### Klasse Book
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | norm_sig (normalisierte Signatur), folder (Standardwert "drucke") | - | Anlegegen des Objekts. Laden der bibliographischen Daten (bib_record), Seiteninformationen (pages) und Strukturdaten (struct_doc) sowie der Ranges (ranges), sofern Strukturdaten gefunden wurden |
+| to_iiif | folder (Standardwert "drucke") | Objekt der Klasse iiif.Manifest (s. u. Modul iiif) | - |
+
+#### Klasse Range
+Abschnitte, die aus den Strukturdaten herausgelesen werden. Zu den erlaubten Werten für type s. https://dfg-viewer.de/strukturdatenset
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | heading (optional), type (optional) | - | - |
+| add_page | Tupel: (image_number, num) | True bei Erfolg | Hinzufügen einer Seite in pages |
 ---
+
 ### Modul duennhaupt
 
 Arbeiten mit den Autor*innen in den Personalbibliographien zu den Drucken des Barock von Gerhard Dünnhaupt (Stuttgart 1990-1993).
@@ -394,15 +443,18 @@ Ausgabe:
 `{'preferredName': 'Antoinette Amalie, Braunschweig-Lüneburg, Herzogin', 'dateOfBirth': '22. April 1696', 'dateOfDeath': '6. März 1762', 'biographicalOrHistoricalInformation': 'Frau von Herzog Ferdinand Albrecht II. von Braunschweig-Bevern (1680-1735); jüngste Tochter von Herzog Ludwig Rudolf von Braunschweig-Lüneburg (1671-1735) und Prinzessin Christine Luise von Oettingen-Oettingen', 'placeOfBirth': 'Wolfenbüttel', 'placeOfDeath': 'Braunschweig', 'gender': 'Frau'}`
 
 ---
-### Modul hbz
-
----
-### Modul html
-Beschreibung folgt
-
----
 ### Modul iiif
-Beschreibung folgt
+Erzeugen von IIIF-Manifesten als JSON-Objekte.
+Klasse **Manifest**
+| Methode | Parameter | Rückgabewert | Effekt |
+|-|--|--|--|
+| \_\_init\_\_ | ressource (URL des Manifests) | - | Anlegen eines leeren Manifests, Inhalt unter content |
+| add_label | label, lang | - | Hinzufügen eines Textes mit Sprachangabe zum Manifest-Objekt |
+| add_metadata_property | field_ger, value_ger, field_eng (optional), value_eng (optional) | - | Hinzufügen einer Property in Deutsch und optional parallel in Englisch zum Tag "metadata" |
+| add_homepage | label_de, label_en, url | - | Hinzufügen einer URL mit Label zum Manifest unter dem Tag "homepage" | 
+| add_page_lazily | base_do (Basis-URL des digitalen Objekts), base_api (Basis-URL der IIIF-API vor "full..."), number (Seitenzahl), height (Höhe der Seite in voller Auflösung), width (Breite entsprechend), format (Standard ist "image/jpg") | - | Hinzufügen einer Seite zum Manifest, eingebettet in Canvas, AnnotationPage und Annotation |
+| add_structures | base_do (Basis-URL des digitalen Objekts), ranges (Objekte vom Typ digitized_book.Range) | - | Hinzufügen der Strukturdaten unter dem Tag "structures" |
+| serialize | - | Manifest (d. h. die Strukturen unter Manifest.content) als serialisiertes JSON-Objekt | Ablage des serialisierten Manifests unter self.content_json | 
 
 ---
 ### Modul image_resolver
@@ -439,10 +491,6 @@ resolver.close()
 ```
 
 ---
-### Modul incunabula
-Beschreibung folgt
-
----
 ### Modul isil
 
 Umrechnung der kataloginternen Bibliothekskennung ELN in eine ISIL gemäß der Berliner [ISIL- und Sigeldatei](https://sigel.staatsbibliothek-berlin.de/suche/). Berücksichtigt werden alle Biblitoheken im VD17. Bereitstellung zusätzlicher Informationen zur Bibliothek und zum Ort.
@@ -463,10 +511,6 @@ Gibt die deutsche Sprachbezeichnung bei Eingabe des Codes aus, bei unbekanntem C
     getCode(language)
 
 Gibt zur Sprachbezeichnung den Code aus, bei unbekannten Sprachen False.
-
----
-### Modul lido
-Beschreibung folgt
 
 ---
 ### Modul lobid
@@ -560,14 +604,6 @@ print(test)
 ```
 
 ---
-### Modul maps
-Beschreibung folgt
-
----
-### Modul mets
-Beschreibung folgt
-
----
 ### Modul network
 Klassen zur Abbildung eines Netzwerks, das auch Knoten und Relationen besteht. Daten können in Cypher ausgegeben und direkt in eine neo4j-Instanz gespielt werden. Aus der GND können Daten zur Abbildung von Personennetzen importiert werden.
 
@@ -614,14 +650,6 @@ graph.save:cypher("mygraph")
 # Exportieren nach neo4j
 graph.to_neo4j("neo4j://localhost:7687", "{Nutzer}", "{Passwort}", "{Datenbank}")
 ```
-
----
-### Modul oai
-Beschreibung folgt
-
----
-### Modul opac
-Beschreibung folgt
 
 ---
 ### Modul pica
@@ -941,7 +969,6 @@ smlist.makeVolumes()
 
 for vol in smlist.volumeList:
     print(vol)
-
 ```
 
 ---
@@ -1032,13 +1059,10 @@ Die Liste der Deskriptoren ist als Dictionary mit `tpro.descriptors` abzurufen. 
 | get_descriptors | type ("Exemplartypen"\|"Rechtlicher Status"\|"Physische Merkmale"\|"Zeitangabe"\|None) | - | Gibt eine Liste aller Deskriptoren des Typs zurück, bei None alle Deskriptoren |
 | validate | desc (Name Deskriptor) | - | True wenn Deskriptor vorhanden, False wenn nicht |
 | get_type | descr | - | Typ des angegebenen Deskriptors, None falls nicht vorhanden |
----
-### Modul unapi
-Beschreibung folgt
 
 ---
 ### Modul xmlreader
-Extraktion wiederkehrender Knoten aus XML-Dokumenten. Die Knoten werden als Instanzen von xml.etree.ElementTree.Element (s. [Dokumentation](https://docs.python.org/3/library/xml.etree.elementtree.html#element-objects)) ausgegeben. Beim Auslesen eines Ordners werden alle darin enthaltenen XML-Dokumente berücksichtigt, beim Auslesen einer URL der darin enthaltene XML-Code.
+Extraktion wiederkehrender Knoten aus XML-Dokumenten. Die Knoten werden als Instanzen von xml.etree.ElementTree.Element (s. [Dokumentation](https://docs.python.org/3/library/xml.etree.elementtree.html#element-objects)) ausgegeben. Beim Auslesen eines Ordners werden alle darin enthaltenen XML-Dokumente berücksichtigt, beim Auslesen einer URL der damit abrufbare XML-Code.
 
 Klasse **DownloadReader**
 

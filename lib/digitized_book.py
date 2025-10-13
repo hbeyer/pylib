@@ -6,8 +6,6 @@ import httpx
 import re
 import os
 import xml.etree.ElementTree as et
-from rdflib import Graph, URIRef, Literal, BNode, Namespace
-from rdflib.namespace import FOAF, RDF, DC, DCTERMS, OWL, RDF, RDFS, SKOS, XSD
 from lib import sru
 from lib import xmlreader as xr
 from lib import image_resolver as ir
@@ -28,9 +26,6 @@ class Book:
         self.pages = []
         self.struct_doc = None
         self.ranges = []
-        self.export_folder = "manifests"
-        self.graph = None
-        self.namespaces = {}
         self.cache_sru = cache.CacheSRU_O()
         self.cache_facs = cache.CacheFacsimile()
         self.cache_struct = cache.CacheStruct()
@@ -64,7 +59,7 @@ class Book:
         xml = self.cache_facs.get_xml(self.norm_sig, self.folder)
         if xml == None:
             loggin.error(f" Seiten zu {self_folder}/{self.norm_sig} konnten nicht geladen werden")
-            return
+            return(False)
         reader = xr.StringReader(xml, tag = "graphic", namespace = "http://www.tei-c.org/ns/1.0")
         for node in reader:
             image = node.attrib.get("url", "")
@@ -76,13 +71,14 @@ class Book:
                 logging.error(f" Problem bei Image {image}")
             number = node.attrib.get("n", "")
             self.pages.append((image_no, number, ""))
+        return(True)
     def get_struct_doc(self):
         xml = self.cache_struct.get_xml(self.norm_sig, self.folder)
         if xml == None:
             logging.info(f" Keine Strukturdaten zu {self.folder}/{self.norm_sig}")
-            return
+            return(False)
         self.struct_doc = et.fromstring(xml)
-        return
+        return(True)
     def get_ranges(self):
         divs = self.struct_doc.findall(".//{http://www.tei-c.org/ns/1.0}div")
         for div in divs:
@@ -100,10 +96,10 @@ class Book:
                 num = pb.attrib.get("n", "")
                 range.add_page((image_no, num))
             self.ranges.append(range)
-        return
+        return(True)
     def to_iiif(self, folder = None):
         if folder != None:
-            self.export_folder = folder
+            self.export_folder = "manifests"
         if not os.path.exists(self.export_folder):
             os.makedirs(self.export_folder)
         self.get_year_digi()

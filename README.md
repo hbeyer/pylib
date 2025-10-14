@@ -631,13 +631,14 @@ print(test)
 
 ---
 ### Modul network
-Klassen zur Abbildung eines Netzwerks, das auch Knoten und Relationen besteht. Daten können in Cypher ausgegeben und direkt in eine neo4j-Instanz gespielt werden. Aus der GND können Daten zur Abbildung von Personennetzen importiert werden.
+Klassen zur Abbildung eines Netzwerks, das aus Knoten und Relationen besteht. Daten können in Cypher ausgegeben und direkt in eine neo4j-Instanz gespielt werden. Aus der GND können Daten zur Abbildung von Personennetzen importiert werden.
 
 Klasse **Graph**
 
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 |\_\_init\_\_| nodes (Liste mit Objekten vom Typ network.Node, optional), relations (Liste mit Objekten vom Typ network.Relation, optional) | - | Instanziierung des Objekts |
+| to_neo4j | uri (Adresse der neo4j-Schnittstelle), user (Nutzer), pw (Passwort), db (Name Datenbank), clear (Boolean, Standard: True) |--|--|
 
 Klasse **Node**
 
@@ -649,7 +650,7 @@ Klasse **Relation**
 
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-|\_\_init\_\_| origin (ID des Ausgangsknotens), target (ID des Zielknotens), type (Typus der Relation), attributes (Dictionary mit Schlüssel-Wert-Paaren) |--|--|
+|\_\_init\_\_| origin (ID des Ausgangsknotens), target (ID des Zielknotens), type (Typus der Relation), attributes (Dictionary mit Schlüssel-Wert-Paaren) | - | Einspielen der Daten aus dem Graph-Objekt in die Datenbank. Wenn für clear nicht False übergeben wird, werden alle enthaltenen Daten zuvor gelöscht. |
 
 Klasse **GraphGND**
 

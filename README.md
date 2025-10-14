@@ -1,5 +1,6 @@
 
 
+
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -140,6 +141,7 @@ Methoden:
 | get_xml | id | XML-Datei | Wenn die Datei im Ordner unter id abgelegt ist, wird sie von dort geladen, ansonsten wird sie von https://alma.lobid.org/marcxml/{id} geladen und gecacht. |
 
 Klasse **CacheSQLite**
+
 Cache, bei dem anstelle eines Ordners eine SQLite-Datenbank verwendet wird.
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
@@ -156,7 +158,7 @@ Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_  | file_name (Standardwert "cache") | - | Anlegen einer Datenbank mit einer Tabelle main und den Spalten "url" und "result" |
-| get_dataset | url | Tupel mit Breite und Höhe, jeweils als String | Die Daten werden mithilfe der Funktion get_dimensions im Modul image_resolver geholt. |
+| get_dataset | url | Tupel mit Breite und Höhe, jeweils als String | Die Daten werden mithilfe der Funktion get_dimensions im Modul [image_resolver](#modul-image_resolver) geholt. |
 
 
 ---
@@ -197,6 +199,7 @@ for row in table:
 	print(row["VD16-Nummer"])
 ```
 Klasse **TableWin**:
+
 Abgeleitete Klasse mit der Zeichencodierung "cp1252"
 
 Klasse **TableGeoBrowser**:
@@ -212,6 +215,7 @@ Methoden:
 |save|path (Dateipfad, unter dem abgespeichert werden soll ohne ".csv"|True|Abspeichern der Datei unter dem angegebenen Pfad, mit Ergänzen der Endung|
 
 Klasse **GeoDataRow**:
+
 Die Klasse enthält die Daten für eine Zeile in der von `TableGeoBrowser` verwalteten Tabelle.
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
@@ -224,6 +228,7 @@ Methoden:
 Speichern und Verarbeiten von einfachen Metadensätzen wie Dublin Core. 
 
 Klasse **Dataset**
+
 Container für Einträge, diese werden in der Eigenschaft Dataset.fields gespeichert, standardmäßig ein leeres Dictionary.
 Daten werden mit dem Feldnamen (z. B. "title") als Index darin gespeichert. Der zugehörige Wert ist eine Liste, die eine beliebige Anzahl an Objekten der Klasse Entry enthält.
 Die Klasse ist nicht für die direkte Instanziierung vorgesehen, s. stattdessen Dataset DC
@@ -237,9 +242,11 @@ Die Klasse ist nicht für die direkte Instanziierung vorgesehen, s. stattdessen 
 | to_list | - | Liste mit Dictionaries, die jeden einzelnen Eintrag als Schlüssel-Wert-Paare repräsentieren | - |
 
 Abgeleitete Klasse **DatasetDC**
+
 Dataset mit vordefinierten Feldern für das Datenmodell Dublin Core.
 
 Klasse **Entry**
+
 Ein einzelner Eintrag des Datensatzes. Er beinhaltet neben dem Wert auch optional eine Sprachangabe und eine Normdatenverknüpfung.
 
 | Methode | Parameter | Rückgabewert | Effekt |
@@ -274,7 +281,7 @@ Handling von Digitalisaten der HAB. Ausgehend von der normalisierten Signatur (z
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | norm_sig (normalisierte Signatur), folder (Standardwert "drucke") | - | Anlegen des Objekts. Laden der bibliographischen Daten (bib_record), Seiteninformationen (pages) und Strukturdaten (struct_doc) sowie der Ranges (ranges), sofern Strukturdaten gefunden wurden |
-| to_iiif | folder (Standardwert "drucke") | Objekt der Klasse iiif.Manifest (s. u. Modul iiif) | - |
+| to_iiif | folder (Standardwert "drucke") | Objekt der Klasse iiif.Manifest (s. u. Modul [iiif](#modul-iiif)) | - |
 
 #### Klasse Range
 Abschnitte, die aus den Strukturdaten herausgelesen werden. Zu den erlaubten Werten für type s. https://dfg-viewer.de/strukturdatenset
@@ -296,10 +303,12 @@ get_query_words(): Gibt eine Liste mit den Suchwörtern für alle Personen aus, 
 
 #### Klassen
 
-Klasse **PersonList**
+Klasse **PersonList**:
+
 Enthält in der Property content eine Liste mit Personendaten
 
 Klasse **Person**:
+
 Enthält die Daten zu einer einzelnen Person in folgenden Propertys:
  - name
  - gnd GND
@@ -323,6 +332,7 @@ Die magische Methode \_\_str\_\_ gibt den Namen mit Geburts- und Sterbejahr sowi
 Abgleichen von Titelliste mit dem K10plus oder dem OPAC der HAB. Das Modul nutzt die Module **pica**, **sru** und **xmlreader**.
 
 Klasse **Evaluation**:
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | __init\_\_ | pers (Personenname, optional), title (Titel, optional), place (Erscheinungsort, optional), year (Erscheinungsjahr, optional) | Instanz von Evaluation | Bilden einer Suchanfrage und Ablage unter Evaluation.query |
@@ -331,6 +341,7 @@ Klasse **Evaluation**:
 Die abgefragte URL kann unter Evaluation.req.url abgerufen werden. Weil für die Ermittlung der PPNs und Signaturen nur die Aufnahmen der Druck-Ausgabe berücksichtigt werden (A-Aufnahmen), kann das Ergebnis abweichen.
 
 Klasse **Evaluation_HAB**:
+
 Dasselbe für den OPAC der HAB Wolfenbüttel.
 
 Codebeispiel:
@@ -357,6 +368,7 @@ Klasse **Evaluation**:
 | \_\_str\_\_ | - | Auflistung der Ergebnisse unabhängig von der Art der Suche | - |
 
 Abgeleitete Klasse **EvaluationSDD**:
+
 Evaluation mit vordefinierten Suchwörtern für SDD-relevante Titel der HAB und 
 
 Beispiel: Auswertung von [Auktion 208](ev%20=%20ep.EvaluationSDD%28%22source/kataloge/Reiss-208.pdf%22%29%20ev.eval%28%29%20print%28ev%29) bei Reiss & Sohn
@@ -428,6 +440,7 @@ Ausgabe:
 Validieren einer GND-Nummer und Harvesten von Informationen dazu.
 
 Klasse **ID**
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | gnd (GND-Nummer) | Instanz der Klasse | Validieren der GND-Nummer, Ergebnis unter ID.valid |
@@ -450,6 +463,7 @@ Ausgabe:
 Erzeugen von IIIF-Manifesten als JSON-Objekte.
 
 Klasse **Manifest**
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |-|--|--|--|
 | \_\_init\_\_ | ressource (URL des Manifests) | - | Anlegen eines leeren Manifests, Inhalt unter content |
@@ -463,7 +477,9 @@ Klasse **Manifest**
 ---
 ### Modul image_resolver
 Ermitteln des Digitalisierungsjahres sowie von Bildamessungen für Digitalisate der HAB. Die Informationen sind zur Erzeugung von IIIF-Manifesten notwendig.
+
 Klasse **Resolver**
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |-|--|--|--|
 | \_\_init\_\_ | -  | - | Initiieren des Objekts, Anlage zweier SQLite-Datenbanken (`year_digi.db` und `digi_fail.db)` |
@@ -523,6 +539,7 @@ Gibt zur Sprachbezeichnung den Code aus, bei unbekannten Sprachen False.
 Suche in der lobid-Schnittstelle des HBZ (http://lobid.org/)
 
 Klasse **Request_Lobid**
+
 Allgemeine Suchanfrage
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
@@ -546,6 +563,7 @@ for tit in titles:
 
 ```
 Klasse **Request_GNDLobid**
+
 Abgeleitet von Request_GND. 
 Suche nach Normdaten in https://lobid.org/gnd. Für das Harvesten von Informationen zu einzelnen GND-Nummern s. neben der unten stehenden Klasse Request_GNDLobid_ID auch das Modul [gnd](#modul-gnd).
 
@@ -556,6 +574,7 @@ Suche nach Normdaten in https://lobid.org/gnd. Für das Harvesten von Informatio
 | get_result | - | Dictionary mit Daten zu den gefundenen Entitäten | - |
 
 Klasse **Request_GNDLobid_ID**
+
 Abgeleitet von Request_GNDLobid. Suche nach Normdaten, bei der eine GND-Nummer übergeben wird.
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
@@ -579,6 +598,7 @@ for key, value in data[0].items():
 Modul zur Arbeit mit einer lokalen SQLite-Datenbank, das auf dem Python-Modul [sqlite3](https://docs.python.org/3/library/sqlite3.html) basiert.
 
 Klasse **Database**
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | file_name (optional, Standardwert "mydb") | - | Initiieren der Klasse, kein Abspeichern der Datenbank |
@@ -614,21 +634,25 @@ print(test)
 Klassen zur Abbildung eines Netzwerks, das auch Knoten und Relationen besteht. Daten können in Cypher ausgegeben und direkt in eine neo4j-Instanz gespielt werden. Aus der GND können Daten zur Abbildung von Personennetzen importiert werden.
 
 Klasse **Graph**
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 |\_\_init\_\_| nodes (Liste mit Objekten vom Typ network.Node, optional), relations (Liste mit Objekten vom Typ network.Relation, optional) | - | Instanziierung des Objekts |
 
 Klasse **Node**
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 |\_\_init\_\_| id (eindeutiger Identifier für den Knoten), name, type, attributes (Dictionary mit Schlüssel-Wert-Paaren) | - | Instanziierung des Objekts |
 
 Klasse **Relation**
+
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 |\_\_init\_\_| origin (ID des Ausgangsknotens), target (ID des Zielknotens), type (Typus der Relation), attributes (Dictionary mit Schlüssel-Wert-Paaren) |--|--|
 
 Klasse **GraphGND**
+
 Erstellen eines Netzwerks aus GND-Daten, ausgehend von einer oder mehreren GND-Nummern. Die GND-Datensätze werden unter der Nummer im Ordner cache/gnd abgespeichert, hierzu wird das Modul [cache](#modul-cache) verwendet.
 
 Codebeispiel:
@@ -662,7 +686,8 @@ graph.to_neo4j("neo4j://localhost:7687", "{Nutzer}", "{Passwort}", "{Datenbank}"
 Auslesen von bibliographischen Daten in PICA-XML. Jeder Datensatz wird in eine objektförmige Struktur mit sprechenden Feldnamen und intuitiven hierarchischen Beziehungen umgewandelt. Die Daten können in JSON oder XML abgespeichert werden.
 
 Klasse **Record**
-Objekt zur Repräsentation eines bibliographischen Datensatzes. Zur gemeinsamen Benutzung mit xmlreader.DownloadReader
+
+Objekt zur Repräsentation eines bibliographischen Datensatzes. Zur gemeinsamen Benutzung mit [xmlreader](#modul-xmlreader).DownloadReader
 
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
@@ -684,15 +709,19 @@ for node in reader:
 ```
 
 Klasse **RecordVD16**
+
 Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 16
 
 Klasse **RecordVD17**
+
 Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 17
 
 Klasse **RecordVD18**
+
 Abgeleitete Klasse zur Verarbeitung von Daten aus dem VD 18
 
 Klasse **RecordInc**
+
 Abgeleitete Klasse zur Verarbeitung von Inkunabeln
 
 ### Felder für bibliographische Einheiten
@@ -722,7 +751,7 @@ Abgeleitete Klasse zur Verarbeitung von Inkunabeln
 | publishers | Liste | DruckerInnen und/oder VerlegerInnen als Person-Objekte |
 | places | Liste | Erscheinungsorte als Place-Objekte |
 | copies | Liste | Exemplare als Copy-Objekte |
-| provenances | Liste | Provenienzinformationen auf dem Shared Level (Feld 9100) in strukturierter Form (s. Modul provenance)
+| provenances | Liste | Provenienzinformationen auf dem Shared Level (Feld 9100) in strukturierter Form (s. Modul [provenance](#modul-provenance))
 
 ### Klasse Person
 
@@ -755,7 +784,7 @@ Abgeleitete Klasse zur Verarbeitung von Inkunabeln
 | iln | String | ILN (Internal Library Number) der Bibliothek |
 | shelfmark | String | Signatur |
 | epn | String | ID des Lokalsatzes |
-| prov_dataset | Liste | Lokale Provenienzinformationen in strukturierter Form (Modul provenance) |
+| prov_dataset | Liste | Lokale Provenienzinformationen in strukturierter Form (Modul [provenance](#modul-provenance)) |
 
 ---
 ### Modul portapp
@@ -868,6 +897,7 @@ Klasse **Provenance**
 Auswertung von lokalen und auf dem Shared Level befindlichen Provenienzinformationen (Feld 680X und 9100)
 
 Klasse **ProvenanceBibLevel**
+
 Abgeleitete Klasse für das Feld 9100.
 
 Klasse **NormLinkLocal**
@@ -913,6 +943,7 @@ Methoden:
 
 
 Klasse **StructuredShelfmark**
+
 Abgeleitete Klasse von **Shelfmark**. Bei der Initialisierung erfolgt eine vollständige Analyse der Signatur und Erzeugung einer Sortierform.
 
 Zusätzliche Properties:
@@ -1033,6 +1064,7 @@ Klasse zur Arbeit mit CSV-Dateien, die mit MS Excel erzeugt wurden (Zeichencodie
 Das Modul überschneidet sich mit dem obigen [Modul csvt](#modul-csvt), das ursprünglich zum Serialisieren von Daten mit Python ohne Import aus einer Windows-Anwendung gedacht war. Inzwischen ist der Funktionsumfang von csvt größer.
 
 Klasse **Table**
+
 Repräsentiert eine Tabelle und enthält die Daten in der Property `content`, die Felder in der Property `fields`. Ist iterierbar und gibt einzelne Zeilen als OrdererdDict aus.
 
 | Methode  | Parameter | Rückgabewert | Effekt |
@@ -1040,7 +1072,7 @@ Repräsentiert eine Tabelle und enthält die Daten in der Property `content`, di
 | \_\_init\_\_ | path | - | Lädt die Daten aus der Tabelle in die Property content. Die Feldnamen werden in fields gespeichert |
 | getByField | field | Liste mit allen Werten der entsprechenden Spalte | - |
 | getSelection | fields (Liste mit Feldnamen) | Liste, enthält für jede Zeile eine Liste mit den ausgewählten Feldern | - |
-| addSortable | field (Feld, in dem eine Signatur der HAB steht. Standardwert ist "Signatur") | True bei Erfolg | Hinzufügen einer Spalte mit dem Namen "Sortierform", in dem eine von der Klasse SortableShelfmark im Modul shelfmark erzeugte Sortierform eingefügt wurde. Funktioniert nur für Signaturen der HAB |
+| addSortable | field (Feld, in dem eine Signatur der HAB steht. Standardwert ist "Signatur") | True bei Erfolg | Hinzufügen einer Spalte mit dem Namen "Sortierform", in dem eine von der Klasse SortableShelfmark im Modul [shelfmark](#modul-shelfmark) erzeugte Sortierform eingefügt wurde. Funktioniert nur für Signaturen der HAB |
 | addNormPages | field (Feld mit der Umfangsangabe, Standardtwert ist "Umfang"), fieldEx (Feld mit dem Identifier des Exemplars, Standardwert ist "Signatur") | True bei Erfolg | Anlegen einer neuen Spalte "Umfang_normiert", in dem die Seitenzahl als Integer ausgegeben wird |
 | addParallels | fieldMan (Feld mit dem Identifier der Manifestation, Standardtwert ist "PPN"), fieldEx (Feld mit dem Identifier des Exemplars, Standardwert ist "Signatur") | True bei Erfolg | Anlegen einer neuen Spalte "Parallelexemplare", in dem die Identifier der Parallelexemplare für diese Ausgabe ausgegeben werden, mehrere getrennt durch ";" |
 | save | fileName (Dateiname ohne Endung, Standardwert ist "myTable") | True bei Erfolg | Abspeichern der Tabelle als CSV-Datei unter dem angegebenen Dateinamen |
@@ -1106,6 +1138,7 @@ Klasse **UnAPIReader**
 Reader zum Auslesen von Downloads aus einer unAPI
 
 Klasse **StringReader**
+
 Reader zum Auslesen von XML, das als String vorliegt.
 
 ---

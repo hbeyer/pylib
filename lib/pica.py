@@ -182,7 +182,7 @@ class Record:
         self.load_places()
         self.load_publishers()
         self.load_bib_provenances()
-        self.get_vd()        
+        self.get_vd()
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", Jahr: " + self.date
         return(ret)
@@ -500,6 +500,8 @@ class Record:
             except:
                 pass    
             self.provenances.append(provenance)
+        for cp in self.copies:
+            cp.prov_bib = list(filter(lambda p: p if p.epn == cp.epn else None, self.provenances))
     def get_vd(self):
         if self.bbg[0] == "O":
             try:
@@ -1025,32 +1027,7 @@ class PublishingHistory():
             try:
                 self.end["volume"] = int(fieldDict["k"].pop(0))
             except:
-                pass
-           
-"""
-{'d': ['1'], 'j': ['1800'], 'n': ['2'], 'k': ['1800']}
-167481029
-{'j': ['1800'], 'k': ['1806']}
-167443402
-{'j': ['1800'], 'k': ['1823']}
-167401971
-{'d': ['1'], 'j': ['1800'], 'n': ['12'], 'k': ['1835']}
-167392026
-{'d': ['1'], 'j': ['1800'], 'n': ['3'], 'k': ['1802']}
-166821837
-{'d': ['1'], 'j': ['1800'], 'n': ['8'], 'k': ['1807']}
-166774677
-{'j': ['1800'], 'k': ['1805']}
-166311197
-{'d': ['1', '3'], 'j': ['1800', '1804'], '0': [' '], 'n': ['5'], 'k': ['1806']}
-165658770
-
-{'i': ['Elektronische Reproduktion'], 'l': ['Wiedemann, Christian Rudolph Wilhelm *1770-*'], 't': ['Archiv für Zoologie und Zootomie'], 'd': ['Braunschweig'], 'e': ['Gedruckt und im Verlage bei Karl Reichard'], 'f': ['1800'], 'h': ['Online-Ressource'], 'c': ['KXP', 'DNB', 'ZDB'], '6': ['799122297', '1059626489', 'zdb/2794548-0']}
-            
-Erscheinungsverlauf Bib. Level
-$v1$b1798/99$V7$E1807/21; $b1834$E1857
-031N ƒd1ƒj1798/99ƒn7ƒk1807/21ƒ0 ƒj1834ƒk1857
-"""            
+                pass        
 
 class RecordList():
     def __init__(self, content = None):
@@ -1158,6 +1135,7 @@ class Copy:
         self.epn = ""
         self.sm = ""
         self.comm = ""
+        self.prov_bib = []
         self.prov = []
         self.prov_struct = []
         self.prov_norm = []

@@ -94,9 +94,16 @@ class Isil:
 			"bib" : "Staats- und Universitätsbibliothek Hamburg Carl von Ossietzky", 
 			"place" : "Hamburg", 
 			"gettyPlace" : "7004428", 
-			"long" : "8.657789", 
-			"lat" : "49.876654"  
+			"long" : "9.985197", 
+			"lat" : "53.564771"  
 			},
+        "DE-18-309" : { 
+			"bib" : "Universität Hamburg, Bibliothek für Geisteswissenschaften", 
+			"place" : "Hamburg", 
+			"gettyPlace" : "7004428",
+			"long" : "9.985279", 
+			"lat" : "53.567265"  
+			},            
         "DE-19" : { 
 			"bib" : "Universitätsbibliothek der LMU München", 
 			"place" : "München", 

@@ -1,10 +1,8 @@
 
-
-
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
-Herunterladen des Repositoriums in ein beliebiges Verzeichnis. Im Wurzelverzeichnis der Anwendung (in der Regel "pylib") können Skripte mit Python 3 (getestet mit Python 3.7.0) ausgeführt werden. Die einzelnen Module liegen im Ordner "lib". Sie können folgendermaßen geladen werden:
+Herunterladen des Repositoriums in ein beliebiges Verzeichnis. Im Wurzelverzeichnis der Anwendung (in der Regel "pylib") können Skripte mit Python 3 (getestet mit Python 3.11.9) ausgeführt werden. Die einzelnen Module liegen im Ordner "lib". Sie können folgendermaßen geladen werden:
 ```python
 from lib import {modul} as {namespace}
 ```
@@ -209,9 +207,9 @@ Erzeugt eine CSV-Tabelle zum Import in den DARIAH GeoBrowser. Die Felder sind: `
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-| \_\_init\_\_ | content (Liste mit Objekten vom Typ `csvt.GeoDataRow`), optional | - |
-|import_row|row (Objekt vom Typ `csvt.GeoDataRow`)|--|--|
-|fill_geo_data|gdb (Objekt vom Typ `geo.DB`)| True | Ergänzen der Felder `Longitude` und `Latitude`, wo sie leer sind aus einer lokalen Geodatensammlung  |
+| \_\_init\_\_ | content (Liste mit Objekten vom Typ [csvt](#modul-csvt).GeoDataRow), optional | - |
+|import_row|row (Objekt vom Typ [csvt](#modul-csvt).GeoDataRow)|--|--|
+|fill_geo_data|gdb (Objekt vom Typ [geo](#modul-geo).DB)| True | Ergänzen der Felder `Longitude` und `Latitude`, wo sie leer sind aus einer lokalen Geodatensammlung  |
 |save|path (Dateipfad, unter dem abgespeichert werden soll ohne ".csv"|True|Abspeichern der Datei unter dem angegebenen Pfad, mit Ergänzen der Endung|
 
 Klasse **GeoDataRow**:
@@ -471,7 +469,7 @@ Klasse **Manifest**
 | add_metadata_property | field_ger, value_ger, field_eng (optional), value_eng (optional) | - | Hinzufügen einer Property in Deutsch und optional parallel in Englisch zum Tag "metadata" |
 | add_homepage | label_de, label_en, url | - | Hinzufügen einer URL mit Label zum Manifest unter dem Tag "homepage" | 
 | add_page_lazily | base_do (Basis-URL des digitalen Objekts), base_api (Basis-URL der IIIF-API vor "full..."), number (Seitenzahl), height (Höhe der Seite in voller Auflösung), width (Breite entsprechend), format (Standard ist "image/jpg") | - | Hinzufügen einer Seite zum Manifest, eingebettet in Canvas, AnnotationPage und Annotation |
-| add_structures | base_do (Basis-URL des digitalen Objekts), ranges (Objekte vom Typ digitized_book.Range) | - | Hinzufügen der Strukturdaten unter dem Tag "structures" |
+| add_structures | base_do (Basis-URL des digitalen Objekts), ranges (Objekte vom Typ [digitized_book](#modul-digitized_book).Range) | - | Hinzufügen der Strukturdaten unter dem Tag "structures" |
 | serialize | - | Manifest (d. h. die Strukturen unter Manifest.content) als serialisiertes JSON-Objekt | Ablage des serialisierten Manifests unter self.content_json | 
 
 ---
@@ -637,7 +635,7 @@ Klasse **Graph**
 
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
-|\_\_init\_\_| nodes (Liste mit Objekten vom Typ network.Node, optional), relations (Liste mit Objekten vom Typ network.Relation, optional) | - | Instanziierung des Objekts |
+|\_\_init\_\_| nodes (Liste mit Objekten vom Typ [network](#modul-network).Node, optional), relations (Liste mit Objekten vom Typ [network](#modul-network).Relation, optional) | - | Instanziierung des Objekts |
 | to_neo4j | uri (Adresse der neo4j-Schnittstelle), user (Nutzer), pw (Passwort), db (Name Datenbank), clear (Boolean, Standard: True) |--|--|
 
 Klasse **Node**
@@ -785,7 +783,8 @@ Abgeleitete Klasse zur Verarbeitung von Inkunabeln
 | iln | String | ILN (Internal Library Number) der Bibliothek |
 | shelfmark | String | Signatur |
 | epn | String | ID des Lokalsatzes |
-| prov_dataset | Liste | Lokale Provenienzinformationen in strukturierter Form (Modul [provenance](#modul-provenance)) |
+| prov_bib | Liste | Provenienzinformationen als Objekte vom Typ [provenance](#modul-provenance).ProvenanceBibLevel |
+| prov_dataset | Liste | Lokale Provenienzinformationen als Objekte vom Typ [provenance](#modul-provenance).Dataset |
 
 ---
 ### Modul portapp
@@ -911,7 +910,35 @@ Auswertung von lokalen Normdatenverknüpfungen im Feld 688X
 
 Klasse **Dataset**
 
-Umfasst alle Provenienzdaten zu einem Exemplar mit der Möglichkeit der Fehlersuche
+Umfasst alle Provenienzdaten zu einem Exemplar mit der Möglichkeit der Fehlersuche.
+
+Die Provenienzinformationen werden bei der Anlage eines Objekts vom Typ [pica](#modul-pica).Record automatisch mitgeladen. Die lokalen Provenienzdaten werden in den Copy-Objekten ([pica](#modul-pica).Copy) unter prov_dataset in einem Objekt vom Typ Dataset abgelegt.
+
+Die Provenienzinformationen auf bibliographischer Ebene (ProvenanceBibLevel) erscheinen im Record unter provenances und jeweils für die EPN im Copy-Objekt unter prov_bib.
+
+Codebeispiele: Ausgeben aller Provenienzen auf bibliographischer Ebene für Göttinger Dissertationen des 19. Jh. im K10plus
+
+```python
+from lib import sru
+from lib import xmlreader as xr
+from lib import pica
+
+folder = "downloads/k10plus"
+
+req = sru.Request_K10plus()
+num = req.prepare("pica.bbg=(Aa* or Af*) and pica.tit=dissertatio* and pica.vlo=goettingen and pica.jah=18*")
+print(f"{req.numFound} Datensätze gefunden")
+
+req.download(folder)
+
+reader = xr.DownloadReader(folder, "record", "info:srw/schema/5/picaXML-v1.0")
+
+for no, node in enumerate(reader):
+    rec = pica.Record(node)
+    for cp in rec.copies:
+        if len(cp.prov_bib) > 0:
+            print(f"PPN: {rec.ppn}, Bibliothek: {cp.bib}, Signatur: {cp.sm}, Name: {'; '.join(prov.name for prov in cp.prov_bib)}")
+```
 
 ---
 ### Modul romnumbers
@@ -977,13 +1004,13 @@ for ind in index:
 
 Klasse **ShelfmarkList**
 
-Fasst mehrere Objekte vom Typ StructuredShelfmark in einer Liste zusammen und erlaubt es, die Sammelbände zu bündeln. Diese werden als Volume-Objekte in der Property volumeList abgelegt.	 
+Fasst mehrere Objekte vom Typ [shelfmark](#modul-shelfmark).StructuredShelfmark in einer Liste zusammen und erlaubt es, die Sammelbände zu bündeln. Diese werden als Volume-Objekte in der Property volumeList abgelegt.	 
 
 Methoden:
 | Name | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | content (optional, Liste mit StructuredShelfmark-Objekten) | - | Erzeugt das Objekt, legt die übergebenen Signaturen in der Property content ab. |
-| addSM | Objekt vom Typ StructuredShelfmark | - | Überprüft die Klassenzugehörigkeit des übergebenen Objekts und legt es unter content ab. |
+| addSM | Objekt vom Typ [shelfmark](#modul-shelfmark).StructuredShelfmark | - | Überprüft die Klassenzugehörigkeit des übergebenen Objekts und legt es unter content ab. |
 | makeVolumes | - | - | Erzeugt anhand der unter content vorhandenen Signaturen Volume-Objekte und legt sie unter VolumeList ab |
 | getByRoot | Signatur (str) ohne Stücktitelangabe, z. B. "57.19 Jur. 2°" | Volume-Objekt mit den zugehörigen Signaturen, None falls nicht vorhanden | - |
 

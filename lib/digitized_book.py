@@ -7,6 +7,7 @@ import re
 import os
 import xml.etree.ElementTree as et
 from lib import sru
+from lib import unapi as ua
 from lib import xmlreader as xr
 from lib import image_resolver as ir
 from lib import pica
@@ -166,3 +167,20 @@ class Range:
             self.type = "unbestimmt"
         ret = f"Abschnitt {self.heading}, Typ {self.type}, {len(self.pages)} Seiten"
         return(ret)
+        
+def get_norm_sig(ppn):
+    if re.match(f"^[\dX]{8,11}$", ppn) == False:
+        return(None)
+    req = ua.Request_unAPI()
+    req.prepare(ppn)
+    url = req.url
+    reader = xr.WebReader(url, "record", "info:srw/schema/5/picaXML-v1.0")
+    for node in reader:
+        rec = pica.Record(node)
+        if len(rec.digi) == 0:
+            logging.error(f"Keine URL in O-Aufnahme {ppn} gefunden")
+        for url_digi in rec.digi:
+            extr = re.search(r"(drucke|inkunabeln|edoc|varia/selecta)/[^/]+", url_digi)
+            if extr != None:
+                return(extr.group(0))
+    return(None)

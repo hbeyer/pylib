@@ -22,7 +22,7 @@ class Reader:
             logging.error(f"Problem bei {str(file)}")
             return([])
         root = tree.getroot()
-        if root.tag == self.tag:
+        if root.tag == self.tag or root.tag == self.namespace + self.tag:
             return([root])
         recs = root.findall(".//" + self.namespace + self.tag)
         if recs:
@@ -100,7 +100,7 @@ class WebReader(Reader):
         try:
             file = ul.urlopen(self.path)
         except:
-            print(self.path + " ist keine funktionierende URL")
+            logging.error(self.path + " ist keine funktionierende URL")
         else:
             self.recs = self.get_recs(file)
     def __iter__(self):

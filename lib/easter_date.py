@@ -16,9 +16,12 @@ class EasterDate():
         if new in [None, True]:
             return(datetime.strptime(self.new, date_format))
         return(datetime.strptime(self.old, date_format))
+    def get_date_str(self, new = None):
+        date_obj = self.get_date(new)
+        return(date_obj.strftime("%Y-%m-%d"))        
     def get_date_ger(self, new = None):
         date_obj = self.get_date(new)
-        return(date_obj.strftime("%d.%m.%Y"))
+        return(date_obj.strftime("%d.%m.%Y"))        
         
     def gaussEasterOld(self):
         a = self.year % 19

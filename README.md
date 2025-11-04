@@ -326,6 +326,31 @@ Enthält die Daten zu einer einzelnen Person in folgenden Propertys:
 Die magische Methode \_\_str\_\_ gibt den Namen mit Geburts- und Sterbejahr sowie GND-Nummer aus.
 
 ---
+### Modul easter_date
+Berechnung des Osterdatums im alten und neuen Stil nach der Gaußschen Osterformel.
+
+Klasse **EasterDate**
+
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+|__init\_\_| year (int) | - | Ablage des alten und neuen Datums als String (yyyy-mm-dd) in den Properties old und new |
+| get_date | new (Boolean, False für Julianischen Kalender) | Datum als [datetime-Objekt](https://docs.python.org/3/library/datetime.html#datetime-objects) | - |
+| get_date_str | new (Boolean, False für Julianischen Kalender) | Datum als String im Format "yyyy-mm-dd" | - |
+| get_date_ger | new (Boolean, False für Julianischen Kalender) | Datum als String im Format "dd.mm.yyyy" | - |
+
+Codebeispiel:
+```python
+from lib import easter_date as ed
+
+year = 1555
+edate = ed.EasterDate(year)
+easter_old = edate.get_date_ger(False)
+easter_new = edate.get_date_ger(True)
+
+print(f"Ostern {str(year)} nach altem Stil: {easter_old}, nach neuem {easter_new}")
+```
+
+---
 ### Modul evallist
 Abgleichen von Titelliste mit dem K10plus oder dem OPAC der HAB. Das Modul nutzt die Module **pica**, **sru** und **xmlreader**.
 

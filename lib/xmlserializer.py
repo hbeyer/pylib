@@ -26,7 +26,7 @@ class Serializer():
                         xml_declaration=True, \
                         default_namespace=None, \
                         method="xml")
-        return(True)
+        return(self.path)
     def to_string(self):
         xml = et.tostring(self.root, encoding='utf8', xml_declaration=False)
         return(xml.decode('UTF-8'))

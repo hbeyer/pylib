@@ -424,11 +424,11 @@ class Volume():
         for part in parts:
             self.parts.append(part)
     def makePartStr(self):
-        self.parts = sorted(self.parts, key = lambda p: int(p))
+        self.parts = sorted(self.parts, key = lambda p: integerize_part(p))
         self.partStr = ", ".join(self.parts)
         return(self.partStr)
     def makeCompStr(self):
-        self.parts = sorted(self.parts, key = lambda p: int(p))
+        self.parts = sorted(self.parts, key = lambda p: integerize_part(p))
         if len(self.parts) < 3:
             self.compStr = ", ".join(self.parts)
             return(False)
@@ -460,7 +460,7 @@ class Volume():
             self.makeCompStr()
             ret += " (" + self.compStr + ")"
         return(ret)
-
+        
 def convertVD16(old):
     if old[0:1] == "\"":
         old = old + ")"
@@ -536,3 +536,9 @@ def searchable(sm):
     sm = sm.replace(")", "\)")
     return(sm)
     
+def integerize_part(p):
+    extr = re.search("\d+", p)
+    try:
+        return(int(extr.group(0)))
+    except:
+        return(999)

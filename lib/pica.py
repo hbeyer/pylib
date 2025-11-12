@@ -573,7 +573,7 @@ class Record:
         if self.copies != []:
             res["copies"] = [cp.to_dict() for cp in self.copies]
         return(res)
-    def to_libreto(self, prov = None, gdb = None):
+    def to_libreto(self, gdb, prov = None):
         itn = et.Element("item")
         et.SubElement(itn, "id").text = "lid" + self.ppn
         et.SubElement(itn, "titleCat").text = self.title
@@ -686,6 +686,120 @@ class Record:
                     itn.append(oi)
                     break                    
         return(itn)
+        
+    def to_libreto_copies(self, gdb, no):
+        itn = et.Element("item")
+        et.SubElement(itn, "id").text = "lid" + self.ppn
+        et.SubElement(itn, "titleCat").text = self.title
+        if self.persons != []:
+            persl = et.Element("persons")
+            for pers in self.persons:
+                persn = et.Element("person")
+                et.SubElement(persn, "persName").text = pers.persName
+                et.SubElement(persn, "gnd").text = pers.gnd
+                et.SubElement(persn, "role").text = pers.role
+                persl.append(persn)
+            itn.append(persl) 
+        if self.places != []:
+            placel = et.Element("places")
+            for pl in self.places:
+                placen = et.Element("place")
+                et.SubElement(placen, "placeName").text = pl.placeName
+                if pl.gnd != None:
+                    et.SubElement(placen, "gnd").text = pl.gnd
+                if gdb != None:
+                    gdata = gdb.get_dict(pl.placeName)
+                    try:
+                        et.SubElement(placen, "getty").text = gdata["getty"]
+                    except:
+                        pass
+                    try:
+                        lat = gdata["lat"]
+                        long = gdata["long"]
+                    except:
+                        pass
+                    else:
+                        gdel = et.Element("geoData")
+                        et.SubElement(gdel, "lat").text = gdata["lat"]
+                        et.SubElement(gdel, "long").text = gdata["long"]
+                        placen.append(gdel)
+                placel.append(placen)
+            itn.append(placel)
+        if self.publishers != []:
+            publ = et.Element("publishers")
+            for pub in self.publishers:
+                et.SubElement(publ, "publisher").text = pub.persName
+            itn.append(publ)
+        if self.date:
+            et.SubElement(itn, "year").text = self.date
+        if self.format:
+            et.SubElement(itn, "format").text = self.format
+        if self.lang != []:
+            langl = et.Element("languages")
+            for code in self.lang:
+                et.SubElement(langl, "language").text = code
+            itn.append(langl)
+        if self.langOrig != []:
+            langl = et.Element("languagesOriginal")
+            for code in self.lang:
+                et.SubElement(langl, "languageOriginal").text = code
+            itn.append(langl)            
+        letter = self.bbg[0]
+        mediaType = assign_mediatype(letter)
+        et.SubElement(itn, "mediaType").text = mediaType
+        genrel = et.Element("genres")
+        subjl = et.Element("subjects")
+        numSubj = 0
+        numGenres = 0
+        for gat in self.gatt:
+            if recognize_genre(gat) == "genre":
+                et.SubElement(genrel, "genre").text = gat
+                numGenres += 1
+            else:
+                et.SubElement(subjl, "subject").text = gat
+                numSubj += 1
+        if numGenres > 0:
+            itn.append(genrel)
+        if numSubj > 0:
+            itn.append(subjl)
+        mann = et.Element("manifestation")
+        sysman = "K10plus"
+        idman = self.ppn
+        if self.vdn != "":
+            if self.vdn[0:4] == "VD16":
+                sysman = "VD16"
+                idman = self.vdn
+            elif self.vdn[0:4] == "VD17":
+                sysman = "VD17"
+                idman = self.vdn
+            elif self.vdn[0:4] == "VD18":
+                sysman = "VD18"
+                idman = self.vdn                
+        et.SubElement(mann, "systemManifestation").text = sysman
+        et.SubElement(mann, "idManifestation").text = idman
+        itn.append(mann)
+        chab = et.Element("copiesHAB")
+        numhab = 0
+        for cop in self.copies:
+            if "HAB" in cop.bib or "Herzog August" in cop.bib or cop.bib == "":
+                et.SubElement(chab, "copyHAB").text = cop.sm
+                numhab += 1
+        if numhab > 0:
+            itn.append(chab)
+        oi = et.Element("originalItem")
+        cop = self.copies[no]
+        if cop.bib == "":
+            et.SubElement(oi, "institutionOriginal").text = "Herzog August Bibliothek Wolfenbüttel"
+        else:
+            et.SubElement(oi, "institutionOriginal").text = cop.bib                    
+        et.SubElement(oi, "shelfmarkOriginal").text = cop.sm
+        try:
+            et.SubElement(oi, "provenanceAttribute").text = "; ".join(cop.provenances)
+        except:
+            pass
+        itn.append(oi)                  
+        return(itn)        
+        
     def to_json(self):
         ret = json.dumps(self.to_dict(), ensure_ascii=False)
         return(ret)
@@ -1046,10 +1160,21 @@ class RecordList():
         ser = xs.Serializer(file_name, "collection")
         ser.add_nested("metadata", metadata)
         for count, rec in enumerate(self.content):
-            itemNode = rec.to_libreto(prov, gdb)
+            itemNode = rec.to_libreto(gdb, prov)
             ser.add_node(itemNode)
-        ser.save()
-    
+        path = ser.save()
+        return(path)
+        
+    def to_libreto_copies(self, file_name, metadata, gdb):
+        ser = xs.Serializer(file_name, "collection")
+        ser.add_nested("metadata", metadata)
+        for rec in self.content:
+            for no, cop in enumerate(rec.copies):
+                itemNode = rec.to_libreto_copies(gdb, no)
+                ser.add_node(itemNode)
+        path = ser.save()
+        return(path)        
+        
 def convert_record(record):
     return(record.to_dict())
 

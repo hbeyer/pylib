@@ -576,7 +576,7 @@ class Record:
     def to_libreto(self, gdb, prov = None):
         itn = et.Element("item")
         et.SubElement(itn, "id").text = "lid" + self.ppn
-        et.SubElement(itn, "titleCat").text = self.title
+        et.SubElement(itn, "titleBib").text = self.title
         if self.persons != []:
             persl = et.Element("persons")
             for pers in self.persons:
@@ -690,7 +690,7 @@ class Record:
     def to_libreto_copies(self, gdb, no):
         itn = et.Element("item")
         et.SubElement(itn, "id").text = "lid" + self.ppn
-        et.SubElement(itn, "titleCat").text = self.title
+        et.SubElement(itn, "titleBib").text = self.title
         if self.persons != []:
             persl = et.Element("persons")
             for pers in self.persons:

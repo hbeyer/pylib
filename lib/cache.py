@@ -21,21 +21,22 @@ class Cache:
             os.mkdir(self.folder)
         except:
             pass
+        self.client = httpx.Client(default_encoding="utf-8")
     def get_content(self, url, id):
         path = f"{self.folder}/{id}"
         if op.exists(path) == True:
-            #file = open(path, "r" encoding="utf-8")
             file = open(path, "r")
             content = file.read()
             return(content)
-        r = httpx.get(url)
+        r = self.client.get(url)
         if r.status_code != 200:
             logging.error(f" {url} konnte nicht geladen werden")
             return(None)
         response = r.text
+        if response in (None, ""):
+            return(None)
         with open(path, "w") as f:
             f.write(response)
-        #ur.urlretrieve(self.url, path)
         return(response)
     def _get_content(self, url, id):
         path = self.folder + "/" + id

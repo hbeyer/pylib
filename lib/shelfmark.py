@@ -19,7 +19,7 @@ class Shelfmark:
         self.volume = ""        
         self.valid = False        
         rexx = {
-            "A:" : "A",
+            "^A:" : "A",
             "Theol|Jur|Hist|Bell|Pol|Oec|Eth|Med|Geog|Astr|Phys|Geom|Arit|Poet|Log|Rhet|Gram|Quod" : "A",
             "Helmst\. Dr" : "HHD",
             "Helmst" : "H",
@@ -49,8 +49,14 @@ class Shelfmark:
             "R[1234]:" : "YRA",
             "Dep\." : "YXD",
             "Aug\.|Novi|Extrav|Cod\.|Blank" : "ZHA",
-            "BA [IV]" : "ZHB",            
-            "Graph" : "ZGR",
+            "BA [IV]" : "ZHB",
+            "Graph\. [ABCDE]" : "ZGA",            
+            "Graph\. Res" : "ZGB",
+            "Berlepsch" : "ZGH",
+            "Chodowiecki" : "ZGI",
+            "Ratdolt" : "ZGJ",
+            "Wagner" : "ZGK",
+            "Top[\. ]" : "ZKT",
             "^K [0-9]" : "ZKA",
             "^1?\d{2}\.(2°|4°|8°|12°) \d{1,6}" : "ZNS",
             "^1?\d{2}\.\d{1,6}" : "ZNC",
@@ -167,6 +173,18 @@ class Shelfmark:
                 self.group = extract.group(1).zfill(6)
             except:
                 return(None)
+        elif self.collection == "ZGA":
+            extract = re.search(r"([A-Z])(\d)?:", self.whole)
+            try:
+                self.group = extract.group(1) + extract.group(2).zfill(4)
+            except:
+                return(None)                
+        elif self.collection == "ZGB":
+            extract = re.search(r"Res\. ([A-Z]):", self.whole)
+            try:
+                self.group = extract.group(1).zfill(6)
+            except:
+                return(None) 
         elif self.collection == "ZPB":
             extract = re.search(r"([A-Z][A-Z]) (\d{2})-", self.whole)
             try:
@@ -178,7 +196,7 @@ class Shelfmark:
             try:
                 self.group = extract.group(1)
             except:
-                return(None)            
+                return(None)
         return(self.group)
     def getForm(self):
         extract = re.search(r"Sammelb|Mischb|Kapsel|Sammelma", self.whole)
@@ -259,7 +277,7 @@ class Shelfmark:
             try:
                 self.number = extract.group(1)
             except:
-                return(None)
+                return(None)                                    
         else:
             extract = re.search(r"\s([0-9\.]+[a-z]?)[^°\d]", self.whole)
             try:
@@ -297,6 +315,9 @@ class StructuredShelfmark(Shelfmark):
                 ret = ret + ", Stücktitel: " + self.part
             return(ret)
         def sortableNum(self, num):
+            if num == None:
+                print(f"Problem bei Signatur {self.whole}")
+                num = "0"
             parts = num.split(".")
             parts = self.separateLetters(parts)
             parts = [p.zfill(5) for p in parts]

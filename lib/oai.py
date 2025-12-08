@@ -19,7 +19,7 @@ class Request_OAI:
         self.resumptionToken = None
         self.id = None
         self.setSpec = ""
-    def makeURL(self):
+    def make_url(self):
         setSpec = self.setSpec
         if setSpec != "":
             setSpec = "&set=" + setSpec
@@ -34,26 +34,30 @@ class Request_OAI:
         self.folder = self.folder.strip("/") + "/"
         if prefix != "":
             self.prefix = prefix
-        url = self.makeURL()
-        path = self.makePath()
+        url = self.make_url()
+        path = self.make_path()
         fo = ur.urlopen(url, None, 60)
         tree = et.parse(fo)
+        if op.exists(path):
+            print(f"Pfad {path} existiert schon.")
         if op.exists(path) == False:
             print("Speichern: " + url)
             tree.write(path, "utf-8", True)
-        self.getResumptionToken(tree)
+        self.get_resumption_token(tree)
         while self.resumptionToken != None:
-            url = self.makeURL()
-            path = self.makePath()
+            url = self.make_url()
+            path = self.make_path()
             fo = ur.urlopen(url, None, 60)
             tree = et.parse(fo)
             if fo == None:
                 break
+            if op.exists(path):
+                print(f"Pfad {path} existiert schon.")
             if op.exists(path) == False:
                 print("Speichern: " + url)
                 tree.write(path, "utf-8", True)
-            self.getResumptionToken(tree)
-    def getResumptionToken(self, tree):
+            self.get_resumption_token(tree)
+    def get_resumption_token(self, tree):
         root = tree.getroot()
         rtt = root.findall(".//" + self.namespace + "resumptionToken")
         try:
@@ -61,7 +65,7 @@ class Request_OAI:
         except:
             self.resumptionToken = None
         return(self.resumptionToken)
-    def makePath(self):
+    def make_path(self):
         path = self.folder + self.fileName + "-" + self.prefix
         if self.resumptionToken != None:
             path = path + "-" + self.resumptionToken

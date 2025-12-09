@@ -43,7 +43,7 @@ class Resolver():
         if self.dc_fail.rows_affected > 0:
             logging.info(f"Es wurden die Werte {norm_sig}, {self.folder} in die Datenbank {self.dc_fail.file_name} eingefügt.")
         return(None)     
-    def forget_item(self, folder = None, page = None):
+    def forget_item(self, norm_sig = None, folder = None):
         if folder != None:
             self.folder = folder
         sql = f"DELETE FROM main WHERE norm_sig LIKE '{norm_sig}' and folder LIKE '{self.folder}'"

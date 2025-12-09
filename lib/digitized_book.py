@@ -13,6 +13,7 @@ from lib import image_resolver as ir
 from lib import pica
 from lib import cache
 from lib import iiif
+import httpx
 # https://rdflib.readthedocs.io/en/stable/intro_to_creating_rdf.html
 logging.basicConfig(level=logging.INFO)
 
@@ -25,6 +26,7 @@ class Book:
         self.year_digi = None
         self.bib_record = None
         self.pages = []
+        self.images = []
         self.struct_doc = None
         self.ranges = []
         self.cache_sru = cache.CacheSRU_O()
@@ -32,12 +34,61 @@ class Book:
         self.cache_struct = cache.CacheStruct()
         self.cache_dim = cache.CacheImageDimensions()
         self.resolver = ir.Resolver()
+    def get_all_data(self):
         self.get_year_digi()
         self.get_bib_data()
         self.get_pages()
         self.get_struct_doc()
         if self.struct_doc != None:
             self.get_ranges()
+    def read_log(self):
+        url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/drucke-convert-tiff-jp2.log"
+        url_jpg = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/drucke-cp-jpg.log"
+        client = httpx.Client(default_encoding="utf-8")
+        req = client.get(url_tiff)
+        if req.status_code != 200:
+            req = client.get(url_jpg)
+            if req.status_code != 200:
+                return(False)
+        lines = req.text.split("\n")
+        for line in lines:
+            if line.strip() == "":
+                continue
+            #extr = re.search(r"\d+.(jpg|tiff) (/images/([^/]+)/([^/]+)/(12]\d{3})_standard_original/([^ ]+)) (\d+)x(\d+)", line)
+            extr = re.search(r"(\d+)\.(jpg|tif) (/images/([^/]+)/([^/]+)/([12]\d{3})_standard_original/([^ ]+)) (\d+)x(\d+)", line)
+            try:
+                self.year_digi = extr.group(5)
+            except:
+                logging.error(f"Kein Digitalisierungsjahr im Logfile, Signatur {self.norm_sig}")
+            else:
+                year_digi = self.year_digi
+            try:
+                image_number = extr.group(1)
+            except:
+                logging.error(f"Fehlende Image-Nummer im Logfile, Signatur {self.norm_sig}")
+                return(False)
+            try:
+                image_path = extr.group(3)
+            except:
+                logging.error(f"Fehlender Image-Path im Logfile, Signatur {self.norm_sig}")
+                return(False)                
+            try:
+                width = extr.group(8)
+                height = extr.group(9)                
+            except:
+                logging.error(f"Nicht lesbare Abmessungen im Log für Signatur {self.norm_sig}") 
+                return(False)
+            self.images.append(Image(image_number, image_path, height, width))
+        return(True)
+    def get_page_labels_diglib(self):
+        if len(self.pages) == 0:
+            self.get_pages()
+        page_dict = { tup[0] : tup[1] for tup in self.pages }
+        for image in self.images:
+            try:
+                image.label = page_dict[image.number]
+            except:
+                pass
     def get_year_digi(self):
         self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
         if self.year_digi == None:
@@ -71,7 +122,27 @@ class Book:
                 image_no = ""
                 logging.error(f" Problem bei Image {image}")
             number = node.attrib.get("n", "")
-            self.pages.append((image_no, number, ""))
+            self.pages.append((image_no, number))
+        return(True)
+    def get_struct_data(self):
+        self.get_struct_doc()
+        if self.struct_doc == None:
+            return(False)
+        for div in divs:
+            div_type = div.attrib.get("type", "")
+            head = div.find(".//{http://www.tei-c.org/ns/1.0}head")
+            try:
+                heading = head.text
+            except:
+                heading = None
+            range = Range(heading, div_type)
+            pbs = div.findall(".//{http://www.tei-c.org/ns/1.0}pb")
+            for pb in pbs:
+                facs = pb.attrib.get("facs", "")
+                image_no = facs.replace(f"#{self.folder}_{self.norm_sig}_", "")
+                num = pb.attrib.get("n", "")
+                range.add_page((image_no, num))
+            self.ranges.append(range)
         return(True)
     def get_struct_doc(self):
         xml = self.cache_struct.get_xml(self.norm_sig, self.folder)
@@ -98,12 +169,14 @@ class Book:
                 range.add_page((image_no, num))
             self.ranges.append(range)
         return(True)
-    def to_iiif(self, folder = None):
-        if folder != None:
-            self.export_folder = "manifests"
-        if not os.path.exists(self.export_folder):
-            os.makedirs(self.export_folder)
-        self.get_year_digi()
+    def to_iiif(self):
+        if self.bib_record == None:
+            self.get_bib_data()
+        if len(self.images) == 0:
+            self.read_log()
+            self.get_page_labels_diglib()
+        if len(self.ranges) == 0:
+            self.get_struct_data()
         main_res = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/manifest.json"
         manifest = iiif.Manifest(main_res)
         if self.bib_record:
@@ -131,21 +204,32 @@ class Book:
             if self.bib_record.vdn:
                 manifest.add_metadata_property("VD-Nr.", self.bib_record.vdn, "No. VD")
             manifest.add_homepage("Katalogeintrag", "Catalogue entry", f"https://opac.lbs-braunschweig.gbv.de/DB=2/XMLPRS=N/PPN?PPN={self.bib_record.ppn}")
-        for page in self.pages:
-            image_no, number, _struct = page
-            base_do = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}"
-            base_api = f"https://image.hab.de/iiif/images/{self.folder}/{self.norm_sig}/{self.year_digi}_standard_original/{self.norm_sig}_{image_no}.jp2/"
-            url_info = ir.make_link(self.norm_sig, self.year_digi, self.folder, image_no)
-            dimensions = self.cache_dim.get(url_info)
-            if dimensions == None:
-                logging.error(f" Abmessungen konnten nicht geladen werden für {self.norm_sig} Image {image_no}")
-                continue
-            width, height = dimensions.split(",")
-            manifest.add_page_lazily(base_do, base_api, image_no, height, width, 'image/jpeg')
+        base_do = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}"
+        for im in self.images:
+            base_api = f"https://image.hab.de/iiif{im.path}/"
+            manifest.add_page_lazily(base_do, base_api, im.number, im.height, im.width, 'image/jpeg')
         if len(self.ranges) > 0:
-            manifest.add_structures(base_do, self.ranges)
-        return(manifest)
-        
+            manifest.add_structures(base_do, self.ranges)            
+        return(manifest)        
+
+class Image:
+    def __init__(self, number, path = None, height = None, width = None, label = None):
+        self.number = number
+        self.path = ""
+        self.label = ""
+        if path != None:
+            self.path = path
+        self.height = height
+        self.width = width
+        if label != None:
+            self.label = label
+    def __str__(self):
+        page_number = ""
+        if self.label != "":
+            page_number = f"S. {self.label}, "
+        im_str = f"Image Nr. {self.number}, {page_number}{self.height}x{self.width}, Pfad: {self.path}"
+        return(im_str)
+
 class Range:
     def __init__(self, heading = None, type = None):
         self.heading = ""

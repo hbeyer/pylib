@@ -1,9 +1,12 @@
 *.docx
+*.db
 cache/*
 downloads/*
 source/*
 scripts/*
-lib/__pycache__/*
+lib/__pycache__/
+__pycache__
+struct*.json
 gattungen-ac
 example*.py
 *.htm

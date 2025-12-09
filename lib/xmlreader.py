@@ -75,7 +75,7 @@ class StringReader(DownloadReader):
         try:
             root = et.fromstring(self.data)
         except:
-            logging.error(f" Nicht lesbar: {data}")
+            logging.error(f" Nicht lesbar: {self.data}")
             return([])
         if root.tag == self.tag:
             return([root])

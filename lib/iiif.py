@@ -22,26 +22,29 @@ class Manifest:
     def add_label(self, label, lang = None):
         if lang == None:
             lang = "de"
-            self.content["label"][lang] = [label]
+        self.content["label"][lang] = [label]
     def add_metadata_property(self, field_ger, value_ger, field_eng = None, value_eng = None):
         if field_eng and value_eng:
-            self.content["metadata"].append({ "label" : [ { "language" : "de", "value" : field_ger }, { "@language" : "en", "@value" : field_eng } ], "value" : [ { "@language" : "de", "@value" : value_ger }, { "@language" : "en", "@value" : value_eng } ] })
+            self.content["metadata"].append({ "label" : { "de" : [field_ger], "en" : [field_eng] }, "value" : { "de" : [value_ger], "en" : [value_eng] } })
             return
         if field_eng:
-            self.content["metadata"].append({ "label" : [ { "@language" : "de", "@value" : field_ger }, { "@language" : "en", "@value" : field_eng } ], "value" : [ { "@language" : "de", "@value" : value_ger }, { "@language" : "en", "@value" : value_ger } ] })
+            self.content["metadata"].append({ "label" : { "de" : [field_ger], "en" : [field_eng] }, "value" : { "de" : [value_ger], "en" : [value_ger] } })
             return
-        self.content["metadata"].append({ "label" : [ { "@language" : "de", "@value" : field_ger }, { "@language" : "en", "@value" : field_eng } ]})
+        self.content["metadata"].append({ "label" : { "de" : [field_ger], "en" : [field_ger] }, "value" : { "de" : [value_ger], "en" : [value_ger] } })
     def add_homepage(self, label_de, label_en, url):
         self.content["homepage"] = { "id" : url, "type" : "Text", "label" : { "de" : [label_de], "en" : [label_en] } }
         return
     def add_canvas(self, canvas):
         self.content["items"].append(canvas.content)
-    def add_page_lazily(self, base_do, base_api, number, height, width, format):
+    def add_page_lazily(self, base_do, base_api, number, height, width, format, image_label = None):
+        if image_label in [None, ""]:
+            image_label = re.sub(r"^0+", "", number)
+            image_label = f"[{image_label}]"
         annotation = Annotation(f"{base_do}-{number}/annotation", base_api, f"{base_do}-{number}/canvas", height, width, format)
         annotation_page = AnnotationPage(f"{base_do}-{number}/page")
         annotation_page.add_annotation(annotation)
         canvas = Canvas(f"{base_do}-{number}/canvas", height, width)
-        canvas.add_label(f"Image {number}")
+        canvas.add_label(image_label)
         canvas.add_page(annotation_page)
         id_thumb = f"{base_api}full/150,/0/default.{get_extension(format)}"
         canvas.add_thumbnail(id_thumb, format)
@@ -76,6 +79,7 @@ class Canvas:
     def add_page(self, page):
         self.content["items"].append(page.content)
     def add_label(self, label):
+        #self.content["label"] = { "de" : [label], "en" : [label] }
         self.content["label"] = { "en" : [label] }
     def add_thumbnail(self, ressource, format_thumb, width_thumb = None):
         if width_thumb == None:

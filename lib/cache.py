@@ -25,18 +25,21 @@ class Cache:
     def get_content(self, url, id):
         path = f"{self.folder}/{id}"
         if op.exists(path) == True:
-            file = open(path, "r")
-            content = file.read()
-            return(content)
+            with open(path, "r") as f:
+                content = f.read()
+            if len(content) > 0:
+                return(content)
+            os.remove(path)
         r = self.client.get(url)
         if r.status_code != 200:
             logging.error(f" {url} konnte nicht geladen werden")
             return(None)
         response = r.text
-        if response in (None, ""):
+        if response.strip() in (None, ""):
             return(None)
-        with open(path, "w") as f:
-            f.write(response)
+        # Das Speichern führt aus irgendeinem Grund zu einer leeren Datei
+        with open(path, "w") as fw:
+            fw.write(response)
         return(response)
     def _get_content(self, url, id):
         path = self.folder + "/" + id

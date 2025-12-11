@@ -1028,6 +1028,7 @@ class RecordVD16(Record):
                 placePPN = ""                
             placeName = re.sub("\!.+\!", "", placeName)
             self.places.append(Place(placeName, placeRel))            
+
 class RecordVD18(Record):
     def __init__(self, node):
         super().__init__(node)    
@@ -1037,7 +1038,8 @@ class RecordVD18(Record):
             self.vd18 = []
     def __str__(self):
         ret = "record: PPN " + self.ppn + ", VD18: " + "|".join(self.vd18) + ", Jahr: " + self.date
-        return(ret)        
+        return(ret)     
+        
 class RecordInc(Record):
     def __init__(self, node):
         super().__init__(node)
@@ -1055,6 +1057,26 @@ class RecordInc(Record):
                         self.gw = link
                     elif link.find("istc") != -1:
                         self.istc = link
+
+class RecordO(Record):
+    def __init__(self, node):
+        super().__init__(node)
+        try:
+            self.institution_original = self.data["009A"]["01"]["c"].pop(0)
+        except:
+            logging.error(f"Keine Originalinstitution bei PPN {self.ppn}")
+            self.institution_original = ""            
+        try:
+            self.country_original = self.data["009A"]["01"]["b"].pop(0)
+        except:
+            logging.error(f"Keine ISIL bei PPN {self.ppn}")
+            self.country_original = ""            
+        try:
+            self.shelfmark_original = self.data["009A"]["01"]["a"].pop(0)
+        except:
+            logging.error(f"Keine ISIL bei PPN {self.ppn}")
+            self.shelfmark_original = ""
+        
 class RecordZS(Record):
     def __init__(self, node):
         super().__init__(node)

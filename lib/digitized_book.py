@@ -13,13 +13,12 @@ from lib import image_resolver as ir
 from lib import pica
 from lib import cache
 from lib import iiif
-import httpx
 # https://rdflib.readthedocs.io/en/stable/intro_to_creating_rdf.html
-logging.basicConfig(level=logging.INFO)
 
 class Book:
     def __init__(self, norm_sig, folder = None):
         self.folder = "drucke"
+        self.rights = "https://creativecommons.org/publicdomain/mark/1.0/"
         if folder != None:
             self.folder = folder
         self.norm_sig = norm_sig
@@ -34,7 +33,8 @@ class Book:
         self.cache_struct = cache.CacheStruct()
         self.cache_dim = cache.CacheImageDimensions()
         self.resolver = ir.Resolver()
-    def get_all_data(self):
+        self.client = httpx.Client(default_encoding="utf-8")
+    def get_legacy_data(self):
         self.get_year_digi()
         self.get_bib_data()
         self.get_pages()
@@ -42,12 +42,11 @@ class Book:
         if self.struct_doc != None:
             self.get_ranges()
     def read_log(self):
-        url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/drucke-convert-tiff-jp2.log"
-        url_jpg = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/drucke-cp-jpg.log"
-        client = httpx.Client(default_encoding="utf-8")
-        req = client.get(url_tiff)
+        url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{self.folder}-convert-tiff-jp2.log"
+        url_jpg = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{self.folder}-cp-jpg.log"
+        req = self.client.get(url_tiff)
         if req.status_code != 200:
-            req = client.get(url_jpg)
+            req = self.client.get(url_jpg)
             if req.status_code != 200:
                 return(False)
         lines = req.text.split("\n")
@@ -55,7 +54,7 @@ class Book:
             if line.strip() == "":
                 continue
             #extr = re.search(r"\d+.(jpg|tiff) (/images/([^/]+)/([^/]+)/(12]\d{3})_standard_original/([^ ]+)) (\d+)x(\d+)", line)
-            extr = re.search(r"(\d+)\.(jpg|tif) (/images/([^/]+)/([^/]+)/([12]\d{3})_standard_original/([^ ]+)) (\d+)x(\d+)", line)
+            extr = re.search(r"/([^/]+)\.(jpg|tif) (/images/([^/]+)/([^/]+)/([12]\d{3})_standard_original/([^ ]+)) (\d+)x(\d+)", line)
             try:
                 self.year_digi = extr.group(5)
             except:
@@ -66,18 +65,18 @@ class Book:
                 image_number = extr.group(1)
             except:
                 logging.error(f"Fehlende Image-Nummer im Logfile, Signatur {self.norm_sig}")
-                return(False)
+                continue
             try:
                 image_path = extr.group(3)
             except:
                 logging.error(f"Fehlender Image-Path im Logfile, Signatur {self.norm_sig}")
-                return(False)                
+                continue                
             try:
                 width = extr.group(8)
                 height = extr.group(9)                
             except:
                 logging.error(f"Nicht lesbare Abmessungen im Log für Signatur {self.norm_sig}") 
-                return(False)
+                continue
             self.images.append(Image(image_number, image_path, height, width))
         return(True)
     def get_page_labels_diglib(self):
@@ -100,11 +99,16 @@ class Book:
                 return(False)
         return(True)
     def get_bib_data(self):
-        url = f"http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.url=diglib.hab.de{self.folder}{self.norm_sig}start.htm and pica.bbg=o*&maximumRecords=1&startRecord=1&recordSchema=picaxml"
-        xml = self.cache_sru.get_xml(url, f"{self.folder}_{self.norm_sig}")
+        url = f"http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.url=diglib.hab.de{self.folder}{self.norm_sig}*+and+pica.bbg=o*&maximumRecords=1&startRecord=1&recordSchema=picaxml"
+        resp = self.client.get(url)
+        if resp.status_code != 200:
+            logging.error(f" Keine O-Aufnahme zu {norm_sig} gefunden")
+            return(False)
+        #xml = self.cache_sru.get_xml(url, f"{self.folder}_{self.norm_sig}")
+        xml = resp.text
         reader = xr.StringReader(xml, "record", "http://docs.oasis-open.org/ns/search-ws/sruResponse")
         for node in reader:
-            self.bib_record = pica.Record(node)
+            self.bib_record = pica.RecordO(node)
             return(True)
         return(False)
     def get_pages(self):
@@ -128,30 +132,6 @@ class Book:
         self.get_struct_doc()
         if self.struct_doc == None:
             return(False)
-        for div in divs:
-            div_type = div.attrib.get("type", "")
-            head = div.find(".//{http://www.tei-c.org/ns/1.0}head")
-            try:
-                heading = head.text
-            except:
-                heading = None
-            range = Range(heading, div_type)
-            pbs = div.findall(".//{http://www.tei-c.org/ns/1.0}pb")
-            for pb in pbs:
-                facs = pb.attrib.get("facs", "")
-                image_no = facs.replace(f"#{self.folder}_{self.norm_sig}_", "")
-                num = pb.attrib.get("n", "")
-                range.add_page((image_no, num))
-            self.ranges.append(range)
-        return(True)
-    def get_struct_doc(self):
-        xml = self.cache_struct.get_xml(self.norm_sig, self.folder)
-        if xml == None:
-            logging.info(f" Keine Strukturdaten zu {self.folder}/{self.norm_sig}")
-            return(False)
-        self.struct_doc = et.fromstring(xml)
-        return(True)
-    def get_ranges(self):
         divs = self.struct_doc.findall(".//{http://www.tei-c.org/ns/1.0}div")
         for div in divs:
             div_type = div.attrib.get("type", "")
@@ -168,20 +148,44 @@ class Book:
                 num = pb.attrib.get("n", "")
                 range.add_page((image_no, num))
             self.ranges.append(range)
+            indices = div.findall(".//{http://www.tei-c.org/ns/1.0}index")
+            for ind in indices:
+                facs = ind.attrib.get("facs", "")
+                image_no = facs.replace(f"#{self.folder}_{self.norm_sig}_", "")
+                term = ind.find(".//{http://www.tei-c.org/ns/1.0}term")
+                try:
+                    term_label = term.text
+                    term_type = term.attrib.get("type", "structure")
+                except:
+                    continue
+                else:
+                    range = Range(term_label, term_type)
+                    range.add_page((image_no, ""))
+                    self.ranges.append(range)
+        return(True)
+    def get_struct_doc(self):
+        xml = self.cache_struct.get_xml(self.norm_sig, self.folder)
+        if xml == None:
+            logging.info(f" Keine Strukturdaten zu {self.folder}/{self.norm_sig}")
+            return(False)
+        self.struct_doc = et.fromstring(xml)
         return(True)
     def to_iiif(self):
         if self.bib_record == None:
             self.get_bib_data()
         if len(self.images) == 0:
             self.read_log()
-            self.get_page_labels_diglib()
+        if len(self.pages) == 0:
+            self.get_pages()
+        self.get_page_labels_diglib()
         if len(self.ranges) == 0:
             self.get_struct_data()
         main_res = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/manifest.json"
         manifest = iiif.Manifest(main_res)
         if self.bib_record:
             label = self.bib_record.make_citation()
-            manifest.add_label(label)
+            manifest.add_label(label, "de")
+            manifest.add_label(label, "en")
             for pers in self.bib_record.persons:
                 if pers.role in ["VerfasserIn", "Verfasser", "creator"]:
                     manifest.add_metadata_property("VerfasserIn", pers.persName, "Author")
@@ -203,26 +207,30 @@ class Book:
             manifest.add_metadata_property("Physische Beschreibung", phys_descr, "Physical description")
             if self.bib_record.vdn:
                 manifest.add_metadata_property("VD-Nr.", self.bib_record.vdn, "No. VD")
+            manifest.add_metadata_property("Besitzende Institution", self.bib_record.institution_original, "Physical location")
+            manifest.add_metadata_property("Ländercode", self.bib_record.country_original, "Country")
+            manifest.add_metadata_property("Signatur", self.bib_record.shelfmark_original, "Shelfmark")
+            manifest.add_metadata_property("Lizenz", self.rights, "Copyright")
             manifest.add_homepage("Katalogeintrag", "Catalogue entry", f"https://opac.lbs-braunschweig.gbv.de/DB=2/XMLPRS=N/PPN?PPN={self.bib_record.ppn}")
         base_do = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}"
         for im in self.images:
             base_api = f"https://image.hab.de/iiif{im.path}/"
-            manifest.add_page_lazily(base_do, base_api, im.number, im.height, im.width, 'image/jpeg')
+            manifest.add_page_lazily(base_do, base_api, im.number, im.height, im.width, 'image/jpeg', im.label)
         if len(self.ranges) > 0:
             manifest.add_structures(base_do, self.ranges)            
-        return(manifest)        
+        return(manifest)
 
 class Image:
     def __init__(self, number, path = None, height = None, width = None, label = None):
         self.number = number
         self.path = ""
         self.label = ""
+        if label != None:
+            self.label = label
         if path != None:
             self.path = path
         self.height = height
         self.width = width
-        if label != None:
-            self.label = label
     def __str__(self):
         page_number = ""
         if self.label != "":

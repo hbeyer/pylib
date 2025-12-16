@@ -99,7 +99,8 @@ class Book:
                 return(False)
         return(True)
     def get_bib_data(self):
-        url = f"http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.url=diglib.hab.de{self.folder}{self.norm_sig}*+and+pica.bbg=o*&maximumRecords=1&startRecord=1&recordSchema=picaxml"
+        folder = self.folder.replace("/", "")
+        url = f"http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.url=diglib.hab.de{folder}{self.norm_sig}*+and+pica.bbg=o*&maximumRecords=1&startRecord=1&recordSchema=picaxml"
         resp = self.client.get(url)
         if resp.status_code != 200:
             logging.error(f" Keine O-Aufnahme zu {norm_sig} gefunden")

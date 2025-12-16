@@ -1,4 +1,3 @@
-
 # PyLib: Sammlung von Python-Modulen für die Arbeit mit bibliographischen Daten
 Das Repositorium enthält Module, die für die Arbeit mit bibliographischen Daten an der Herzog August Bibliothek Wolfenbüttel mit dem Schwerpunkt Alte Drucke entwickelt wurden. Sie sind optimiert für die Arbeit mit dem PICA-Format, den SRU-Schnittstellen des GBV und K10plus, der WinIBW 3 und das Signaturensystem der HAB. Die Module werden laufend erweitert und angepasst, bei der Verwendung von älterem Client Code kann es daher zu Problemen kommen.
 ## Installation
@@ -279,14 +278,51 @@ Handling von Digitalisaten der HAB. Ausgehend von der normalisierten Signatur (z
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | norm_sig (normalisierte Signatur), folder (Standardwert "drucke") | - | Anlegen des Objekts. Laden der bibliographischen Daten (bib_record), Seiteninformationen (pages) und Strukturdaten (struct_doc) sowie der Ranges (ranges), sofern Strukturdaten gefunden wurden |
-| to_iiif | folder (Standardwert "drucke") | Objekt der Klasse iiif.Manifest (s. u. Modul [iiif](#modul-iiif)) | - |
+| to_iiif | - | Objekt der Klasse iiif.Manifest (s. u. Modul [iiif](#modul-iiif)) | Laden der bibliographischen Daten, Images in Book.images, und wenn vorhanden Strukturdaten in Book.ranges |
+| get_bib_data | - | - | Laden der bibliographischen Daten in die Property Book.bib_record in Form eines Objekts vom Typ [pica](#modul-pica).RecordO |
+| get_pages | - | - | Laden der Seiteninformationen aus der Datei facsimile.xml als Tupel (Nummer, Seitenzahl) in die Property Book.pages |
+| get_struct_data | - | - | Laden der Strukturdaten aus der Datei tei-struct.xml, Ablage als Objekt vom Typ Range in Book.ranges. Die TEI-Dateien werden im Ordner cache/struct zwischengespeichert, s. Modul [cache](#modul-cache) |
+| read_logs | - | - | Auslesen der Logfiles auf dem Image-Server, sofern vorhanden. Laden der Seiteninformationen in Book.images als Objekte vom Typ Image |
+
+#### Klasse Image
+Images, die über einen IIIF-Server abgerufen werden können.
+| Methode | Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| \_\_init\_\_ | number, path (Pfad auf dem IIIF-Server, optional), height (optional), width (optional), label (Seitenzahl, optional) | - | - |
+| \_\_init\_\_ | - | String-Repräsentation der Seite | - |
+
 
 #### Klasse Range
 Abschnitte, die aus den Strukturdaten herausgelesen werden. Zu den erlaubten Werten für type s. https://dfg-viewer.de/strukturdatenset
 | Methode | Parameter | Rückgabewert | Effekt |
 |--|--|--|--|
 | \_\_init\_\_ | heading (optional), type (optional) | - | - |
-| add_page | Tupel: (image_number, num) | True bei Erfolg | Hinzufügen einer Seite in pages |
+| add_page | Tupel: (image_number, num) | True bei Erfolg | Hinzufügen einer Seite in Range.pages |
+
+Codebeispiel
+```bash
+from lib import digitized_book as db
+from lib import iiif
+
+book = db.Book("95-2-theol-10s", "drucke")
+manifest = book.to_iiif()
+man_json = manifest.serialize()
+print(man_json)
+```
+
+#### Funktionen
+| Funktion| Parameter | Rückgabewert | Effekt |
+|--|--|--|--|
+| get_norm_sig | ppn (PPN der O-Aufnahme im K10plus) | Ordner und normalisierte Signatur, None bei Misserfolg | - |
+
+```bash
+from lib import digitized_book as db
+ppn = "690222866"
+sig = db.get_norm_sig(ppn)
+print(sig)
+# Ausgabe: drucke/lo-4559
+```
+
 ---
 
 ### Modul duennhaupt

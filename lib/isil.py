@@ -335,6 +335,13 @@ class Isil:
 			"long" : "11.191754", 
 			"lat" : "48.886671"  
 			},
+        "DE-929" : { 
+			"bib" : "Landesbibliothekszentrum Rheinland-Pfalz / Rheinische Landesbibliothek", 
+			"place" : "Koblenz", 
+			"gettyPlace" : "7004448", 
+			"long" : "7.6000", 
+			"lat" : "50.3500"  
+			},            
         "DE-2863" : { 
 			"bib" : "Kirchenbibliothek Pegau", 
 			"place" : "Pegau", 
@@ -356,6 +363,15 @@ class Isil:
             "long" : "11.970288", 
             "lat" : "51.489599"  
 			},
+
+        "DE-Ef27" : { 
+			"bib" : "Bibliothek des Evangelischen Ministeriums im Augustinerkloster Erfurt", 
+			"place" : "Erfurt", 
+            "gettyPlace" : "7024031", 
+            "long" : "11.0333", 
+            "lat" : "50.9833"  
+			},            
+            
         "DE-Em2" : { 
 			"bib" : "Johannes a Lasco Bibliothek Große Kirche Emden", 
 			"place" : "Emden", 
@@ -453,7 +469,14 @@ class Isil:
 			"gettyPlace" : "7003689", 
 			"long" : "11.012385", 
 			"lat" : "50.931662" 
-            }
+            },
+        "#EKMD" : { 
+			"bib" : "Evangelische Kirche Mitteldeutschland", 
+			"place" : "Magdeburg", 
+			"gettyPlace" : "7004456", 
+			"long" : "11.634967", 
+			"lat" : "52.124002" 
+            }            
     }
     eln_isil = {
         "0000" : "#VD17R",
@@ -497,6 +520,7 @@ class Isil:
         "0547" : "DE-547",
         "0547/0039" : "DE-537",
         "0824" : "DE-824",
+        "4030" : "#EKMD",
         "5122" : "#VD17Polen",
         "1999" : "#VD17R",
         "2028" : "DE-32",
@@ -518,7 +542,9 @@ class Isil:
         "40047" : "DE-188",
         "40059" : "DE-37",
         "40074" : "DE-824",
+        "40076" : "DE-929",
         "40082" : "DE-F42",
+        "4028" : "DE-Ef27",
         "4369" : "DE-4369",
         "4620" : "#VD17R",
         "4680" : "DE-Zw1",
@@ -548,7 +574,9 @@ class Isil:
         "278" : "DE-Ha32", # Marienbibliothek Halle
         "620" : "#VD17R",
         "755" : "#THURKB", # Thüringische Kirchenbibliotheken
-        "1122" : "#VD17POLEN",        
+        "1122" : "#VD17POLEN",
+        "1028" : "DE-Ef27",
+        "1030" : "#EKMD",
         "2001" : "DE-21", # UB Tübingen
         "2006" : "DE-14", # UB Dresden
         "2008" : "DE-24", # WLB Stuttgart
@@ -570,6 +598,7 @@ class Isil:
         "4299" : "DE-75", # STB Nürnberg
         "4103" : "DE-188", # UB der FU Berlin
         "4302" : "DE-107", # Pf. LB Speyer
+        "4320" : "DE-929",
         "4346" : "DE-70", # LB Coburg
         "4385" : "DE-F42", # St. Georgen
         "4394" : "DE-235", #SB Ingolstadt

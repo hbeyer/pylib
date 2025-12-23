@@ -42,8 +42,9 @@ class Book:
         if self.struct_doc != None:
             self.get_ranges()
     def read_log(self):
-        url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{self.folder}-convert-tiff-jp2.log"
-        url_jpg = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{self.folder}-cp-jpg.log"
+        folder = self.folder.replace("/selecta", "")
+        url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{folder}-convert-tiff-jp2.log"
+        url_jpg = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{folder}-cp-jpg.log"
         req = self.client.get(url_tiff)
         if req.status_code != 200:
             req = self.client.get(url_jpg)
@@ -53,27 +54,27 @@ class Book:
         for line in lines:
             if line.strip() == "":
                 continue
-            #extr = re.search(r"\d+.(jpg|tiff) (/images/([^/]+)/([^/]+)/(12]\d{3})_standard_original/([^ ]+)) (\d+)x(\d+)", line)
-            extr = re.search(r"/([^/]+)\.(jpg|tif) (/images/([^/]+)/([^/]+)/([12]\d{3})_standard_original/([^ ]+)) (\d+)x(\d+)", line)
+            extr1 = re.search(r"(20\d\d)_standard_original", line)
             try:
-                self.year_digi = extr.group(5)
+                self.year_digi = extr1.group(1)
             except:
-                logging.error(f"Kein Digitalisierungsjahr im Logfile, Signatur {self.norm_sig}")
-            else:
-                year_digi = self.year_digi
+                logging.error(f"Kein Digitalisierungsjahr im Logfile, Signatur {self.norm_sig}")            
+            extr2 = re.search(r"/([^/]+)\.(jpg|tif) /images", line)
             try:
-                image_number = extr.group(1)
+                image_number = extr2.group(1)
             except:
                 logging.error(f"Fehlende Image-Nummer im Logfile, Signatur {self.norm_sig}")
                 continue
+            extr3 = re.search(r" (/images/[^ ]+) ", line)
             try:
-                image_path = extr.group(3)
+                image_path = extr3.group(1)
             except:
                 logging.error(f"Fehlender Image-Path im Logfile, Signatur {self.norm_sig}")
                 continue                
+            extr4 = re.search(r" (\d+)x(\d+)", line)
             try:
-                width = extr.group(8)
-                height = extr.group(9)                
+                width = extr4.group(1)
+                height = extr4.group(2)                
             except:
                 logging.error(f"Nicht lesbare Abmessungen im Log für Signatur {self.norm_sig}") 
                 continue

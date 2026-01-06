@@ -14,6 +14,7 @@ from lib import provenance as prv
 
 class Record:
     def __init__(self, node):
+        self.opac = "https://opac.k10plus.de/DB=2.299/"
         self.node = node
         self.data = {}
         self.persons = []
@@ -166,6 +167,13 @@ class Record:
                     self.digi.extend(digiDict[key]["u"])
                 except:
                     pass
+        if len(self.digi) == 0:
+            try:
+                ppn = self.data["039D"]["01"]["6"].pop(0)
+            except:
+                pass
+            else:
+                self.digi.append(f"{self.opac}PPNSET?PPN={ppn}")
         self.comm = []
         self.similar = []
         try:
@@ -853,7 +861,8 @@ class Record:
 
 class RecordVD17(Record):
     def __init__(self, node):
-        super().__init__(node)    
+        super().__init__(node)
+        self.opac = "https://kxp.k10plus.de/DB=1.28/"
         try:
             self.vd17 = self.data["006W"]["01"]["0"]
         except:
@@ -985,6 +994,7 @@ class RecordVD17(Record):
 class RecordVD16(Record):
     def __init__(self, node):
         super().__init__(node)
+        self.opac = "https://bvbat01.bib-bvb.de/TP61/start.do?View=vd16/"
         try:
             self.vd16 = self.data["006V"]["01"]["0"]
         except:
@@ -1031,7 +1041,8 @@ class RecordVD16(Record):
 
 class RecordVD18(Record):
     def __init__(self, node):
-        super().__init__(node)    
+        super().__init__(node)
+        self.opac = "https://vd18.k10plus.de/DB=1.65/"
         try:
             self.vd18 = self.data["006M"]["01"]["0"]
         except:

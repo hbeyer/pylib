@@ -3,7 +3,7 @@
 
 import re
 import logging
-import requests
+import httpx
 
 class Shelfmark:
     def __init__(self, whole):
@@ -107,21 +107,24 @@ class Shelfmark:
         norm_sig = self.whole.replace("A: ", "").replace("H: ", "").replace("M: ", "")
         norm_sig = norm_sig.replace("Helmst.", "helmst")
         norm_sig = norm_sig.replace("Sammelbd.", "sbd")
-        norm_sig = norm_sig.replace("Sammelband", "sbd")        
+        norm_sig = norm_sig.replace("Sammelband", "sbd")
+        norm_sig = norm_sig.replace("Schulenb.", "sch")        
         norm_sig = norm_sig.replace("°", "f")
         norm_sig = norm_sig.replace("(", "").replace(")", "s")
         norm_sig = norm_sig.replace(". ", "-")
-        norm_sig = norm_sig.replace(" ", "-")
+        norm_sig = norm_sig.replace(".", "-")  
+        norm_sig = re.sub("\s+", "-", norm_sig)
+        norm_sig = re.sub(":(\d+)", r"-\1b", norm_sig)
         norm_sig = norm_sig.lower()
+        norm_sig = norm_sig.strip("-")
         return(norm_sig)
-    def check_digi_status(self, folder = None):
+    def check_digi_status(self, client, folder = None):
         if folder == None:
             folder = "drucke"
         norm_sig = self.normalize_wdb()
-        url = f"http://diglib.hab.de/{folder}/{norm_sig}/facsimile.xml"
-        #http://diglib.hab.de/drucke/{norm_sig}/thumbs/00001.jpg
-        response = requests.get(url)
-        code = response.status_code
+        url = f"http://diglib.hab.de/{folder}/{norm_sig}/start.htm"
+        req = client.get(url)
+        code = req.status_code
         logging.info(f"Code für {url}: {code}")
         return(code)
     def getFormat(self):

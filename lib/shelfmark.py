@@ -104,6 +104,13 @@ class Shelfmark:
             ret += ' (' + self.part + ')'
         return(ret)
     def normalize_wdb(self):
+        if "Hardt" in self.whole:
+            extr = re.search(r"\((\d+), (\d+)", self.whole)
+            try:
+                return(f"li-5530-{extr.group(1)}b-{extr.group(2)}s")
+            except:
+                logging.error(f"Keine normalisierte Signatur zu bilden: {self.whole}")
+                return("")
         norm_sig = self.whole.replace("A: ", "").replace("H: ", "").replace("M: ", "")
         norm_sig = norm_sig.replace("Helmst.", "helmst")
         norm_sig = norm_sig.replace("Sammelbd.", "sbd")
@@ -118,11 +125,16 @@ class Shelfmark:
         norm_sig = norm_sig.lower()
         norm_sig = norm_sig.strip("-")
         return(norm_sig)
-    def check_digi_status(self, client, folder = None):
+    def get_url(self, folder = None):
         if folder == None:
             folder = "drucke"
         norm_sig = self.normalize_wdb()
         url = f"http://diglib.hab.de/{folder}/{norm_sig}/start.htm"
+        return(url)
+    def check_digi_status(self, client, folder = None):
+        if folder == None:
+            folder = "drucke"
+        url = self.get_url(folder)
         req = client.get(url)
         code = req.status_code
         logging.info(f"Code für {url}: {code}")

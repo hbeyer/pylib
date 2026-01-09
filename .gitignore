@@ -18,3 +18,4 @@ example*.py
 !placeData.csv
 !vorlagen.py
 !lib/*py
+digi_fail.db

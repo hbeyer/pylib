@@ -169,7 +169,6 @@ class CustomTable(QuarterTable):
         print(f"Es wurde eine Tabelle zum Zeitraum {self.regex_date}, eingeschränkt auf DDC {self.regex_dewey} abgespeichert unter {path}")
         return(True)        
     
-
 def prepare_text(text):
     text = text.replace("\n", " ")
     text = text.replace("  ", " ")

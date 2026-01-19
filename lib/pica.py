@@ -15,6 +15,7 @@ from lib import provenance as prv
 class Record:
     def __init__(self, node):
         self.opac = "https://opac.k10plus.de/DB=2.299/"
+        self.isil_db = il.DB_K10plus()
         self.node = node
         self.data = {}
         self.persons = []
@@ -249,7 +250,7 @@ class Record:
             if tag == "203@":
                 if cp != None:
                     self.copies.append(cp)
-                cp = Copy()
+                cp = Copy(self.isil_db)
                 try:
                     cp.epn = get_subfield(fi, "0")
                 except:
@@ -942,7 +943,7 @@ class RecordVD17(Record):
             if tag == "203@":
                 if cp != None:
                     self.copies.append(cp)
-                cp = Copy()
+                cp = Copy(self.isil_db)
                 try:
                     cp.epn = get_subfield(fi, "0")
                 except:
@@ -1284,7 +1285,8 @@ class Person:
         return(True)
 
 class Copy:
-    def __init__(self):
+    def __init__(self, isil_db):
+        self.isil_db = isil_db
         self.place = ""
         self.bib = ""
         self.isil = ""
@@ -1316,14 +1318,13 @@ class Copy:
             ret += ", EPN: " + self.epn
         return(ret)
     def get_bib(self):
-        self.isil = il.get_isil(self.iln, "iln")
-        if self.isil == None:
-            self.isil = il.get_isil(self.eln, "eln")
-        bibd = il.get_bib(self.isil, "isil")
-        if bibd == None:
+        isil_data = self.isil_db.get_by_eln(self.eln)
+        try:
+            self.isil = isil_data[0]
+        except:
             return(None)
-        self.bib = bibd["bib"]
-        self.place = bibd["place"]
+        self.bib = isil_data[3]
+        self.place = isil_data[6]
         return(True)
     def get_prov_names(self):
         if self.prov_struct == []:

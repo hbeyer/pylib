@@ -32,15 +32,14 @@ class Cache:
             os.remove(path)
         r = self.client.get(url)
         if r.status_code != 200:
-            logging.error(f" {url} konnte nicht geladen werden")
+            logging.error(f" {url} konnte nicht geladen werden. Code: {r.status_code}")
             return(None)
-        response = r.text
-        if response.strip() in (None, ""):
+        text = r.text.strip()
+        if text in (None, ""):
             return(None)
-        # Das Speichern führt aus irgendeinem Grund zu einer leeren Datei
-        with open(path, "w") as fw:
-            fw.write(response)
-        return(response)
+        with open(path, "w", encoding="utf8") as file:
+            file.write(text)
+        return(text)
     def _get_content(self, url, id):
         path = self.folder + "/" + id
         if op.exists(path) != True:
@@ -97,23 +96,22 @@ class CacheFacsimile(Cache):
             if response == None:
                 logging.error(f"Kein Download von {url} möglich")
             return(response)          
-"""            
-class CachePICA(Cache):
-    folder = "cache/pica"
+     
+class CacheISIL(Cache):
+    folder = "cache/isil"
     def __init__(self):
         super().__init__()
-    def get_xml(self, ppn):
-        url = f""
+    def get_xml(self, isil):
+        url = f"https://services.dnb.de/sru/bib?operation=searchRetrieve&version=1.1&query=isl%3D{isil}&recordSchema=PicaPlus-xml"
         try:
-            response = self.get_content(url, id)
+            response = self.get_content(url, isil)
         except:
-            logging.error(f"Kein Download von {url} möglich")
+            logging.error(f"Kein Download von {url} möglich: Cache.get_content() liefert leeres Ergebnis")
             #logging.info(f"Programm pausiert für 5 Minuten")
             #sleep(300)
             return(None)
         else:
             return(response)
-"""            
 
 class CacheGESA(Cache):
     folder = "cache/gesa"

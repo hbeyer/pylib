@@ -16,6 +16,7 @@ example*.py
 *.xml
 *.cypher
 !placeData.csv
+!K10plus-Bibliotheken.csv
 !vorlagen.py
 !lib/*py
 digi_fail.db

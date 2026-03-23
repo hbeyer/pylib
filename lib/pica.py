@@ -7,15 +7,14 @@ import logging
 import re
 import urllib.request as ul
 import xml.etree.ElementTree as et
-from lib import isil as il
 from lib import xmlserializer as xs
 from lib import romnumbers as rn
 from lib import provenance as prv
 
 class Record:
-    def __init__(self, node):
+    def __init__(self, node, isil_db = None):
         self.opac = "https://opac.k10plus.de/DB=2.299/"
-        self.isil_db = il.DB_K10plus()
+        self.isil_db = isil_db
         self.node = node
         self.data = {}
         self.persons = []
@@ -859,10 +858,18 @@ class Record:
             reservation["digitalisierbar"] = reservation["status"].replace("cc", "Nein").replace("cb", "Ja")
             ret.append(reservation)
         return(ret)
+    def get_reservation_str(self):
+        res_list = self.get_reservation()
+        ret_list = []
+        for row in res_list:
+            ret_list.append(f"ISIL {row['isil']}, Status {row['status']}, Datum {row['date']}{', Hinweis: ' + row['note'] if row['note'] else ''}")
+        return('. - '.join(ret_list))
+               
+        
 
 class RecordVD17(Record):
-    def __init__(self, node):
-        super().__init__(node)
+    def __init__(self, node, isil_db = None):
+        super().__init__(node, isil_db)
         self.opac = "https://kxp.k10plus.de/DB=1.28/"
         try:
             self.vd17 = self.data["006W"]["01"]["0"]
@@ -1285,7 +1292,7 @@ class Person:
         return(True)
 
 class Copy:
-    def __init__(self, isil_db):
+    def __init__(self, isil_db = None):
         self.isil_db = isil_db
         self.place = ""
         self.bib = ""
@@ -1318,6 +1325,8 @@ class Copy:
             ret += ", EPN: " + self.epn
         return(ret)
     def get_bib(self):
+        if self.isil_db == None:
+            return(False)
         isil_data = self.isil_db.get_by_eln(self.eln)
         try:
             self.isil = isil_data[0]

@@ -127,7 +127,7 @@ class QuarterTable:
                     text_r = right.extract_text()        
                     pn = str(page.page_number)
                     cont_text = cont_text + text_l + text_r
-                    print(f"Datei {path}, Seite {pn} verarbeitet.")
+                    logging.info(f"Datei {path}, Seite {pn} verarbeitet.")
                 pieces = cont_text.split("PREPUBLICATION RECORD")
                 pieces = list(map(prepare_text, pieces))
                 print(f"{len(pieces)} Einträge extrahiert.")
@@ -136,7 +136,6 @@ class QuarterTable:
                     if re.match(self.regex_dewey, entry.dewey):
                         row = entry.to_row()
                         self.tab.content.append(row)
-                        print(f"{entry.bnb_number}")
     def save(self, target_folder = None):
         if len(self.tab.content) == 0:
             logging.error("Es wurden keine Daten extrahiert.")

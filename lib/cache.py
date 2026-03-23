@@ -3,6 +3,7 @@
 
 import logging
 import os
+import json
 import sqlite3
 import shutil
 import urllib.parse as up
@@ -10,75 +11,79 @@ import httpx
 import os.path as op
 import urllib.request as ur
 from time import sleep
-from lib import image_resolver as ir
 
 class Cache:
     folder = "cache/default"
     def __init__(self, folder = None):
         if isinstance(folder, str):
             self.folder = folder
-        try:
-            os.mkdir(self.folder)
-        except:
-            pass
-        self.client = httpx.Client(default_encoding="utf-8")
+        os.makedirs(self.folder, exist_ok=True)
+        self.client = httpx.Client(timeout=30.0)
+    def __enter__(self):
+        return self
+    def __exit__(self, *args):
+        self.client.close()        
     def get_content(self, url, id):
-        path = f"{self.folder}/{id}"
-        if op.exists(path) == True:
-            with open(path, "r") as f:
+        path = op.join(self.folder, id)
+        if op.exists(path):
+            with open(path, "rb") as f:
                 content = f.read()
-            if len(content) > 0:
+            if content:
                 return(content)
             os.remove(path)
-        r = self.client.get(url)
-        if r.status_code != 200:
-            logging.error(f" {url} konnte nicht geladen werden. Code: {r.status_code}")
+        try:
+            r = self.client.get(url)
+            r.raise_for_status()  # wirft Exception bei HTTP-Fehlern
+        except httpx.HTTPError as e:
+            logging.error(f"{url} konnte nicht geladen werden: {e}")
             return(None)
-        text = r.text.strip()
-        if text in (None, ""):
+        if not r.content:
             return(None)
-        with open(path, "w", encoding="utf8") as file:
-            file.write(text)
-        return(text)
-    def _get_content(self, url, id):
-        path = self.folder + "/" + id
-        if op.exists(path) != True:
-            try:
-                ur.urlretrieve(url, path)
-            except:
-                return(None)
-        file = open(path, "r", encoding="utf-8")
-        content = file.read()
-        return(content)
+        with open(path, "wb") as file:
+            file.write(r.content)
+        return(r.content)
 
+class CacheStruct(Cache):
+    def get_xml(self, sig, folder_wdb = None):
+        if folder_wdb is None:
+            folder_wdb = "drucke"
+        url = f"https://diglib.hab.de/{folder_wdb}/{sig}/tei-struct.xml"
+        try:
+            content = self.get_content(url, sig)
+            if content is None:
+                return(None)
+            return(decode_xml(content))  # hier bewusst!
+        except Exception as e:
+            logging.error(f"Kein Laden von {url} möglich: {e}")
+            return(None)        
+
+# Bis hierher wurde die Klasse überarbeitet, um Encoding-Probleme zu vermeiden:
+# Laden und Speichern ohne Zeichencodierung, Auslesen mit Zeichencodierung (Funktion decode_xml)
+            
 class CacheSRU_O(Cache):
     def __init__(self):
         super().__init__("cache/sru_o")
     def get_xml(self, url, id):
         try:
-            response = self.get_content(url, id)
-        except:
-            logging.error(f"Kein Download von {url} möglich")
+            content = self.get_content(url, id)
+            if content is None:
+                return(None)
+            return(decode_xml(content))  # hier bewusst!            
+        except Exception as e:
+            logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)
-        else:
-            return(response)        
-        
-class CacheStruct(Cache):
+
+class CacheManifest_SBB(Cache):
     def __init__(self):
-        super().__init__("cache/struct")
-    def get_xml(self, sig, folder_wdb = None):
-        if folder_wdb == None:
-            folder_wdb = "drucke"
-        url = f"https://diglib.hab.de/{folder_wdb}/{sig}/tei-struct.xml"
+        super().__init__("cache/manifest_sbb")
+    def get_json(self, url, ppn):
         try:
-            response = self.get_content(url, sig)
-        except:
-            logging.error(f"Kein Download von {url} möglich")
+            response = self.get_content(url, ppn)
+        except Exception as e:
+            logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)
         else:
-            if response == None:
-                logging.error(f"Kein Download von {url} möglich")
-            return(response)   
+            return(response)
             
 class CacheFacsimile(Cache):
     def __init__(self):
@@ -144,7 +149,6 @@ class CacheLobid(Cache):
         path = f"{self.folder}/{query.replace(':', '_')}_{start}-{str(start + size)}"
         if op.exists(path) != True:
             self.make_url(query, str(start), str(size))
-            print(path)
             ur.urlretrieve(self.url, path)
         file = open(path, "r", encoding="utf-8")
         content = file.read()
@@ -230,20 +234,9 @@ class CacheSQLite:
         self.cursor.execute(sql)
         self.conn.commit()
         
-class CacheImageDimensions(CacheSQLite):
-    def __init__(self):
-        super().__init__("image_dimensions")
-    def get_dataset(self, url):
-        dimensions = ir.get_dimensions(url)
-        try:
-            width, height = dimensions
-        except:
-            logging.error(f" Nicht vorhandenes Bild: {url}")
-            return(None)
-        return([str(width), str(height)])
-    def insert_dataset(self, data, url):
-        # Auf Dubletten prüfen?
-        sql = "INSERT INTO main VALUES (?, ?)"
-        row = [url, ",".join(data)]
-        self.cursor.execute(sql, row)
-        self.conn.commit()
+def decode_xml(content: bytes, url=None) -> str:
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError as e:
+        logging.warning(f"{url}: falsches UTF-8 → fallback latin-1 ({e})")
+        return content.decode("latin-1")        

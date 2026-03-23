@@ -19,9 +19,11 @@ class Request_SRU:
         self.query_pica_enc = ""
         self.numFound = 0
         self.ns_resp = "http://docs.oasis-open.org/ns/search-ws/sruResponse"
-    def prepare(self, query_pica, format = "picaxml"): 
+    def prepare(self, query_pica, format = None): 
         self.query_pica = query_pica
         self.format = format
+        if format == None:
+            self.format = "picaxml"
         #self.query_pica_enc = self.query_pica.replace(", ", ",")
         self.query_pica_enc = self.query_pica.replace(", ", ",").replace("=", "%3D").replace(" ", "+")
         #self.query_pica_enc = self.query_pica_enc.replace(",", "%2C")
@@ -71,6 +73,12 @@ class Request_K10plus(Request_SRU):
         super().__init__()
         self.base = 'https://sru.k10plus.de/opac-de-627'
         self.fileName = "downloadK10plus"
+        
+class Request_SBB(Request_SRU):
+    def __init__(self):
+        super().__init__()
+        self.base = 'https://sru.k10plus.de/opac-de-1'
+        self.fileName = "downloadSBB"        
 
 class Request_VD17(Request_SRU):
     def __init__(self):
@@ -120,11 +128,12 @@ class Request_HPB(Request_SRU):
         self.base = 'http://sru.k10plus.de/hpb'
         self.fileName = "SRU_HPB"
         
-class Request_OGND(Request_SRU):
+class Request_GND(Request_SRU):
     def __init__(self):
         super().__init__()
-        self.base = 'http://sru.k10plus.de/ognd'
-        self.fileName = "SRU_OGND"
+        self.base = 'https://services.dnb.de/sru/authorities'
+        self.version = "1.1"
+        self.fileName = "SRU_GND"
         
 class Request_RISM(Request_SRU):
     def __init__(self):

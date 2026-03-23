@@ -43,6 +43,7 @@ class Request_Lobid():
             return(None)
         self.query_enc = up.quote(self.query)
         self.make_url()
+        print(self.url)
         self.get_num()
         return(True)
     def get_result(self):
@@ -57,7 +58,8 @@ class Request_GNDLobid(Request_Lobid):
             self.size = size
     def get_num(self):
         lc = cache.CacheGNDLobid()
-        text = lc.get_content(self.url, self.query)
+        id_query = make_id_query(self.query)
+        text = lc.get_content(self.url, id_query)
         try:
             self.data = json.loads(text)
         except:
@@ -194,3 +196,16 @@ def is_year(text):
     if int(text) < 1 or int(text) > 2100:
         return(False)
     return(True)
+    
+def make_id_query(query):
+    query = query.lower()
+    replacements = [
+        (":", "_"),
+        ("&", "_and_"),
+        ("*", ""),
+        ("(", ""),
+        (")", ""),        
+        ];
+    for repl in replacements:
+        query = query.replace(repl[0], repl[1])
+    return(query)

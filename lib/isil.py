@@ -662,7 +662,10 @@ class DB_K10plus(Isil):
         try:
             return(self.tab.content[self.index_eln[eln]])
         except:
-            return(None)
+            try:
+                return(self.tab.content[self.index_isil[Isil.eln_isil[eln]]])
+            except:
+                return(None)
             
     isil_vd17 = {
         "#SBBW" : { 

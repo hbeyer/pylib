@@ -571,7 +571,6 @@ def searchable(sm):
     sm = sm.replace("(", "\(")
     sm = sm.replace(")", "\)")
     return(sm)
-    
 def integerize_part(p):
     extr = re.search("\d+", p)
     try:

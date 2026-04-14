@@ -16,7 +16,10 @@ from lib import iiif
 # https://rdflib.readthedocs.io/en/stable/intro_to_creating_rdf.html
 
 class Book:
-    def __init__(self, norm_sig, folder = None):
+    def __init__(self, norm_sig, folder = None, client = None, cache_facs = None):
+        self.client = client
+        if self.client == None:
+            self.client = httpx.Client(default_encoding="utf-8")
         self.folder = "drucke"
         self.rights = "https://creativecommons.org/publicdomain/mark/1.0/"
         if folder != None:
@@ -28,19 +31,20 @@ class Book:
         self.images = []
         self.struct_doc = None
         self.ranges = []
-        self.cache_sru = cache.CacheSRU_O()
-        self.cache_facs = cache.CacheFacsimile()
-        self.cache_struct = cache.CacheStruct()
-        self.cache_dim = cache.CacheImageDimensions()
-        self.resolver = ir.Resolver()
-        self.client = httpx.Client(default_encoding="utf-8")
-    def get_legacy_data(self):
-        self.get_year_digi()
-        self.get_bib_data()
-        self.get_pages()
-        self.get_struct_doc()
-        if self.struct_doc != None:
-            self.get_ranges()
+        self.cache_facs = cache_facs
+        if self.cache_facs == None:
+            self.cache_facs = cache.CacheFacsimile()
+        # self.cache_sru = cache.CacheSRU_O()
+        # self.cache_struct = cache.CacheStruct()
+        # self.cache_dim = cache.CacheImageDimensions()
+        # self.resolver = ir.Resolver()
+    # def get_legacy_data(self):
+        # self.get_year_digi()
+        # self.get_bib_data()
+        # self.get_pages()
+        # self.get_struct_doc()
+        # if self.struct_doc != None:
+            # self.get_ranges()
     def read_log(self):
         folder = self.folder.replace("/selecta", "")
         url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{folder}-convert-tiff-jp2.log"
@@ -89,16 +93,16 @@ class Book:
                 image.label = page_dict[image.number]
             except:
                 pass
-    def get_year_digi(self):
-        self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
-        if self.year_digi == None:
-            # Zusatzprüfung für den Fall, dass das Digitalisat seit der letzten Prüfung abrufbar gemacht wurde
-            self.resolver.forget_item(self.norm_sig, self.folder);
-            self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
-            if self.year_digi == None:
-                logging.error(f" Es konnte kein Digitalisierungsjahr zu {self.folder}/{self.norm_sig} gefunden werden")
-                return(False)
-        return(True)
+    # def get_year_digi(self):
+        # self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
+        # if self.year_digi == None:
+            # # Zusatzprüfung für den Fall, dass das Digitalisat seit der letzten Prüfung abrufbar gemacht wurde
+            # self.resolver.forget_item(self.norm_sig, self.folder);
+            # self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
+            # if self.year_digi == None:
+                # logging.error(f" Es konnte kein Digitalisierungsjahr zu {self.folder}/{self.norm_sig} gefunden werden")
+                # return(False)
+        # return(True)
     def get_bib_data(self):
         folder = self.folder.replace("/", "")
         url = f"http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.url=diglib.hab.de{folder}{self.norm_sig}*+and+pica.bbg=o*&maximumRecords=1&startRecord=1&recordSchema=picaxml"
@@ -116,12 +120,12 @@ class Book:
     def get_pages(self):
         xml = self.cache_facs.get_xml(self.norm_sig, self.folder)
         if xml == None:
-            loggin.error(f" Seiten zu {self_folder}/{self.norm_sig} konnten nicht geladen werden")
+            logging.error(f" Seiten zu {self.folder}/{self.norm_sig} konnten nicht geladen werden")
             return(False)
         reader = xr.StringReader(xml, tag = "graphic", namespace = "http://www.tei-c.org/ns/1.0")
         for node in reader:
             image = node.attrib.get("url", "")
-            extr = re.search("(eb\d{2}|\d{5}[a-z]?)\.jpg", image)            
+            extr = re.search("([^/]+)\.jpg", image)            
             try:
                 image_no = extr.group(1)
             except:
@@ -262,7 +266,7 @@ class Range:
         ret = f"Abschnitt {self.heading}, Typ {self.type}, {len(self.pages)} Seiten"
         return(ret)
         
-def get_norm_sig(ppn):
+def get_folder_sig_by_ppn(ppn):
     if re.match(f"^[\dX]{8,11}$", ppn) == False:
         return(None)
     req = ua.Request_unAPI()
@@ -273,8 +277,22 @@ def get_norm_sig(ppn):
         rec = pica.Record(node)
         if len(rec.digi) == 0:
             logging.error(f"Keine URL in O-Aufnahme {ppn} gefunden")
-        for url_digi in rec.digi:
-            extr = re.search(r"(drucke|inkunabeln|edoc|varia/selecta)/[^/]+", url_digi)
-            if extr != None:
-                return(extr.group(0))
+        folder_sig = get_location_wdb
+        if folder_sig != None:
+            return(folder_sig)
+    return(None)
+    
+def get_location_wdb(digi):    
+    for url_digi in digi:
+        folder_sig = extract_folder_sig(url_digi)
+        if folder_sig != None:
+            return(folder_sig)
+    return(None)
+    
+def extract_folder_sig(url):
+    if "diglib" not in url:
+        return(None)
+    extr = re.search(r"(drucke|inkunabeln|edoc|varia/selecta|periodica)/([^/]+)", url)
+    if extr != None:
+        return((extr.group(1), extr.group(2)))
     return(None)

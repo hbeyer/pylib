@@ -7,8 +7,9 @@ import json
 import functools
 from datetime import date
 from lib import localsql as lsql
-logging.basicConfig(level=logging.INFO)
 
+# Die Klasse ist obsolet, da die Digitalisierungsjahre über Logfiles eingelesen werden können
+# Für Digitalisate ohne Derivate auf dem image-Server könnte sie aber noch nützlich sein
 class Resolver():
     def __init__(self):
         self.folder = "drucke"
@@ -65,10 +66,12 @@ class Resolver():
         self.dc.close()
         self.dc_fail.close()
 
-# Das Caching bringt nicht viel, da es nur zur Laufzeit des Programms verfügbar ist. => Datenbank o. ä. einbinden
+# Das Folgende ist noch nützlich um
+# 1) Die Dimensionen aus der info.json-Date zu lesen
+# 2) Links auf einzelne Objekte auf dem Image-Server zu erzeugen
 @functools.lru_cache(maxsize=10000)
-def get_dimensions(url):
-    r = httpx.get(url)
+def get_dimensions(url_info):
+    r = httpx.get(url_info)
     if r.status_code != 200:
         logging.error(f" {url} konnte nicht geladen werden")
         return(None)
@@ -76,7 +79,7 @@ def get_dimensions(url):
     try:
         dim = (parsed_json["width"], parsed_json["height"])
     except:
-        #logging.error(f" Abmessungen zu {folder}/{norm_sig}, Seite {page} konnten nicht geladen werden")
+        logging.error(f" Abmessungen zu {folder}/{norm_sig}, Seite {page} konnten nicht geladen werden")
         return(None)
     return(dim)
     

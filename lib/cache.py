@@ -17,7 +17,7 @@ class Cache:
     def __init__(self, folder = None):
         if isinstance(folder, str):
             self.folder = folder
-        os.makedirs(self.folder, exist_ok=True)
+        os.makedirs(self.folder, exist_ok = True)
         self.client = httpx.Client(timeout=30.0)
     def __enter__(self):
         return self
@@ -42,7 +42,22 @@ class Cache:
         with open(path, "wb") as file:
             file.write(r.content)
         return(r.content)
-
+    def get_content_local(self, path_source, id):
+        path = op.join(self.folder, id)
+        if op.exists(path):
+            with open(path, "rb") as f:
+                content = f.read()
+            if content:
+                return(content)
+            os.remove(path)
+        with open(path_source, "rb") as f:
+            content = f.read()
+        if not content:
+            return(None)
+        with open(path, "wb") as file:
+            file.write(content)        
+        return(content)
+        
 class CacheStruct(Cache):
     def get_xml(self, sig, folder_wdb = None):
         if folder_wdb is None:
@@ -52,14 +67,11 @@ class CacheStruct(Cache):
             content = self.get_content(url, sig)
             if content is None:
                 return(None)
-            return(decode_xml(content))  # hier bewusst!
+            return(decode_response(content))  # hier bewusst!
         except Exception as e:
             logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)        
 
-# Bis hierher wurde die Klasse überarbeitet, um Encoding-Probleme zu vermeiden:
-# Laden und Speichern ohne Zeichencodierung, Auslesen mit Zeichencodierung (Funktion decode_xml)
-            
 class CacheSRU_O(Cache):
     def __init__(self):
         super().__init__("cache/sru_o")
@@ -68,7 +80,7 @@ class CacheSRU_O(Cache):
             content = self.get_content(url, id)
             if content is None:
                 return(None)
-            return(decode_xml(content))  # hier bewusst!            
+            return(decode_response(content))          
         except Exception as e:
             logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)
@@ -78,12 +90,13 @@ class CacheManifest_SBB(Cache):
         super().__init__("cache/manifest_sbb")
     def get_json(self, url, ppn):
         try:
-            response = self.get_content(url, ppn)
+            content = self.get_content(url, ppn)
+            if content is None:
+                return(None)
+            return(decode_response(content))
         except Exception as e:
             logging.error(f"Kein Laden von {url} möglich: {e}")
-            return(None)
-        else:
-            return(response)
+            return(None)    
             
 class CacheFacsimile(Cache):
     def __init__(self):
@@ -93,15 +106,42 @@ class CacheFacsimile(Cache):
             folder_wdb = "drucke"
         url = f"https://diglib.hab.de/{folder_wdb}/{sig}/facsimile.xml"
         try:
-            response = self.get_content(url, sig)
-        except:
-            logging.error(f"Kein Download von {url} möglich")
+            content = self.get_content(url, sig)
+            if content is None:
+                return(None)
+            return(decode_response(content))            
+        except Exception as e:
+            logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)
-        else:
-            if response == None:
-                logging.error(f"Kein Download von {url} möglich")
-            return(response)          
-     
+
+class CacheFacsimileLocal(Cache):
+    def __init__(self):
+        super().__init__("cache/facs")
+    def get_xml(self, sig, folder_wdb = None):
+        if folder_wdb == None:
+            folder_wdb = "drucke"
+        path = f"//server/Digitalisate/copy/{folder_wdb}/{sig}/facsimile.xml"    
+        try:
+            content = self.get_content_local(path, sig)
+        except (FileNotFoundError, OSError) as e:
+            logging.error(f"Kein Laden von {path} möglich: {e}")
+            return(None)
+        if content is None:
+            return(None)
+        return(decode_response(content))
+    
+        # if folder_wdb == None:
+            # folder_wdb = "drucke"
+        # path = f"//server/Digitalisate/copy/{folder_wdb}/{sig}/facsimile.xml"
+        # try:
+            # content = self.get_content_local(path, sig)
+            # if content is None:
+                # return(None)
+            # return(decode_response(content))            
+        # except Exception as e:
+            # logging.error(f"Kein Laden von {path} möglich: {e}")
+            # return(None)
+
 class CacheISIL(Cache):
     folder = "cache/isil"
     def __init__(self):
@@ -109,15 +149,17 @@ class CacheISIL(Cache):
     def get_xml(self, isil):
         url = f"https://services.dnb.de/sru/bib?operation=searchRetrieve&version=1.1&query=isl%3D{isil}&recordSchema=PicaPlus-xml"
         try:
-            response = self.get_content(url, isil)
-        except:
-            logging.error(f"Kein Download von {url} möglich: Cache.get_content() liefert leeres Ergebnis")
-            #logging.info(f"Programm pausiert für 5 Minuten")
-            #sleep(300)
+            content = self.get_content(url, isil)
+            if content is None:
+                return(None)
+            return(decode_response(content))            
+        except Exception as e:
+            logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)
-        else:
-            return(response)
 
+# Bis hierher wurde die Klasse überarbeitet, um Encoding-Probleme zu vermeiden:
+# Laden und Speichern ohne Zeichencodierung, Auslesen mit Zeichencodierung (Funktion decode_response)              
+            
 class CacheGESA(Cache):
     folder = "cache/gesa"
     def __init__(self):
@@ -234,7 +276,7 @@ class CacheSQLite:
         self.cursor.execute(sql)
         self.conn.commit()
         
-def decode_xml(content: bytes, url=None) -> str:
+def decode_response(content: bytes, url=None) -> str:
     try:
         return content.decode("utf-8")
     except UnicodeDecodeError as e:

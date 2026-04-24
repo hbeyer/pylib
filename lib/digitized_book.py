@@ -34,17 +34,6 @@ class Book:
         self.cache_facs = cache_facs
         if self.cache_facs == None:
             self.cache_facs = cache.CacheFacsimile()
-        # self.cache_sru = cache.CacheSRU_O()
-        # self.cache_struct = cache.CacheStruct()
-        # self.cache_dim = cache.CacheImageDimensions()
-        # self.resolver = ir.Resolver()
-    # def get_legacy_data(self):
-        # self.get_year_digi()
-        # self.get_bib_data()
-        # self.get_pages()
-        # self.get_struct_doc()
-        # if self.struct_doc != None:
-            # self.get_ranges()
     def read_log(self):
         folder = self.folder.replace("/selecta", "")
         url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{folder}-convert-tiff-jp2.log"

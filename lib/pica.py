@@ -282,10 +282,7 @@ class Record:
             # Auslesen der Anmerkungen in 4801
             if tag == "220B":
                 comm = get_subfield_list(fi, "a")
-                if comm != []:
-                    if cp.comm != "":
-                        cp.comm = cp.comm + "; "
-                    cp.comm = cp.comm + ("; ").join(comm)
+                cp.comm.extend(comm)
             # Auslesen der Bestandsdaten bei Zeitschriften (Ab-Sätze)
             if tag == "231B":
                 hist = get_subfield(fi, "a")
@@ -295,10 +292,7 @@ class Record:
                     logging.error(f"Fehler beim Auslesen des Erscheinungsverlaufs {cp.sm}");
             if tag == "237A":
                 comm = get_subfield_list(fi, "a")
-                if comm != []:
-                    if cp.comm != "":
-                        cp.comm = cp.comm + "; "
-                    cp.comm = cp.comm + ("; ").join(comm)
+                cp.comm.extend(comm)
             # Auslesen der Provenienzdaten
             if tag == "244Z":
                 provstr = get_subfield(fi, "a")
@@ -486,7 +480,12 @@ class Record:
             try:
                 provenance.name = row["a"].pop(0)
             except:
-                pass                
+                pass
+            else:
+                try:
+                    provenance.name += f", {row['d'].pop(0)}"
+                except:
+                    pass
             try:
                 provenance.date = row["c"].pop(0)
             except:
@@ -1301,7 +1300,7 @@ class Copy:
         self.iln = ""
         self.epn = ""
         self.sm = ""
-        self.comm = ""
+        self.comm = []
         self.prov_bib = []
         self.prov = []
         self.prov_struct = []
@@ -1331,6 +1330,7 @@ class Copy:
         try:
             self.isil = isil_data[0]
         except:
+            logging.error(f"Keine ISIL-Daten zu ELN {self.eln}")
             return(None)
         self.bib = isil_data[3]
         self.place = isil_data[6]

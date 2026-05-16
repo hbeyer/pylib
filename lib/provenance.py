@@ -87,14 +87,14 @@ class ProvenanceBibLevel(Provenance):
         self.sm = ""
         self.comment = ""
     def __str__(self):
-        ret = f"Provenienz: {self.name}"
+        ret_list = [f"Provenienz: {self.name}"]
         if self.gnd != None:
-            ret = ret + " " + self.gnd
+            ret_list.append(self.gnd)
         if self.descriptors != []:
-            ret = ret + " / ".join(self.descriptors)
+            ret_list.append(" / ".join(self.descriptors))
         if self.date != "":
-            ret = ret + " / Datum " + self.date
-        return(ret)
+            ret_list.append(" / Datum " + self.date)
+        return(", ".join(ret_list))
         
 class NormLinkLocal:
     def __init__(self, name, ppn, position):

@@ -6,6 +6,7 @@ import urllib.request as ul
 import xml.etree.ElementTree as et
 import re
 import logging
+import os
 
 class Reader:
     def __init__(self, path, tag = "record", namespace = None):
@@ -127,6 +128,8 @@ class SRUDownloadReader(DownloadReader):
 class UnAPIReader(Reader):
     def __init__(self, path, tag = "", namespace = ""):
         super().__init__(path, tag, namespace)
-        file = open(path, "r")
-        tree = et.parse(file)
+    def get_single_node(self, file_name):
+        file_path = os.path.join(self.path, file_name)
+        tree = et.parse(file_path)
         self.node = tree.getroot()
+        return(self.node)    

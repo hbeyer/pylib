@@ -1094,7 +1094,25 @@ class RecordO(Record):
         except:
             logging.error(f"Keine ISIL bei PPN {self.ppn}")
             self.shelfmark_original = ""
-        
+        self.get_diglib()
+    def get_diglib(self):
+        self.url_diglib = ""
+        self.norm_sig = ""
+        self.folder_wdb = "drucke"
+        for url in self.digi:
+            if "diglib" in url:
+                self.url_diglib = url
+                extr = re.search(r"(drucke|inkunabeln|periodica|edoc)/([^/]+)/start.htm", url)
+                try:
+                    self.folder_wdb = extr.group(1)
+                except:
+                    logging.error(f"Kein Ordner in {url} gefunden")
+                try:
+                    self.norm_sig = extr.group(2)
+                except:
+                    logging.error(f"Keine normalisierte Signatur in {url} gefunden")
+                break
+                
 class RecordZS(Record):
     def __init__(self, node):
         super().__init__(node)

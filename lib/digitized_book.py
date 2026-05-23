@@ -13,7 +13,6 @@ from lib import image_resolver as ir
 from lib import pica
 from lib import cache
 from lib import iiif
-# https://rdflib.readthedocs.io/en/stable/intro_to_creating_rdf.html
 
 class Book:
     def __init__(self, norm_sig, folder = None, client = None, cache_facs = None):
@@ -31,6 +30,7 @@ class Book:
         self.images = []
         self.struct_doc = None
         self.ranges = []
+        self.iconclass = []
         self.cache_facs = cache_facs
         if self.cache_facs == None:
             self.cache_facs = cache.CacheFacsimile()
@@ -82,16 +82,6 @@ class Book:
                 image.label = page_dict[image.number]
             except:
                 pass
-    # def get_year_digi(self):
-        # self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
-        # if self.year_digi == None:
-            # # Zusatzprüfung für den Fall, dass das Digitalisat seit der letzten Prüfung abrufbar gemacht wurde
-            # self.resolver.forget_item(self.norm_sig, self.folder);
-            # self.year_digi = self.resolver.get_digi_year(self.norm_sig, self.folder)
-            # if self.year_digi == None:
-                # logging.error(f" Es konnte kein Digitalisierungsjahr zu {self.folder}/{self.norm_sig} gefunden werden")
-                # return(False)
-        # return(True)
     def get_bib_data(self):
         folder = self.folder.replace("/", "")
         url = f"http://sru.k10plus.de/opac-de-23?version=2.0&operation=searchRetrieve&query=pica.url=diglib.hab.de{folder}{self.norm_sig}*+and+pica.bbg=o*&maximumRecords=1&startRecord=1&recordSchema=picaxml"
@@ -123,7 +113,9 @@ class Book:
             number = node.attrib.get("n", "")
             self.pages.append((image_no, number))
         return(True)
-    def get_struct_data(self):
+    def get_struct_data(self, cache_struct):
+        # So abändern, dass wenn kein cache_struct übergeben wird, direkt online geladen wird?
+        self.cache_struct = cache_struct
         self.get_struct_doc()
         if self.struct_doc == None:
             return(False)
@@ -157,6 +149,32 @@ class Book:
                     range = Range(term_label, term_type)
                     range.add_page((image_no, ""))
                     self.ranges.append(range)
+        return(True)
+    def get_iconclass(self):
+        ic_dict = {}
+        if self.struct_doc is None:
+            logging.error(f"Keine Strukturdaten geladen für {self.norm_sig}")
+            return(False)
+        ns = {"tei": "http://www.tei-c.org/ns/1.0"}
+        indices = self.struct_doc.findall(".//tei:index", ns)
+        for index in indices:
+            facs = index.get("facs")
+            if not facs:
+                continue
+            terms = index.findall("tei:term", ns)
+            for term in terms:
+                key = term.get("key")
+                if not key:
+                    continue
+                text = (term.text or "").strip()
+                text = " ".join(text.split())
+                if not text:
+                    continue
+                ic_dict.setdefault((facs, key), []).append(text)
+        self.iconclass = [
+            (facs, key, "; ".join(labels))
+            for (facs, key), labels in ic_dict.items()
+        ]
         return(True)
     def get_struct_doc(self):
         xml = self.cache_struct.get_xml(self.norm_sig, self.folder)

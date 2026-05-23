@@ -59,6 +59,7 @@ class Cache:
         return(content)
         
 class CacheStruct(Cache):
+    folder = "cache/struct"
     def get_xml(self, sig, folder_wdb = None):
         if folder_wdb is None:
             folder_wdb = "drucke"

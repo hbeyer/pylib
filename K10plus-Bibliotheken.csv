@@ -1,6 +1,6 @@
 ISIL;ILN;ELN;Bibliothek;Anschrift;PLZ;Ort;Bundesland;Land;Lat;Long;Website;OPAC
 ;0001;1999;GBV/VZG;;;;;;;;;
-DE-1a;0011;0001;Staatsbibliothek zu Berlin - PreuÃŸischer Kulturbesitz, Haus Potsdamer StraÃŸe;Potsdamer Str. 33;10785;Berlin;Berlin;DE;52.50771;13.37063;http://www.staatsbibliothek-berlin.de;http://stabikat.de
+DE-1a;0011;0001;Staatsbibliothek zu Berlin - Preußischer Kulturbesitz, Haus Potsdamer Straße;Potsdamer Str. 33;10785;Berlin;Berlin;DE;52.50771;13.37063;http://www.staatsbibliothek-berlin.de;http://stabikat.de
 ;0019;2004;ZDB;;;;;;;;;
 ;0019;2012;GND;;;;;;;;;
 ;0019;2014;Basisklassifikation;;;;;;;;;
@@ -2009,3 +2009,15 @@ DE-929;;40076;Landesbibliothekszentrum Rheinland-Pfalz / Rheinische Landesbiblio
 DE-MUS-621612;;5002;Museum der St. Nikolai-Kirche Spandau;Reformationsplatz 12;13597;Berlin;Berlin;DE;52.53781;13.20520;http://www.nikolai-spandau.de/content/view/19/26/;https://lbz-rlp.digibib.net/search/katalog
 AT-HBTL;;5007;Diözesan- und Universitätsbibliothek der Katholischen Privatuniversität Linz;Bethlehemstr. 20;A-4020;Linz;;AT;48.30386;14.29152;http://ku-linz.at/bibliothek/;https://search-dli.obvsg.at/
 AT-OeNB;;9511;Österreichische Nationalbibliothek;Josefsplatz 1;A-1015;Wien;;AT;48.20548;16.36544;https://www.onb.ac.at/;https://search.onb.ac.at/
+;1122;5122;VD17 Polen;;;;;PL;52.41563;18.77892;;https://stabikat.de/
+;1122;5122/0001;VD17 Polen – Warszawa;;;Warszawa;;PL;52.21373;21.003017;;
+;1122;5122/0002;VD17 Polen – Łódź;;;Łódź;;PL;51.745596;19.454151;;
+;1122;5122/0003;VD17 Polen – Gdańsk;;;Gdańsk;;PL;54.397062;18.574552;;
+;1122;5122/0004;VD17 Polen – Toruń;;;Toruń;;PL;53.020242;18.571194;;
+;1122;5122/0005;VD17 Polen – Elbląg;;;Elbląg;;PL;54.15748;19.394486;;
+;4113;5113;Kirchenbibliothek Röhrsdorf;Kirchberg 5;01665;Klipphausen;Sachsen;DE;51.095913;13.524923;;
+;755;3206;Thüringische Kirchenbibliotheken;;;;Thüringen;DE;51.059629;10.878038;;
+;620;4620;VD17-Redaktion;;;;;DE;51.618978;9.9319168634435;;
+DE-14;124;0014;Sächsische Landesbibliothek - Staats- und Universitätsbibliothek Dresden;Zellescher Weg 18;01609;Dresden;Sachsen;DE;51.028644;13.736834;http://www.slub-dresden.de/;http://www.slub-dresden.de/
+DE-26;4037;0026;Universitätsbibliothek Gießen;Otto-Behaghel-Str. 8;35394;Gießen;Hessen;DE;50.576094;8.6953674;http://www.uni-giessen.de/ub/rnavi/standorte/ub-db/1;https://hds.hebis.de/ubgi/index.php
+;369;4369;Heimatkundliches Museum Schlan;Masarykovo nám. 159;274 01;Slaný;;CZ;50.230407;14.088149;https://www.muzeumslany.cz/;

@@ -104,7 +104,7 @@ class Annotation:
             format = "image/jpeg"
         self.res = ressource
         ext = get_extension(format)
-        self.im_res = f"{image_api}/full/max/0/default.{ext}"
+        self.im_res = f"{image_api}full/max/0/default.{ext}"
         self.service = image_api
         self.content = {
             "id" : self.res,

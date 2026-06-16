@@ -29,6 +29,7 @@ class Book:
         self.pages = []
         self.images = []
         self.struct_doc = None
+        self.full_text = None
         self.ranges = []
         self.iconclass = []
         self.cache_facs = cache_facs
@@ -113,9 +114,21 @@ class Book:
             number = node.attrib.get("n", "")
             self.pages.append((image_no, number))
         return(True)
-    def get_struct_data(self, cache_struct):
+    def get_struct_doc(self):
+        xml = self.cache_struct.get_xml(self.norm_sig, self.folder)
+        if xml == None:
+            logging.info(f" Keine Strukturdaten zu {self.folder}/{self.norm_sig}")
+            return(False)
+        self.struct_doc = et.fromstring(xml)
+        return(True)
+    def get_full_text(self, cache_ft):
+        result = cache_ft.get_xml(self.norm_sig, self.folder)
+        if result:
+            self.full_text = result
+            return(True)
+        return(False)
+    def get_struct_data(self):
         # So abändern, dass wenn kein cache_struct übergeben wird, direkt online geladen wird?
-        self.cache_struct = cache_struct
         self.get_struct_doc()
         if self.struct_doc == None:
             return(False)
@@ -176,14 +189,8 @@ class Book:
             for (facs, key), labels in ic_dict.items()
         ]
         return(True)
-    def get_struct_doc(self):
-        xml = self.cache_struct.get_xml(self.norm_sig, self.folder)
-        if xml == None:
-            logging.info(f" Keine Strukturdaten zu {self.folder}/{self.norm_sig}")
-            return(False)
-        self.struct_doc = et.fromstring(xml)
-        return(True)
-    def to_iiif(self):
+    def to_iiif(self, cache_struct):
+        self.cache_struct = cache_struct
         if self.bib_record == None:
             self.get_bib_data()
         if len(self.images) == 0:
@@ -193,7 +200,7 @@ class Book:
         self.get_page_labels_diglib()
         if len(self.ranges) == 0:
             self.get_struct_data()
-        main_res = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}/manifest.json"
+        main_res = f"https://iiif.hab.de/{self.folder}/{self.norm_sig}/manifest.json"
         manifest = iiif.Manifest(main_res)
         if self.bib_record:
             label = self.bib_record.make_citation()
@@ -225,7 +232,7 @@ class Book:
             manifest.add_metadata_property("Signatur", self.bib_record.shelfmark_original, "Shelfmark")
             manifest.add_metadata_property("Lizenz", self.rights, "Copyright")
             manifest.add_homepage("Katalogeintrag", "Catalogue entry", f"https://opac.lbs-braunschweig.gbv.de/DB=2/XMLPRS=N/PPN?PPN={self.bib_record.ppn}")
-        base_do = f"https://diglib.hab.de/{self.folder}/{self.norm_sig}"
+        base_do = f"https://iiif.hab.de/{self.folder}/{self.norm_sig}"
         for im in self.images:
             base_api = f"https://image.hab.de/iiif{im.path}/"
             manifest.add_page_lazily(base_do, base_api, im.number, im.height, im.width, 'image/jpeg', im.label)

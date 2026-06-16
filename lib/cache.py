@@ -73,6 +73,29 @@ class CacheStruct(Cache):
             logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)        
 
+class CacheFullTextHAB(Cache):
+    folder = "cache/full_texts_hab"
+    def get_xml(self, sig, folder_wdb = None):
+        if folder_wdb is None:
+            folder_wdb = "drucke"
+        url_tei = f"https://diglib.hab.de/{folder_wdb}/{sig}/tei-transcript.xml"
+        try:
+            content = self.get_content(url_tei, f"{sig}-tei.xml")
+            if content is None:
+                return(None)
+            return(decode_response(content))
+        except Exception as e:
+            logging.info(f"Kein Laden von {url} möglich: {e}")
+        url_ocr = f"https://diglib.hab.de/{folder_wdb}/{sig}/ocr.xml"
+        try:
+            content = self.get_content(url_tei, f"{sig}-ocr.xml")
+            if content is None:
+                return(None)
+            return(decode_response(content))
+        except Exception as e:
+            logging.error(f"Kein Laden von {url} möglich: {e}")
+            return(None)
+            
 class CacheSRU_O(Cache):
     def __init__(self):
         super().__init__("cache/sru_o")

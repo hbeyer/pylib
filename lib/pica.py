@@ -1429,7 +1429,7 @@ def get_norm_p(pages):
 def get_number(page_string, mult=1):
     res = 0
     clean = re.sub(r"[\divxdclmIVXDCLM]+,? \[?(das heißt|i. ?e.)", "", page_string)
-    spans = re.findall("(\[?(\d+)\]? ?- ?\[?(\d+)\]?)", clean)
+    spans = re.findall(r"(\[?(\d+)\]? ?- ?\[?(\d+)\]?)", clean)
     for span in spans:
         whole, start, end = span
         diff = int(end) - int(start)

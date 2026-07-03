@@ -1343,12 +1343,14 @@ class Copy:
         return(ret)
     def get_bib(self):
         if self.isil_db == None:
-            return(False)
+            return(None)
+        if self.eln in ["0000", None, "None"]:
+            return(None)
         isil_data = self.isil_db.get_by_eln(self.eln)
         try:
             self.isil = isil_data[0]
         except:
-            logging.error(f"Keine ISIL-Daten zu ELN {self.eln}")
+            #logging.error(f"Keine ISIL-Daten zu ELN {self.eln}")
             return(None)
         self.bib = isil_data[3]
         self.place = isil_data[6]

@@ -334,8 +334,13 @@ class Record:
         for fi in fields:
             tag = fi.get("tag")
             if tag == "145Z":
-                sdd_not = get_subfield_list(fi, "a")
+                sdd_not.extend(get_subfield_list(fi, "a"))
         return(";".join(sdd_not))
+    def get_cult_trans(self):
+        local_sys = self.get_sdd_sys()
+        parts_lsy = local_sys.split(";")
+        cult_trans = [s for s in parts_lsy if s.startswith("Kulturtransfer")]
+        return(cult_trans)
     def get_local_sys(self, isil):
         ret = []
         fields = self.node.findall(".//{info:srw/schema/5/picaXML-v1.0}datafield")

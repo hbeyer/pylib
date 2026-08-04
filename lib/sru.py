@@ -47,7 +47,7 @@ class Request_SRU:
         if not os.path.exists(folder):
         # Create a new directory because it does not exist
             os.makedirs(folder)
-            logging.info(" Ordner {folder} wurde angelegt")
+            logging.info(f" Ordner {folder} wurde angelegt")
         self.folder = folder
         if fileName != False:
             self.fileName = fileName

@@ -33,6 +33,10 @@ class Record:
         except:
             self.bbg = ""
         try:
+            self.media_type = self.data["002E"]["01"]["a"].pop(0)
+        except:
+            self.media_type = ""
+        try:
             self.ppn_sup = self.data["036D"]["01"]["9"].pop(0)
         except:
             self.ppn_sup = ""
@@ -82,6 +86,9 @@ class Record:
                     self.title = self.data["036C"]["01"]["a"].pop()
                 except:
                     self.title = ""
+        if self.title is None:
+            logging.error(f"Problem mit Titel bei PPN {self.ppn}")
+            self.title = ""
         self.title = self.title.strip(".").replace("@", "")
         try:
             self.title = self.title + ". " + self.data["021A"]["01"]["d"].pop(0)

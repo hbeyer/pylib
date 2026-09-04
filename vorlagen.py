@@ -143,6 +143,13 @@ with open("test.txt", "r") as file:
 """
 
 """
+# Einlesen einer Datei im Byte-Modus und Dekodieren als UTF-8:
+with open("source/skos.xml", "rb") as file:
+    content = file.read()
+xml = content.decode("utf-8")
+"""
+
+"""
 # Eine XML-Datei parsen
 import xml.etree.ElementTree as et
 tree = et.parse('test.xml')

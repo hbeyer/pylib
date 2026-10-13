@@ -13,6 +13,7 @@ from lib import image_resolver as ir
 from lib import pica
 from lib import cache
 from lib import iiif
+from lib import shelfmark
 
 class Book:
     def __init__(self, norm_sig, folder = None, client = None, cache_facs = None):
@@ -35,7 +36,72 @@ class Book:
         self.cache_facs = cache_facs
         if self.cache_facs == None:
             self.cache_facs = cache.CacheFacsimile()
+    def to_iiif(self, cache_struct):
+        self.cache_struct = cache_struct
+        if self.bib_record == None:
+            self.get_bib_data()
+        if len(self.images) == 0:
+            self.read_log()
+        if len(self.pages) == 0:
+            self.get_pages()
+        self.get_page_labels_diglib()
+        self.images.sort(key=lambda image: image.number)
+        if len(self.ranges) == 0:
+            self.get_struct_data()
+        main_res = f"https://iiif.hab.de/{self.folder}/{self.norm_sig}/manifest.json"
+        manifest = iiif.Manifest(main_res)
+        if self.bib_record:
+            label = self.bib_record.make_citation()
+            manifest.add_label(label, "de")
+            manifest.add_label(label, "en")
+            for pers in self.bib_record.persons:
+                if pers.role in ["VerfasserIn", "Verfasser", "creator"]:
+                    manifest.add_metadata_property("VerfasserIn", pers.persName, "Author")
+            manifest.add_metadata_property("Titel", self.bib_record.title, "Title")
+            if self.bib_record.edition:
+                manifest.add_metadata_property("Ausgabe", self.bib_record.edition, "Edition")
+            if len(self.bib_record.publishers) > 0:
+                pub_str = "; ".join([pub.persName for pub in self.bib_record.publishers])
+                manifest.add_metadata_property("Drucker/Verlag", pub_str, "Publisher")
+            if len(self.bib_record.places) > 0:
+                place_str = "; ".join([pl.placeName for pl in self.bib_record.places])
+                manifest.add_metadata_property("Erscheinungsort", place_str, "Place")                
+            manifest.add_metadata_property("Datum", self.bib_record.date, "Date")
+            phys_descr = self.bib_record.pages
+            if self.bib_record.format:
+                phys_descr = phys_descr + ", " + self.bib_record.format
+            if self.bib_record.illustrations:
+                phys_descr = phys_descr + ", " + self.bib_record.illustrations
+            manifest.add_metadata_property("Physische Beschreibung", phys_descr, "Physical description")
+            if self.bib_record.vdn:
+                manifest.add_metadata_property("VD-Nr.", self.bib_record.vdn, "No. VD")
+            try:
+                manifest.add_metadata_property("Besitzende Institution", self.bib_record.institution_original, "Physical location")
+            except:
+                manifest.add_metadata_property("Besitzende Institution", "Herzog August Bibliothek Wolfenbüttel", "Physical location")
+            try:
+                manifest.add_metadata_property("Ländercode", self.bib_record.country_original, "Country")
+            except:
+                manifest.add_metadata_property("Ländercode", "DE", "Country")
+            try:
+                manifest.add_metadata_property("Signatur", self.bib_record.shelfmark_original, "Shelfmark")
+            except:
+                shm = get_shelfmark_by_norm_sig(self.bib_record, self.norm_sig)
+                manifest.add_metadata_property("Signatur", shm, "Shelfmark")
+            try:
+                manifest.add_metadata_property("Lizenz", self.rights, "Copyright")
+            except:
+                manifest.add_metadata_property("Lizenz", "https://creativecommons.org/publicdomain/mark/1.0/", "Copyright")
+            manifest.add_homepage("Katalogeintrag", "Catalogue entry", f"https://opac.lbs-braunschweig.gbv.de/DB=2/XMLPRS=N/PPN?PPN={self.bib_record.ppn}")
+        base_do = f"https://iiif.hab.de/{self.folder}/{self.norm_sig}"
+        for im in self.images:
+            base_api = f"https://image.hab.de/iiif{im.path}/"
+            manifest.add_page_lazily(base_do, base_api, im.number, im.height, im.width, 'image/jpeg', im.label)
+        if len(self.ranges) > 0:
+            manifest.add_structures(base_do, self.ranges)            
+        return(manifest)
     def read_log(self):
+        known_nums = set()
         folder = self.folder.replace("/selecta", "")
         url_tiff = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{folder}-convert-tiff-jp2.log"
         url_jpg = f"https://image.hab.de/images/{self.folder}/{self.norm_sig}/{folder}-cp-jpg.log"
@@ -44,7 +110,7 @@ class Book:
             req = self.client.get(url_jpg)
             if req.status_code != 200:
                 return(False)
-        lines = req.text.split("\n")
+        lines = req.text.split("\n")       
         for line in lines:
             if line.strip() == "":
                 continue
@@ -59,6 +125,10 @@ class Book:
             except:
                 logging.error(f"Fehlende Image-Nummer im Logfile, Signatur {self.norm_sig}")
                 continue
+            if image_number in known_nums:
+                logging.error(f"Image Nr. {image_number} mehrfach im Logfile")
+                continue
+            known_nums.add(image_number)
             extr3 = re.search(r" (/images/[^ ]+) ", line)
             try:
                 image_path = extr3.group(1)
@@ -90,13 +160,28 @@ class Book:
         if resp.status_code != 200:
             logging.error(f" Keine O-Aufnahme zu {norm_sig} gefunden")
             return(False)
-        #xml = self.cache_sru.get_xml(url, f"{self.folder}_{self.norm_sig}")
         xml = resp.text
         reader = xr.StringReader(xml, "record", "http://docs.oasis-open.org/ns/search-ws/sruResponse")
         for node in reader:
             self.bib_record = pica.RecordO(node)
             return(True)
         return(False)
+    def get_bib_data_a(self, ppn):
+        url = f"https://unapi.k10plus.de/?id=gvk:ppn:{ppn}&format=picaxml"
+        resp = self.client.get(url)
+        if resp.status_code != 200:
+            logging.error(f" Keine Aufnahme zu PPN {ppn} gefunden")
+            return(False)
+        xml = resp.text
+        reader = xr.StringReader(xml, "record", "info:srw/schema/5/picaXML-v1.0")
+        try:
+            node = reader.get_recs().pop()
+        except:
+            print("record konnte nicht aus PICA-XML geladen werden")
+            return(False)
+        else:
+            self.bib_record = pica.Record(node)
+            return(True)
     def get_pages(self):
         xml = self.cache_facs.get_xml(self.norm_sig, self.folder)
         if xml == None:
@@ -189,56 +274,6 @@ class Book:
             for (facs, key), labels in ic_dict.items()
         ]
         return(True)
-    def to_iiif(self, cache_struct):
-        self.cache_struct = cache_struct
-        if self.bib_record == None:
-            self.get_bib_data()
-        if len(self.images) == 0:
-            self.read_log()
-        if len(self.pages) == 0:
-            self.get_pages()
-        self.get_page_labels_diglib()
-        if len(self.ranges) == 0:
-            self.get_struct_data()
-        main_res = f"https://iiif.hab.de/{self.folder}/{self.norm_sig}/manifest.json"
-        manifest = iiif.Manifest(main_res)
-        if self.bib_record:
-            label = self.bib_record.make_citation()
-            manifest.add_label(label, "de")
-            manifest.add_label(label, "en")
-            for pers in self.bib_record.persons:
-                if pers.role in ["VerfasserIn", "Verfasser", "creator"]:
-                    manifest.add_metadata_property("VerfasserIn", pers.persName, "Author")
-            manifest.add_metadata_property("Titel", self.bib_record.title, "Title")
-            if self.bib_record.edition:
-                manifest.add_metadata_property("Ausgabe", self.bib_record.edition, "Edition")
-            if len(self.bib_record.publishers) > 0:
-                pub_str = "; ".join([pub.persName for pub in self.bib_record.publishers])
-                manifest.add_metadata_property("Drucker/Verlag", pub_str, "Publisher")
-            if len(self.bib_record.places) > 0:
-                place_str = "; ".join([pl.placeName for pl in self.bib_record.places])
-                manifest.add_metadata_property("Erscheinungsort", place_str, "Place")                
-            manifest.add_metadata_property("Datum", self.bib_record.date, "Date")
-            phys_descr = self.bib_record.pages
-            if self.bib_record.format:
-                phys_descr = phys_descr + ", " + self.bib_record.format
-            if self.bib_record.illustrations:
-                phys_descr = phys_descr + ", " + self.bib_record.illustrations
-            manifest.add_metadata_property("Physische Beschreibung", phys_descr, "Physical description")
-            if self.bib_record.vdn:
-                manifest.add_metadata_property("VD-Nr.", self.bib_record.vdn, "No. VD")
-            manifest.add_metadata_property("Besitzende Institution", self.bib_record.institution_original, "Physical location")
-            manifest.add_metadata_property("Ländercode", self.bib_record.country_original, "Country")
-            manifest.add_metadata_property("Signatur", self.bib_record.shelfmark_original, "Shelfmark")
-            manifest.add_metadata_property("Lizenz", self.rights, "Copyright")
-            manifest.add_homepage("Katalogeintrag", "Catalogue entry", f"https://opac.lbs-braunschweig.gbv.de/DB=2/XMLPRS=N/PPN?PPN={self.bib_record.ppn}")
-        base_do = f"https://iiif.hab.de/{self.folder}/{self.norm_sig}"
-        for im in self.images:
-            base_api = f"https://image.hab.de/iiif{im.path}/"
-            manifest.add_page_lazily(base_do, base_api, im.number, im.height, im.width, 'image/jpeg', im.label)
-        if len(self.ranges) > 0:
-            manifest.add_structures(base_do, self.ranges)            
-        return(manifest)
 
 class Image:
     def __init__(self, number, path = None, height = None, width = None, label = None):
@@ -310,3 +345,12 @@ def extract_folder_sig(url):
     if extr != None:
         return((extr.group(1), extr.group(2)))
     return(None)
+    
+def get_shelfmark_by_norm_sig(record, norm_sig):
+    for cop in record.copies:
+        shm = shelfmark.Shelfmark(cop.sm)
+        shm_norm = shm.normalize_wdb()
+        if shm_norm == norm_sig:
+            return(cop.sm)
+        return("")
+    

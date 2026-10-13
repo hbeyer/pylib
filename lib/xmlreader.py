@@ -78,11 +78,11 @@ class StringReader(DownloadReader):
         except:
             logging.error(f" Nicht lesbar: {self.data}")
             return([])
-        if root.tag == self.tag:
+        if root.tag == self.namespace + self.tag:
             return([root])
         self.recs = root.findall(".//" + self.namespace + self.tag)
         if len(self.recs) == 0:
-            logging.error(f"Keine Datensätze")
+            logging.error(f"Keine Datensätze im XML-Dokument gefunden, Tag {self.tag}, Namespace {self.namespace}")
             return
     def __iter__(self):
         self.get_recs()

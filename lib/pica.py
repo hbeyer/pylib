@@ -1009,7 +1009,7 @@ class RecordVD17(Record):
             if cp.prov_struct != [] or cp.prov_norm != []:
                 cp.prov_dataset = prv.Dataset(cp.epn, cp.prov_struct, cp.prov_norm)
             self.copies.append(cp)
-
+            
 class RecordVD16(Record):
     def __init__(self, node):
         super().__init__(node)

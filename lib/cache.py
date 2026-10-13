@@ -6,7 +6,7 @@ import os
 import json
 import sqlite3
 import shutil
-import urllib.parse as up
+#import urllib.parse as up
 import httpx
 import os.path as op
 import urllib.request as ur

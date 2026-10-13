@@ -61,8 +61,8 @@ class Manifest:
         self.content["structures"] = [ {"id" : f"{base_do}range/toc", "type" : "Range", "label" : { "de" : [ "Inhaltsverzeichnis" ] }, "items" : items } ]
         return
     def serialize(self):
-        self.content_json = json.dumps(self.content)
-        return(self.content_json)
+        self.content_json = json.dumps(self.content, indent=2)
+        return self.content_json
         
 class Canvas:
     def __init__(self, ressource, height, width):

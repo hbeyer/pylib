@@ -79,7 +79,8 @@ class StringReader(DownloadReader):
             logging.error(f" Nicht lesbar: {self.data}")
             return([])
         if root.tag == self.namespace + self.tag:
-            return([root])
+            self.recs.append(root)
+            return
         self.recs = root.findall(".//" + self.namespace + self.tag)
         if len(self.recs) == 0:
             logging.error(f"Keine Datensätze im XML-Dokument gefunden, Tag {self.tag}, Namespace {self.namespace}")

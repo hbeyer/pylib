@@ -21,7 +21,6 @@ class Book:
         if self.client == None:
             self.client = httpx.Client(default_encoding="utf-8")
         self.folder = "drucke"
-        self.rights = "https://creativecommons.org/publicdomain/mark/1.0/"
         if folder != None:
             self.folder = folder
         self.norm_sig = norm_sig
@@ -88,10 +87,7 @@ class Book:
             except:
                 shm = get_shelfmark_by_norm_sig(self.bib_record, self.norm_sig)
                 manifest.add_metadata_property("Signatur", shm, "Shelfmark")
-            try:
-                manifest.add_metadata_property("Lizenz", self.rights, "Copyright")
-            except:
-                manifest.add_metadata_property("Lizenz", "https://creativecommons.org/publicdomain/mark/1.0/", "Copyright")
+            manifest.add_rights()
             manifest.add_homepage("Katalogeintrag", "Catalogue entry", f"https://opac.lbs-braunschweig.gbv.de/DB=2/XMLPRS=N/PPN?PPN={self.bib_record.ppn}")
         base_do = f"https://iiif.hab.de/{self.folder}/{self.norm_sig}"
         for im in self.images:
@@ -166,16 +162,12 @@ class Book:
             self.bib_record = pica.RecordO(node)
             return(True)
         return(False)
-    def get_bib_data_a(self, ppn):
-        url = f"https://unapi.k10plus.de/?id=gvk:ppn:{ppn}&format=picaxml"
-        resp = self.client.get(url)
-        if resp.status_code != 200:
-            logging.error(f" Keine Aufnahme zu PPN {ppn} gefunden")
-            return(False)
-        xml = resp.text
+    def get_bib_data_a(self, ppn, cache_una):
+        xml = cache_una.get_xml(ppn)
         reader = xr.StringReader(xml, "record", "info:srw/schema/5/picaXML-v1.0")
+        reader.get_recs()
         try:
-            node = reader.get_recs().pop()
+            node = reader.recs.pop()
         except:
             print("record konnte nicht aus PICA-XML geladen werden")
             return(False)

@@ -34,6 +34,10 @@ class Manifest:
     def add_homepage(self, label_de, label_en, url):
         self.content["homepage"] = { "id" : url, "type" : "Text", "label" : { "de" : [label_de], "en" : [label_en] } }
         return
+    def add_rights(self, rights_url = None):
+        if rights_url == None:
+            rights_url = "https://creativecommons.org/publicdomain/mark/1.0/"
+        self.content["rights"] = rights_url
     def add_canvas(self, canvas):
         self.content["items"].append(canvas.content)
     def add_page_lazily(self, base_do, base_api, number, height, width, format, image_label = None):

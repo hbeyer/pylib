@@ -6,7 +6,6 @@ import os
 import json
 import sqlite3
 import shutil
-#import urllib.parse as up
 import httpx
 import os.path as op
 import urllib.request as ur
@@ -73,6 +72,19 @@ class CacheStruct(Cache):
             logging.error(f"Kein Laden von {url} möglich: {e}")
             return(None)        
 
+class CacheUnAPI(Cache):
+    folder = "cache/unapi"
+    def get_xml(self, ppn):
+        url = f"https://unapi.k10plus.de/?id=k10plus:ppn:{ppn}&format=picaxml"
+        try:
+            content = self.get_content(url, ppn)
+            if content is None:
+                return(None)
+            return(decode_response(content))  # hier bewusst!
+        except Exception as e:
+            logging.error(f"Kein Laden von {url} möglich: {e}")
+            return(None)
+            
 class CacheFullTextHAB(Cache):
     folder = "cache/full_texts_hab"
     def get_xml(self, sig, folder_wdb = None):
